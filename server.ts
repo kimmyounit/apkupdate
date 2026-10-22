@@ -1239,8 +1239,12 @@ async function setupVite() {
   });
 }
 
-setupVite().catch((err) => {
-  console.error('[TAMVESTA] Failed to start server:', err);
-});
+if (!process.env.VERCEL) {
+  setupVite().catch((err) => {
+    console.error('[TAMVESTA] Failed to start server:', err);
+  });
+}
+
+export default app;
 
 

@@ -25,7 +25,8 @@ import type {
   TuChatMessage,
 } from '../types/index.ts';
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DEFAULT_DATA_FILE = path.resolve(process.cwd(), 'data', 'tamvesta-data.json');
+const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'tamvesta-data') : path.resolve(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'tamvesta-data.json');
 
 export interface DatabaseSchema {
@@ -465,6 +466,12 @@ class DatabaseManager {
     try {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+
+      if (process.env.VERCEL && !fs.existsSync(DATA_FILE) && fs.existsSync(DEFAULT_DATA_FILE)) {
+        try {
+          fs.copyFileSync(DEFAULT_DATA_FILE, DATA_FILE);
+        } catch (_) {}
       }
 
       if (fs.existsSync(DATA_FILE)) {
