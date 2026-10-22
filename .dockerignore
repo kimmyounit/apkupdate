@@ -1,0 +1,8 @@
+node_modules
+android
+.git
+*.apk
+dist
+.gemini
+.cache
+.system_generated

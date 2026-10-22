@@ -1,0 +1,102 @@
+import React from 'react';
+import { Home, BookOpen, HelpCircle, Archive, QrCode, User } from 'lucide-react';
+
+export type StudentNavTab = 'home' | 'articles' | 'quiz' | 'archive' | 'qr' | 'profile';
+
+interface StudentBottomNavProps {
+  activeTab: StudentNavTab;
+  onTabChange: (tab: StudentNavTab) => void;
+}
+
+export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
+  activeTab,
+  onTabChange,
+}) => {
+  const navItems = [
+    {
+      id: 'home' as const,
+      label: 'Beranda',
+      icon: Home,
+    },
+    {
+      id: 'articles' as const,
+      label: 'Artikel',
+      icon: BookOpen,
+    },
+    {
+      id: 'quiz' as const,
+      label: 'Quiz',
+      icon: HelpCircle,
+    },
+    {
+      id: 'archive' as const,
+      label: 'Arsip',
+      icon: Archive,
+    },
+    {
+      id: 'qr' as const,
+      label: 'QR',
+      icon: QrCode,
+    },
+    {
+      id: 'profile' as const,
+      label: 'Profil',
+      icon: User,
+    },
+  ];
+
+  return (
+    <nav
+      aria-label="Student Navigation Bar"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] py-1 px-1"
+    >
+      <div className="max-w-md mx-auto flex items-center justify-around">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => onTabChange(item.id)}
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-2xl transition-all duration-200 select-none relative group ${
+                isActive
+                  ? 'text-emerald-700 font-black'
+                  : 'text-slate-500 hover:text-slate-800 font-medium'
+              }`}
+            >
+              {/* Active Indicator Top Glow */}
+              {isActive && (
+                <span className="absolute -top-1 w-6 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-xs" />
+              )}
+
+              {/* Icon Container with subtle background when active */}
+              <div
+                className={`w-8 h-6 flex items-center justify-center rounded-xl transition-all ${
+                  isActive
+                    ? 'bg-emerald-100/90 text-emerald-700 scale-105 shadow-xs'
+                    : 'text-slate-400 group-hover:scale-105'
+                }`}
+              >
+                <Icon
+                  className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform ${
+                    isActive ? 'stroke-[2.5]' : 'stroke-2'
+                  }`}
+                />
+              </div>
+
+              {/* Label */}
+              <span
+                className={`text-[9px] sm:text-[10px] tracking-tight mt-0.5 truncate ${
+                  isActive ? 'text-emerald-800 font-black' : 'text-slate-500'
+                }`}
+              >
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};

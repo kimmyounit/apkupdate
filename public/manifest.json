@@ -1,0 +1,23 @@
+{
+  "name": "TAMVESTA - Tamansiswa Batam",
+  "short_name": "TAMVESTA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#85CCF6",
+  "theme_color": "#064e3b",
+  "description": "Sistem Informasi Sekolah Terpadu & Layanan Absensi QR Code Tamansiswa Batam",
+  "icons": [
+    {
+      "src": "/assets/tamvesta_mascot.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/tamvesta_mascot.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Print Styles for Student ID & QR Code Card */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #student-card-print, #student-card-print * {
+    visibility: visible;
+  }
+  #student-card-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 24px;
+    border: 2px solid #059669 !important;
+    box-shadow: none !important;
+  }
+}

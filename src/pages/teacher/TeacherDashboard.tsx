@@ -1,0 +1,1695 @@
+import React, { useState, useEffect } from 'react';
+import {
+  HelpCircle,
+  Plus,
+  Trash2,
+  Users,
+  Award,
+  BookOpen,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  ScanLine,
+  Search,
+  Key,
+  Copy,
+  ExternalLink,
+  ShieldCheck,
+  ToggleLeft,
+  ToggleRight,
+  Sparkles,
+  Lock,
+  Unlock,
+  AlertCircle,
+  X,
+  Share2,
+  Edit2,
+  Eye,
+  Check,
+  Save,
+  UserCheck,
+  UserX,
+  FileText,
+  Filter,
+} from 'lucide-react';
+import { api } from '../../lib/api.ts';
+import type {
+  Quiz,
+  QuizAttempt,
+  Subject,
+  TeacherArticle,
+  ClassAttendanceEntry,
+  ClassAttendanceStatus,
+  User,
+} from '../../types/index.ts';
+import { useAuth } from '../../context/AuthContext.tsx';
+
+type TeacherTab = 'articles' | 'attendance' | 'quizzes';
+
+export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpenScanner }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<TeacherTab>('articles');
+  const [loading, setLoading] = useState(true);
+
+  // --- Quiz Management State ---
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [searchAttempt, setSearchAttempt] = useState('');
+  const [selectedQuizFilter, setSelectedQuizFilter] = useState<string>('all');
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  // Create Quiz Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creatingLoading, setCreatingLoading] = useState(false);
+  const [quizForm, setQuizForm] = useState({
+    title: '',
+    subjectName: 'Matematika Peminatan',
+    description: '',
+    durationMinutes: 15,
+    passingScore: 75,
+    token: '',
+    sourceType: 'interactive' as 'interactive' | 'google_forms',
+    externalUrl: '',
+    password: '',
+    scheduleStart: '',
+    scheduleEnd: '',
+    questions: [
+      {
+        id: 'q_guru_1',
+        question: '',
+        options: ['', '', '', ''],
+        correctOptionIndex: 0,
+        explanation: '',
+      },
+    ],
+  });
+
+  // --- Article State ---
+  const [articles, setArticles] = useState<TeacherArticle[]>([]);
+  const [articleCategoryFilter, setArticleCategoryFilter] = useState<string>('semua');
+  const [articleSearch, setArticleSearch] = useState('');
+  const [showArticleModal, setShowArticleModal] = useState(false);
+  const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
+  const [articleSaving, setArticleSaving] = useState(false);
+  const [previewArticle, setPreviewArticle] = useState<TeacherArticle | null>(null);
+  const [articleForm, setArticleForm] = useState({
+    title: '',
+    category: 'Artikel Guru' as 'Artikel Guru' | 'Metode Pembelajaran',
+    summary: '',
+    content: '',
+    coverImage: '',
+    tags: '',
+    isPublished: true,
+  });
+
+  // --- Attendance State ---
+  const [allStudents, setAllStudents] = useState<User[]>([]);
+  const [selectedKelas, setSelectedKelas] = useState<string>('X TKJ 1');
+  const [attendanceDate, setAttendanceDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+  const [attendanceMap, setAttendanceMap] = useState<
+    Record<string, { status: 'hadir' | 'izin' | 'sakit' | 'alpa'; notes: string }>
+  >({});
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
+  const [attendanceSuccess, setAttendanceSuccess] = useState<string | null>(null);
+  const [existingAttendance, setExistingAttendance] = useState<ClassAttendanceEntry[]>([]);
+
+  // Alert message state
+  const [globalSuccess, setGlobalSuccess] = useState<string | null>(null);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+
+  // Available classes list
+  const classList = [
+    'X TKJ 1',
+    'X TKJ 2',
+    'X RPL 1',
+    'X RPL 2',
+    'XI TKJ 1',
+    'XI TKJ 2',
+    'XI RPL 1',
+    'XI RPL 2',
+    'XII TKJ 1',
+    'XII TKJ 2',
+    'XII RPL 1',
+    'XII RPL 2',
+  ];
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [qz, att, sb, artList, stuList] = await Promise.all([
+        api.getQuizzes(),
+        api.getQuizAttempts(),
+        api.getSubjects(),
+        api.getArticles(),
+        api.getStudents(),
+      ]);
+      setQuizzes(qz);
+      setAttempts(att);
+      setSubjects(sb);
+      setArticles(artList);
+      setAllStudents(stuList);
+
+      if (sb.length > 0 && !quizForm.subjectName) {
+        setQuizForm((prev) => ({ ...prev, subjectName: sb[0].name }));
+      }
+    } catch (err) {
+      console.error('Failed to load teacher dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // When selected class or date changes, load class attendance
+  useEffect(() => {
+    const fetchClassAttendance = async () => {
+      try {
+        const records = await api.getClassAttendance({
+          date: attendanceDate,
+          kelas: selectedKelas,
+        });
+        setExistingAttendance(records);
+
+        // Prepopulate attendance map
+        const newMap: Record<
+          string,
+          { status: 'hadir' | 'izin' | 'sakit' | 'alpa'; notes: string }
+        > = {};
+        records.forEach((rec: ClassAttendanceEntry) => {
+          newMap[rec.studentId] = {
+            status: rec.status.toLowerCase() as 'hadir' | 'izin' | 'sakit' | 'alpa',
+            notes: rec.notes || '',
+          };
+        });
+        setAttendanceMap(newMap);
+      } catch (err) {
+        console.error('Failed to load class attendance:', err);
+      }
+    };
+
+    fetchClassAttendance();
+  }, [selectedKelas, attendanceDate]);
+
+  // ===================== QUIZ HANDLERS =====================
+  const handleGenerateToken = async () => {
+    try {
+      const res = await api.generateQuizToken('');
+      setQuizForm((prev) => ({ ...prev, token: res.token }));
+    } catch (err) {
+      const randomToken = `TVQ-${Math.floor(1000 + Math.random() * 9000)}`;
+      setQuizForm((prev) => ({ ...prev, token: randomToken }));
+    }
+  };
+
+  const handleCopyToken = (token: string) => {
+    navigator.clipboard.writeText(token);
+    setCopiedToken(token);
+    setTimeout(() => setCopiedToken(null), 2500);
+  };
+
+  const addQuizQuestion = () => {
+    setQuizForm((prev) => ({
+      ...prev,
+      questions: [
+        ...prev.questions,
+        {
+          id: `q_guru_${Date.now()}_${prev.questions.length + 1}`,
+          question: '',
+          options: ['', '', '', ''],
+          correctOptionIndex: 0,
+          explanation: '',
+        },
+      ],
+    }));
+  };
+
+  const removeQuizQuestion = (index: number) => {
+    if (quizForm.questions.length <= 1) return;
+    setQuizForm((prev) => ({
+      ...prev,
+      questions: prev.questions.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleToggleQuizStatus = async (quiz: Quiz) => {
+    try {
+      const newStatus = !quiz.isActive;
+      await api.updateQuiz(quiz.id, {
+        isActive: newStatus,
+        status: newStatus ? 'active' : 'inactive',
+      });
+      setQuizzes((prev) =>
+        prev.map((q) =>
+          q.id === quiz.id
+            ? { ...q, isActive: newStatus, status: newStatus ? 'active' : 'inactive' }
+            : q
+        )
+      );
+    } catch (err: any) {
+      alert(err.message || 'Gagal mengubah status kuis.');
+    }
+  };
+
+  const handleDeleteQuiz = async (id: string) => {
+    if (!confirm('Hapus quiz ini beserta seluruh token dan riwayatnya?')) return;
+    try {
+      await api.deleteQuiz(id);
+      setQuizzes((prev) => prev.filter((q) => q.id !== id));
+    } catch (err: any) {
+      alert(err.message || 'Gagal menghapus quiz.');
+    }
+  };
+
+  const handleSaveQuiz = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quizForm.title.trim()) {
+      alert('Judul quiz wajib diisi.');
+      return;
+    }
+
+    if (quizForm.sourceType === 'google_forms' && !quizForm.externalUrl.trim()) {
+      alert('Tautan Google Forms wajib diisi.');
+      return;
+    }
+
+    setCreatingLoading(true);
+    try {
+      const payload: Partial<Quiz> = {
+        title: quizForm.title,
+        subjectName: quizForm.subjectName,
+        subjectId: subjects.find((s) => s.name === quizForm.subjectName)?.id || 'sub_general',
+        description: quizForm.description,
+        durationMinutes: Number(quizForm.durationMinutes),
+        passingScore: Number(quizForm.passingScore),
+        token: quizForm.token || `TVQ-${Math.floor(1000 + Math.random() * 9000)}`,
+        sourceType: quizForm.sourceType,
+        externalUrl: quizForm.externalUrl,
+        password: quizForm.password,
+        scheduleStart: quizForm.scheduleStart,
+        scheduleEnd: quizForm.scheduleEnd,
+        questions: quizForm.sourceType === 'interactive' ? quizForm.questions : [],
+        isActive: true,
+        status: 'active',
+      };
+
+      await api.createQuiz(payload);
+      setShowCreateModal(false);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || 'Gagal membuat quiz baru.');
+    } finally {
+      setCreatingLoading(false);
+    }
+  };
+
+  // ===================== ARTICLE HANDLERS =====================
+  const openCreateArticle = () => {
+    setEditingArticleId(null);
+    setArticleForm({
+      title: '',
+      category: 'Artikel Guru',
+      summary: '',
+      content: '',
+      coverImage: '',
+      tags: '',
+      isPublished: true,
+    });
+    setShowArticleModal(true);
+  };
+
+  const openEditArticle = (art: TeacherArticle) => {
+    setEditingArticleId(art.id);
+    setArticleForm({
+      title: art.title,
+      category: art.category,
+      summary: art.summary,
+      content: art.content,
+      coverImage: art.coverUrl || '',
+      tags: '',
+      isPublished: art.isPublished,
+    });
+    setShowArticleModal(true);
+  };
+
+  const handleSaveArticle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!articleForm.title.trim() || !articleForm.content.trim()) {
+      setGlobalError('Judul dan isi artikel wajib diisi.');
+      return;
+    }
+
+    setArticleSaving(true);
+    try {
+      const tagArray = articleForm.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      if (editingArticleId) {
+        await api.updateArticle(editingArticleId, {
+          title: articleForm.title,
+          category: articleForm.category,
+          summary: articleForm.summary || articleForm.content.slice(0, 140) + '...',
+          content: articleForm.content,
+          coverImage: articleForm.coverImage,
+          tags: tagArray,
+          isPublished: articleForm.isPublished,
+        });
+        setGlobalSuccess('Artikel berhasil diperbarui!');
+      } else {
+        await api.createArticle({
+          title: articleForm.title,
+          category: articleForm.category,
+          summary: articleForm.summary || articleForm.content.slice(0, 140) + '...',
+          content: articleForm.content,
+          authorId: user?.id || 'guru_auth',
+          authorName: user?.name || 'Guru Pengampu',
+          authorRole: 'Guru',
+          coverImage: articleForm.coverImage,
+          tags: tagArray,
+          isPublished: articleForm.isPublished,
+        });
+        setGlobalSuccess('Artikel berhasil dibuat dan diterbitkan!');
+      }
+
+      setShowArticleModal(false);
+      const updatedList = await api.getArticles();
+      setArticles(updatedList);
+      setTimeout(() => setGlobalSuccess(null), 4000);
+    } catch (err: any) {
+      setGlobalError(err.message || 'Gagal menyimpan artikel.');
+      setTimeout(() => setGlobalError(null), 4000);
+    } finally {
+      setArticleSaving(false);
+    }
+  };
+
+  const handleTogglePublishArticle = async (art: TeacherArticle) => {
+    try {
+      const nextPublished = !art.isPublished;
+      await api.updateArticle(art.id, { isPublished: nextPublished });
+      setArticles((prev) =>
+        prev.map((a) => (a.id === art.id ? { ...a, isPublished: nextPublished } : a))
+      );
+      setGlobalSuccess(
+        `Artikel "${art.title}" berhasil diubah menjadi ${nextPublished ? 'Terbit ke Siswa' : 'Draf'}.`
+      );
+      setTimeout(() => setGlobalSuccess(null), 3000);
+    } catch (err: any) {
+      setGlobalError(err.message || 'Gagal mengubah status terbit.');
+      setTimeout(() => setGlobalError(null), 3000);
+    }
+  };
+
+  const handleDeleteArticle = async (id: string, title: string) => {
+    if (!confirm(`Hapus artikel "${title}"?`)) return;
+    try {
+      await api.deleteArticle(id);
+      setArticles((prev) => prev.filter((a) => a.id !== id));
+      setGlobalSuccess(`Artikel "${title}" telah dihapus.`);
+      setTimeout(() => setGlobalSuccess(null), 3000);
+    } catch (err: any) {
+      setGlobalError(err.message || 'Gagal menghapus artikel.');
+      setTimeout(() => setGlobalError(null), 3000);
+    }
+  };
+
+  // ===================== ATTENDANCE HANDLERS =====================
+  // Filter students by selected class
+  const classStudents = allStudents.filter(
+    (stu) => (stu.kelas || '').toLowerCase() === selectedKelas.toLowerCase() && !stu.isAlumni
+  );
+
+  const handleSetStudentStatus = (studentId: string, status: 'hadir' | 'izin' | 'sakit' | 'alpa') => {
+    setAttendanceMap((prev) => ({
+      ...prev,
+      [studentId]: {
+        status,
+        notes: prev[studentId]?.notes || '',
+      },
+    }));
+  };
+
+  const handleSetStudentNotes = (studentId: string, notes: string) => {
+    setAttendanceMap((prev) => ({
+      ...prev,
+      [studentId]: {
+        status: prev[studentId]?.status || 'hadir',
+        notes,
+      },
+    }));
+  };
+
+  const handleSaveClassAttendance = async () => {
+    if (classStudents.length === 0) {
+      alert('Tidak ada siswa di kelas ini.');
+      return;
+    }
+
+    setAttendanceSaving(true);
+    try {
+      const entries: Partial<ClassAttendanceEntry>[] = classStudents.map((stu) => {
+        const state = attendanceMap[stu.id] || { status: 'hadir', notes: '' };
+        return {
+          studentId: stu.id,
+          studentName: stu.name,
+          studentKelas: selectedKelas,
+          date: attendanceDate,
+          status: (state.status.charAt(0).toUpperCase() + state.status.slice(1)) as ClassAttendanceStatus,
+          notes: state.notes,
+          recordedBy: user?.name || 'Guru Pengampu',
+          recordedRole: 'Guru',
+        };
+      });
+
+      await api.recordClassAttendance(entries);
+      setAttendanceSuccess(`Absensi kelas ${selectedKelas} (${entries.length} siswa) berhasil disimpan!`);
+      setTimeout(() => setAttendanceSuccess(null), 4000);
+    } catch (err: any) {
+      setGlobalError(err.message || 'Gagal menyimpan absensi kelas.');
+      setTimeout(() => setGlobalError(null), 4000);
+    } finally {
+      setAttendanceSaving(false);
+    }
+  };
+
+  const handleMarkAllHadir = () => {
+    const updated = { ...attendanceMap };
+    classStudents.forEach((s) => {
+      updated[s.id] = {
+        status: 'hadir',
+        notes: updated[s.id]?.notes || '',
+      };
+    });
+    setAttendanceMap(updated);
+  };
+
+  // Filtered lists
+  const filteredArticles = articles.filter((art) => {
+    const matchesCat =
+      articleCategoryFilter === 'semua' || art.category === articleCategoryFilter;
+    const matchesSearch =
+      art.title.toLowerCase().includes(articleSearch.toLowerCase()) ||
+      art.summary.toLowerCase().includes(articleSearch.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
+
+  const filteredAttempts = attempts.filter((att) => {
+    const matchesSearch =
+      att.studentName.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+      att.username.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+      att.quizTitle.toLowerCase().includes(searchAttempt.toLowerCase());
+    const matchesQuiz = selectedQuizFilter === 'all' || att.quizId === selectedQuizFilter;
+    return matchesSearch && matchesQuiz;
+  });
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Top Banner Portal Guru */}
+      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 border border-slate-800">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-bold tracking-wide">
+              PORTAL GURU RESMI
+            </span>
+            <span className="text-xs text-slate-400">TAMANSISWA BATAM</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black mt-1">Dashboard Terpadu Guru & Pendidik</h1>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
+            Kelola artikel guru & metode pembelajaran untuk siswa, catat absensi kelas dengan QR scan, serta manajemen kuis dan token evaluasi.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {activeTab === 'articles' && (
+            <button
+              onClick={openCreateArticle}
+              className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tulis Artikel Baru</span>
+            </button>
+          )}
+
+          {activeTab === 'quizzes' && (
+            <button
+              onClick={() => {
+                handleGenerateToken();
+                setShowCreateModal(true);
+              }}
+              className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Buat Quiz & Token Baru</span>
+            </button>
+          )}
+
+          <button
+            onClick={onOpenScanner}
+            className="flex items-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-2xl font-bold text-xs shadow-md transition"
+          >
+            <ScanLine className="w-4 h-4 text-emerald-400" />
+            <span>Scan QR Absensi</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Tabs Navigation */}
+      <div className="flex border-b border-slate-200 overflow-x-auto gap-2 text-xs sm:text-sm font-bold">
+        <button
+          onClick={() => setActiveTab('articles')}
+          className={`py-3 px-4 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'articles'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span>Artikel Guru & Metode Pembelajaran ({articles.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('attendance')}
+          className={`py-3 px-4 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'attendance'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <UserCheck className="w-4 h-4" />
+          <span>Absensi & Presensi Kelas</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('quizzes')}
+          className={`py-3 px-4 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'quizzes'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Award className="w-4 h-4" />
+          <span>Manajemen Quiz & Token ({quizzes.length})</span>
+        </button>
+      </div>
+
+      {/* Alert Notifications */}
+      {globalSuccess && (
+        <div className="flex items-center justify-between gap-2 p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl text-xs font-bold animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{globalSuccess}</span>
+          </div>
+          <button onClick={() => setGlobalSuccess(null)} className="text-emerald-600 hover:text-emerald-900">
+            ✕
+          </button>
+        </div>
+      )}
+
+      {globalError && (
+        <div className="flex items-center justify-between gap-2 p-4 bg-rose-50 text-rose-800 border border-rose-200 rounded-2xl text-xs font-bold animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{globalError}</span>
+          </div>
+          <button onClick={() => setGlobalError(null)} className="text-rose-600 hover:text-rose-900">
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* ===================== TAB 1: ARTIKEL GURU & METODE PEMBELAJARAN ===================== */}
+      {activeTab === 'articles' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-indigo-700" />
+                  <span>Karya Tulis & Metode Pembelajaran Guru</span>
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Buat materi edukasi dan metode ajar yang langsung diterbitkan ke tab Artikel Dashboard Siswa
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative w-full sm:w-60">
+                  <input
+                    type="text"
+                    value={articleSearch}
+                    onChange={(e) => setArticleSearch(e.target.value)}
+                    placeholder="Cari judul atau ringkasan..."
+                    className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                </div>
+
+                <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+                  <button
+                    onClick={() => setArticleCategoryFilter('semua')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                      articleCategoryFilter === 'semua'
+                        ? 'bg-white text-indigo-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Semua
+                  </button>
+                  <button
+                    onClick={() => setArticleCategoryFilter('Artikel Guru')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                      articleCategoryFilter === 'Artikel Guru'
+                        ? 'bg-white text-indigo-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Artikel Guru
+                  </button>
+                  <button
+                    onClick={() => setArticleCategoryFilter('Metode Pembelajaran')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                      articleCategoryFilter === 'Metode Pembelajaran'
+                        ? 'bg-white text-indigo-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Metode Pembelajaran
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {filteredArticles.length === 0 ? (
+              <div className="p-12 text-center space-y-3 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
+                <h3 className="font-bold text-slate-700 text-sm">Belum Ada Artikel</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Tulis artikel guru atau metode pembelajaran perdana Anda untuk dibagikan ke siswa Tamansiswa Batam.
+                </p>
+                <button
+                  onClick={openCreateArticle}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition"
+                >
+                  + Tulis Artikel Baru
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredArticles.map((art) => (
+                  <div
+                    key={art.id}
+                    className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between"
+                  >
+                    {art.coverUrl && (
+                      <div className="h-36 w-full overflow-hidden bg-slate-100">
+                        <img
+                          src={art.coverUrl}
+                          alt={art.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              art.category === 'Metode Pembelajaran'
+                                ? 'bg-indigo-100 text-indigo-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            {art.category}
+                          </span>
+
+                          <button
+                            onClick={() => handleTogglePublishArticle(art)}
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border transition ${
+                              art.isPublished
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                                : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                            }`}
+                            title="Klik untuk menerbitkan atau menarik draf"
+                          >
+                            {art.isPublished ? '● TERBIT KE SISWA' : '○ DRAF (SEMBUNYI)'}
+                          </button>
+                        </div>
+
+                        <h3 className="font-black text-slate-900 text-sm leading-snug line-clamp-2">
+                          {art.title}
+                        </h3>
+
+                        <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed">
+                          {art.summary}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span className="text-[11px] text-slate-400 font-medium">
+                          {new Date(art.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setPreviewArticle(art)}
+                            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+                            title="Lihat Pratinjau"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => openEditArticle(art)}
+                            className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                            title="Edit Artikel"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteArticle(art.id, art.title)}
+                            className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                            title="Hapus Artikel"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===================== TAB 2: ABSENSI & PRESENSI KELAS ===================== */}
+      {activeTab === 'attendance' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-5">
+            {/* Header filter kelas dan tanggal */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-indigo-700" />
+                  <span>Pencatatan Presensi & Absensi Siswa Per Kelas</span>
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Pilih kelas, tentukan status kehadiran (Hadir, Izin, Sakit, Alpa), dan simpan ke database sekolah
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Pilih Kelas
+                  </label>
+                  <select
+                    value={selectedKelas}
+                    onChange={(e) => setSelectedKelas(e.target.value)}
+                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  >
+                    {classList.map((kls) => (
+                      <option key={kls} value={kls}>
+                        {kls}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Tanggal Presensi
+                  </label>
+                  <input
+                    type="date"
+                    value={attendanceDate}
+                    onChange={(e) => setAttendanceDate(e.target.value)}
+                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+
+                <div className="pt-5 flex items-center gap-2">
+                  <button
+                    onClick={handleMarkAllHadir}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+                  >
+                    Set Semua Hadir
+                  </button>
+                  <button
+                    onClick={onOpenScanner}
+                    className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                  >
+                    <ScanLine className="w-4 h-4 text-indigo-600" />
+                    <span>Scan QR Siswa</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Attendance Success Notification */}
+            {attendanceSuccess && (
+              <div className="p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl text-xs font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{attendanceSuccess}</span>
+              </div>
+            )}
+
+            {/* Table of students */}
+            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-700 font-extrabold border-b border-slate-200">
+                  <tr>
+                    <th className="p-3.5 w-12 text-center">No</th>
+                    <th className="p-3.5">Nama Lengkap Siswa</th>
+                    <th className="p-3.5">NISN / Kelas</th>
+                    <th className="p-3.5 text-center">Status Kehadiran</th>
+                    <th className="p-3.5">Keterangan / Alasan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {classStudents.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-slate-400">
+                        Tidak ada siswa yang terdaftar di kelas <strong>{selectedKelas}</strong>. Silakan pilih kelas lain.
+                      </td>
+                    </tr>
+                  ) : (
+                    classStudents.map((stu, idx) => {
+                      const cur = attendanceMap[stu.id] || { status: 'hadir', notes: '' };
+
+                      return (
+                        <tr key={stu.id} className="hover:bg-slate-50/70 transition">
+                          <td className="p-3.5 text-center font-bold text-slate-400">{idx + 1}</td>
+                          <td className="p-3.5">
+                            <div className="font-bold text-slate-900">{stu.name}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">@{stu.username}</div>
+                          </td>
+                          <td className="p-3.5 text-slate-700">
+                            <div>{stu.kelas || selectedKelas}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">{stu.nisn || '-'}</div>
+                          </td>
+                          <td className="p-3.5 text-center">
+                            <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1">
+                              <button
+                                onClick={() => handleSetStudentStatus(stu.id, 'hadir')}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition ${
+                                  cur.status === 'hadir'
+                                    ? 'bg-emerald-600 text-white shadow-xs'
+                                    : 'text-slate-600 hover:text-emerald-700'
+                                }`}
+                              >
+                                Hadir
+                              </button>
+                              <button
+                                onClick={() => handleSetStudentStatus(stu.id, 'izin')}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition ${
+                                  cur.status === 'izin'
+                                    ? 'bg-blue-600 text-white shadow-xs'
+                                    : 'text-slate-600 hover:text-blue-700'
+                                }`}
+                              >
+                                Izin
+                              </button>
+                              <button
+                                onClick={() => handleSetStudentStatus(stu.id, 'sakit')}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition ${
+                                  cur.status === 'sakit'
+                                    ? 'bg-amber-500 text-white shadow-xs'
+                                    : 'text-slate-600 hover:text-amber-700'
+                                }`}
+                              >
+                                Sakit
+                              </button>
+                              <button
+                                onClick={() => handleSetStudentStatus(stu.id, 'alpa')}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition ${
+                                  cur.status === 'alpa'
+                                    ? 'bg-rose-600 text-white shadow-xs'
+                                    : 'text-slate-600 hover:text-rose-700'
+                                }`}
+                              >
+                                Alpa
+                              </button>
+                            </div>
+                          </td>
+                          <td className="p-3.5">
+                            <input
+                              type="text"
+                              value={cur.notes}
+                              onChange={(e) => handleSetStudentNotes(stu.id, e.target.value)}
+                              placeholder="Surat dokter / keperluan keluarga..."
+                              className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Bottom action: save */}
+            {classStudents.length > 0 && (
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-xs text-slate-500">
+                  Total: <strong>{classStudents.length} Siswa</strong> di kelas {selectedKelas}
+                </span>
+
+                <button
+                  onClick={handleSaveClassAttendance}
+                  disabled={attendanceSaving}
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md transition disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{attendanceSaving ? 'Menyimpan...' : 'Simpan Absensi Kelas'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===================== TAB 3: MANAJEMEN QUIZ & TOKEN ===================== */}
+      {activeTab === 'quizzes' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* LEFT COLUMN: QUIZ LIST & TOKEN MANAGEMENT (7 cols) */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  Daftar Quiz & Token ({quizzes.length})
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Kelola status kuis, salin token untuk dibagikan ke siswa
+                </p>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-400 font-bold text-xs animate-pulse">
+                Memuat data kuis guru...
+              </div>
+            ) : quizzes.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3">
+                <HelpCircle className="w-12 h-12 text-slate-300 mx-auto" />
+                <h3 className="font-bold text-slate-700 text-sm">Belum Ada Quiz</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Anda belum membuat quiz. Klik tombol <strong>"Buat Quiz & Token Baru"</strong> untuk mengatur kuis atau memasukkan tautan Google Forms.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {quizzes.map((quiz) => (
+                  <div
+                    key={quiz.id}
+                    className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition space-y-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-50 text-blue-800 border border-blue-200">
+                            {quiz.subjectName}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              quiz.isActive
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-800 border border-rose-200'
+                            }`}
+                          >
+                            {quiz.isActive ? 'AKTIF (DIBUKA)' : 'NONAKTIF (DITUTUP)'}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                            {quiz.sourceType === 'google_forms' ? 'Google Forms' : 'Soal Interaktif'}
+                          </span>
+                        </div>
+                        <h3 className="font-black text-slate-900 text-base">{quiz.title}</h3>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleToggleQuizStatus(quiz)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                            quiz.isActive
+                              ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                          }`}
+                          title="Ubah status akses kuis"
+                        >
+                          {quiz.isActive ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                          <span>{quiz.isActive ? 'Tutup Kuis' : 'Buka Kuis'}</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteQuiz(quiz.id)}
+                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                          title="Hapus Kuis"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Token & Access Sharing Box */}
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Token Akses Siswa:
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-black text-lg text-blue-900 tracking-wider">
+                            {quiz.token}
+                          </span>
+                          {quiz.password && (
+                            <span className="text-[10px] text-slate-500 font-semibold bg-white px-2 py-0.5 rounded border border-slate-200">
+                              Password: <strong className="text-slate-700">{quiz.password}</strong>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleCopyToken(quiz.token)}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition ${
+                            copiedToken === quiz.token
+                              ? 'bg-emerald-600 text-white shadow-xs'
+                              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs'
+                          }`}
+                        >
+                          {copiedToken === quiz.token ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Tersalin!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Salin Token</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Details metadata */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-500 pt-1">
+                      <div>
+                        Durasi: <strong>{quiz.durationMinutes} Menit</strong>
+                      </div>
+                      <div>
+                        KKM / Lulus: <strong>{quiz.passingScore} Poin</strong>
+                      </div>
+                      <div>
+                        Jumlah Soal:{' '}
+                        <strong>
+                          {quiz.sourceType === 'google_forms' ? 'Google Forms Link' : `${quiz.questions?.length || 0} Butir`}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {quiz.sourceType === 'google_forms' && quiz.externalUrl && (
+                      <div className="text-xs text-blue-700 bg-blue-50/60 p-2.5 rounded-xl border border-blue-100 flex items-center justify-between">
+                        <span className="truncate max-w-sm">{quiz.externalUrl}</span>
+                        <a
+                          href={quiz.externalUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-700 font-bold hover:underline shrink-0 flex items-center gap-1 ml-2"
+                        >
+                          <span>Cek Link</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN: RESULTS & ATTEMPTS (5 cols) */}
+          <div className="lg:col-span-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  Hasil Nilai Siswa ({filteredAttempts.length})
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Nilai dan catatan waktu pengerjaan quiz
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-4">
+              <div className="space-y-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchAttempt}
+                    onChange={(e) => setSearchAttempt(e.target.value)}
+                    placeholder="Cari nama siswa atau username..."
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                </div>
+
+                <select
+                  value={selectedQuizFilter}
+                  onChange={(e) => setSelectedQuizFilter(e.target.value)}
+                  className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none"
+                >
+                  <option value="all">Semua Quiz Terdaftar</option>
+                  {quizzes.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.title} ({q.token})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {filteredAttempts.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-xs italic">
+                  Belum ada siswa yang mengerjakan quiz ini.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto space-y-1">
+                  {filteredAttempts.map((att) => (
+                    <div key={att.id} className="py-3 flex items-center justify-between gap-3 text-xs">
+                      <div className="space-y-0.5">
+                        <p className="font-bold text-slate-900">{att.studentName}</p>
+                        <p className="text-[11px] text-slate-500">
+                          @{att.username} • <span className="text-blue-700 font-mono font-bold">{att.tokenUsed}</span>
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {new Date(att.completedAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}{' '}
+                          • {new Date(att.completedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                        </p>
+                      </div>
+
+                      <div className="text-right space-y-1">
+                        <div className="text-lg font-black text-slate-900">
+                          {att.score}
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                            att.passed
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              : 'bg-rose-50 text-rose-800 border border-rose-200'
+                          }`}
+                        >
+                          {att.passed ? 'LULUS' : 'REMIDI'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== MODAL: BUAT / EDIT ARTIKEL ===================== */}
+      {showArticleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-black text-slate-900 text-lg">
+                  {editingArticleId ? 'Edit Artikel Guru' : 'Tulis Artikel Guru & Metode Pembelajaran'}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Artikel akan langsung tampil pada menu Artikel di Dashboard Siswa jika diterbitkan
+                </p>
+              </div>
+              <button
+                onClick={() => setShowArticleModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveArticle} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Judul Artikel *</label>
+                <input
+                  type="text"
+                  value={articleForm.title}
+                  onChange={(e) => setArticleForm({ ...articleForm, title: e.target.value })}
+                  required
+                  placeholder="Contoh: Strategi Efektif Menguasai Aljabar Linear"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Kategori Artikel *</label>
+                  <select
+                    value={articleForm.category}
+                    onChange={(e) =>
+                      setArticleForm({
+                        ...articleForm,
+                        category: e.target.value as 'Artikel Guru' | 'Metode Pembelajaran',
+                      })
+                    }
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  >
+                    <option value="Artikel Guru">Artikel Guru</option>
+                    <option value="Metode Pembelajaran">Metode Pembelajaran</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">URL Foto Sampul (Opsional)</label>
+                  <input
+                    type="url"
+                    value={articleForm.coverImage}
+                    onChange={(e) => setArticleForm({ ...articleForm, coverImage: e.target.value })}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Ringkasan Singkat (Abstrak)</label>
+                <textarea
+                  rows={2}
+                  value={articleForm.summary}
+                  onChange={(e) => setArticleForm({ ...articleForm, summary: e.target.value })}
+                  placeholder="Ringkasan 1-2 kalimat pengantar..."
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Isi Lengkap Artikel *</label>
+                <textarea
+                  rows={8}
+                  value={articleForm.content}
+                  onChange={(e) => setArticleForm({ ...articleForm, content: e.target.value })}
+                  required
+                  placeholder="Tuliskan materi pembelajaran, tips belajar, atau panduan detail di sini..."
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium leading-relaxed"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Tags / Kata Kunci (Pisahkan dengan koma)</label>
+                <input
+                  type="text"
+                  value={articleForm.tags}
+                  onChange={(e) => setArticleForm({ ...articleForm, tags: e.target.value })}
+                  placeholder="Matematika, Ujian, Tips Belajar, Kelas X"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-slate-800 block">Terbitkan Langsung ke Siswa</span>
+                  <span className="text-[11px] text-slate-500">
+                    Siswa dapat langsung membaca artikel ini di tab Artikel mereka
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={articleForm.isPublished}
+                  onChange={(e) => setArticleForm({ ...articleForm, isPublished: e.target.checked })}
+                  className="w-5 h-5 text-indigo-600 rounded"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowArticleModal(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={articleSaving}
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md transition disabled:opacity-50"
+                >
+                  {articleSaving ? 'Menyimpan...' : 'Simpan Artikel'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== MODAL: PRATINJAU ARTIKEL ===================== */}
+      {previewArticle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 space-y-4 my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
+                {previewArticle.category}
+              </span>
+              <button
+                onClick={() => setPreviewArticle(null)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {previewArticle.coverUrl && (
+              <img
+                src={previewArticle.coverUrl}
+                alt={previewArticle.title}
+                className="w-full h-48 object-cover rounded-2xl"
+              />
+            )}
+
+            <div>
+              <h2 className="text-xl font-black text-slate-900">{previewArticle.title}</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Oleh <strong>{previewArticle.authorName}</strong> •{' '}
+                {new Date(previewArticle.createdAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </p>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
+              {previewArticle.content}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setPreviewArticle(null)}
+                className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition"
+              >
+                Tutup Pratinjau
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== MODAL: BUAT QUIZ & TOKEN ===================== */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-black text-slate-900 text-lg">Buat Quiz & Atur Token</h3>
+                <p className="text-xs text-slate-500">
+                  Tentukan mata pelajaran, sumber kuis (Google Forms atau Soal), password, dan token akses
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuiz} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Judul Quiz *</label>
+                  <input
+                    type="text"
+                    value={quizForm.title}
+                    onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
+                    required
+                    placeholder="Contoh: Penilaian Harian Bab 2"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Mata Pelajaran *</label>
+                  {subjects.length > 0 ? (
+                    <select
+                      value={quizForm.subjectName}
+                      onChange={(e) => setQuizForm({ ...quizForm, subjectName: e.target.value })}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                    >
+                      {subjects.map((s) => (
+                        <option key={s.id} value={s.name}>
+                          {s.name} ({s.code})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={quizForm.subjectName}
+                      onChange={(e) => setQuizForm({ ...quizForm, subjectName: e.target.value })}
+                      required
+                      placeholder="Nama Mapel"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <label className="block font-bold text-slate-800 uppercase tracking-wider text-[10px]">
+                  Sumber Quiz
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuizForm({ ...quizForm, sourceType: 'interactive' })}
+                    className={`py-2.5 px-3 rounded-xl font-bold text-xs transition border ${
+                      quizForm.sourceType === 'interactive'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    📝 Soal Interaktif TAMVESTA
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setQuizForm({ ...quizForm, sourceType: 'google_forms' })}
+                    className={`py-2.5 px-3 rounded-xl font-bold text-xs transition border ${
+                      quizForm.sourceType === 'google_forms'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    🌐 Tautan Google Forms
+                  </button>
+                </div>
+
+                {quizForm.sourceType === 'google_forms' && (
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Tautan Google Forms Soal Ujian *
+                    </label>
+                    <input
+                      type="url"
+                      value={quizForm.externalUrl}
+                      onChange={(e) => setQuizForm({ ...quizForm, externalUrl: e.target.value })}
+                      required
+                      placeholder="https://forms.gle/... atau https://docs.google.com/forms/..."
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl font-mono text-blue-700"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <label className="block font-bold text-slate-800 uppercase tracking-wider text-[10px]">
+                  Pengaturan Akses & Token Siswa
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Token Akses Quiz *</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={quizForm.token}
+                        onChange={(e) => setQuizForm({ ...quizForm, token: e.target.value.toUpperCase() })}
+                        required
+                        placeholder="TVQ-XXXX"
+                        className="flex-1 px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl font-mono font-black text-blue-800 uppercase tracking-wider"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleGenerateToken}
+                        className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold text-[11px] whitespace-nowrap transition"
+                      >
+                        Acak Token
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Password Quiz (Opsional)
+                    </label>
+                    <input
+                      type="text"
+                      value={quizForm.password}
+                      onChange={(e) => setQuizForm({ ...quizForm, password: e.target.value })}
+                      placeholder="Kosongkan jika bebas sandi"
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Durasi (Menit)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={quizForm.durationMinutes}
+                    onChange={(e) => setQuizForm({ ...quizForm, durationMinutes: Number(e.target.value) })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Nilai KKM Kelulusan (0-100)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={quizForm.passingScore}
+                    onChange={(e) => setQuizForm({ ...quizForm, passingScore: Number(e.target.value) })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  />
+                </div>
+              </div>
+
+              {quizForm.sourceType === 'interactive' && (
+                <div className="space-y-4 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-800 text-xs uppercase tracking-wider">
+                      Daftar Pertanyaan ({quizForm.questions.length} Butir)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={addQuizQuestion}
+                      className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-bold text-xs transition"
+                    >
+                      + Tambah Soal
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 max-h-60 overflow-y-auto pr-1">
+                    {quizForm.questions.map((q, qIdx) => (
+                      <div key={q.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-800">Nomor {qIdx + 1}</span>
+                          {quizForm.questions.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeQuizQuestion(qIdx)}
+                              className="text-rose-600 hover:text-rose-800"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        <input
+                          type="text"
+                          value={q.question}
+                          onChange={(e) => {
+                            const updated = [...quizForm.questions];
+                            updated[qIdx].question = e.target.value;
+                            setQuizForm({ ...quizForm, questions: updated });
+                          }}
+                          required
+                          placeholder={`Ketik pertanyaan nomor ${qIdx + 1}...`}
+                          className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl"
+                        />
+
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] text-slate-500 font-bold">
+                            Opsi Jawaban (Pilih tombol bulat di kiri untuk Kunci Benar):
+                          </p>
+                          {q.options.map((opt, oIdx) => (
+                            <div key={oIdx} className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name={`correct_guru_${qIdx}`}
+                                checked={q.correctOptionIndex === oIdx}
+                                onChange={() => {
+                                  const updated = [...quizForm.questions];
+                                  updated[qIdx].correctOptionIndex = oIdx;
+                                  setQuizForm({ ...quizForm, questions: updated });
+                                }}
+                                className="text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="font-bold text-slate-600 w-4">
+                                {String.fromCharCode(65 + oIdx)}.
+                              </span>
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={(e) => {
+                                  const updated = [...quizForm.questions];
+                                  updated[qIdx].options[oIdx] = e.target.value;
+                                  setQuizForm({ ...quizForm, questions: updated });
+                                }}
+                                required
+                                placeholder={`Opsi ${String.fromCharCode(65 + oIdx)}`}
+                                className="flex-1 px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingLoading}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md transition disabled:opacity-50"
+                >
+                  {creatingLoading ? 'Menyimpan...' : 'Simpan & Rilis Quiz'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

@@ -1,0 +1,263 @@
+import React, { useState, useEffect } from 'react';
+import {
+  X,
+  UserCheck,
+  UserPlus,
+  Edit3,
+  Calendar,
+  Grid,
+  Heart,
+  MessageCircle,
+  Sparkles,
+  School,
+  Lock,
+} from 'lucide-react';
+import { api } from '../lib/api.ts';
+import type { StudentPost, User } from '../types/index.ts';
+
+interface UserProfileModalProps {
+  isOpen: boolean;
+  username: string | null;
+  currentUserId?: string;
+  onClose: () => void;
+  onEditProfile?: () => void;
+  onPostClick?: (post: StudentPost) => void;
+}
+
+export const UserProfileModal: React.FC<UserProfileModalProps> = ({
+  isOpen,
+  username,
+  currentUserId,
+  onClose,
+  onEditProfile,
+  onPostClick,
+}) => {
+  const [profileUser, setProfileUser] = useState<Partial<User> | null>(null);
+  const [posts, setPosts] = useState<StudentPost[]>([]);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isSelf, setIsSelf] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isOpen || !username) return;
+
+    setLoading(true);
+    api
+      .getUserProfile(username)
+      .then((res) => {
+        setProfileUser(res.user);
+        setPosts(res.posts || []);
+        setFollowersCount(res.followersCount || 0);
+        setFollowingCount(res.followingCount || 0);
+        setIsFollowing(res.isFollowing);
+        setIsSelf(res.isSelf);
+      })
+      .catch((err: unknown) => {
+        console.error('Failed to load user profile:', err);
+      })
+      .finally(() => setLoading(false));
+  }, [isOpen, username]);
+
+  if (!isOpen || !username) return null;
+
+  const handleToggleFollow = async () => {
+    if (!profileUser?.id || isSelf) return;
+    const prev = isFollowing;
+    setIsFollowing(!prev);
+    setFollowersCount((c) => (prev ? c - 1 : c + 1));
+
+    try {
+      await api.toggleFollow(profileUser.id);
+    } catch (err: unknown) {
+      // Revert
+      setIsFollowing(prev);
+      setFollowersCount((c) => (prev ? c + 1 : c - 1));
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+        {/* Header */}
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-slate-500">
+              @{username}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-500 transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <div className="overflow-y-auto flex-1 p-5 space-y-6">
+          {loading ? (
+            <div className="py-16 text-center space-y-3">
+              <div className="w-8 h-8 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin mx-auto" />
+              <p className="text-xs text-slate-400">Memuat profil pengguna...</p>
+            </div>
+          ) : !profileUser ? (
+            <div className="py-12 text-center text-slate-500">
+              <p className="text-sm font-bold">Pengguna tidak ditemukan.</p>
+            </div>
+          ) : (
+            <>
+              {/* Profile Bio Card */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                {/* Large Profile Picture */}
+                <div className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-emerald-500/30 shadow-md shrink-0 bg-slate-100">
+                  <img
+                    src={
+                      profileUser.avatarUrl ||
+                      `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                        profileUser.name || 'User'
+                      )}&backgroundColor=0284c7`
+                    }
+                    alt={profileUser.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="flex-1 text-center sm:text-left space-y-2">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-900 leading-snug">
+                      {profileUser.name}
+                    </h2>
+                    <p className="text-xs text-emerald-700 font-semibold flex items-center justify-center sm:justify-start gap-1.5 mt-0.5">
+                      <span>@{profileUser.username}</span>
+                      <span>•</span>
+                      <span className="px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px]">
+                        {profileUser.kelas || (profileUser.role === 'guru' ? 'Guru' : 'Tamansiswa')}
+                      </span>
+                    </p>
+                  </div>
+
+                  {/* Bio */}
+                  <p className="text-xs text-slate-600 leading-relaxed max-w-sm">
+                    {profileUser.bio || 'Siswa Perguruan Tamansiswa Batam. Belum ada bio.'}
+                  </p>
+
+                  {/* Stats Counter */}
+                  <div className="flex items-center justify-center sm:justify-start gap-4 pt-1 text-xs">
+                    <div>
+                      <span className="font-black text-slate-900">{posts.length}</span>{' '}
+                      <span className="text-slate-500">Post</span>
+                    </div>
+                    <div>
+                      <span className="font-black text-slate-900">{followersCount}</span>{' '}
+                      <span className="text-slate-500">Pengikut</span>
+                    </div>
+                    <div>
+                      <span className="font-black text-slate-900">{followingCount}</span>{' '}
+                      <span className="text-slate-500">Mengikuti</span>
+                    </div>
+                  </div>
+
+                  {/* Follow or Edit Action */}
+                  <div className="pt-2">
+                    {isSelf ? (
+                      <button
+                        onClick={() => {
+                          onClose();
+                          if (onEditProfile) onEditProfile();
+                        }}
+                        className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit Profil Saya</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleToggleFollow}
+                        className={`px-5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm ${
+                          isFollowing
+                            ? 'bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 border border-slate-200'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                        }`}
+                      >
+                        {isFollowing ? (
+                          <>
+                            <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Mengikuti</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-3.5 h-3.5" />
+                            <span>Ikuti Siswa</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* User Posts Grid */}
+              <div className="space-y-3 pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-500">
+                  <Grid className="w-4 h-4" />
+                  <span>Semua Postingan ({posts.length})</span>
+                </div>
+
+                {posts.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+                    Belum ada postingan yang diunggah oleh siswa ini.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {posts.map((post) => (
+                      <div
+                        key={post.id}
+                        onClick={() => onPostClick && onPostClick(post)}
+                        className="group relative aspect-square bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 cursor-pointer hover:shadow-md transition"
+                      >
+                        {post.mediaUrl ? (
+                          post.mediaType === 'video' ? (
+                            <video
+                              src={post.mediaUrl}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <img
+                              src={post.mediaUrl}
+                              alt={post.caption}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          )
+                        ) : (
+                          <div className="w-full h-full p-3 bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center text-center">
+                            <p className="text-[11px] text-slate-700 font-medium line-clamp-4">
+                              {post.caption}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Hover Overlay with Likes & Comments */}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white text-xs font-bold">
+                          <span className="flex items-center gap-1">
+                            <Heart className="w-4 h-4 fill-white" />
+                            {post.likes?.length || 0}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="w-4 h-4 fill-white" />
+                            {post.comments?.length || 0}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
