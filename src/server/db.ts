@@ -579,12 +579,54 @@ class DatabaseManager {
     this.save();
   }
 
+  private async syncToGitHub(dataToSave: DatabaseSchema) {
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (!token) return;
+
+    try {
+      const url = 'https://api.github.com/repos/kimmyounit/tamvestaa/contents/data/tamvesta-data.json';
+      const getRes = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'User-Agent': 'TAMVESTA-Cloud-Sync',
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+      let sha = '';
+      if (getRes.ok) {
+        const getJson: any = await getRes.json();
+        sha = getJson.sha;
+      }
+
+      const content = Buffer.from(JSON.stringify(dataToSave, null, 2)).toString('base64');
+      await fetch(url, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'User-Agent': 'TAMVESTA-Cloud-Sync',
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'Sync TAMVESTA cloud database [skip ci]',
+          content,
+          sha: sha || undefined,
+        }),
+      });
+    } catch (err) {
+      console.warn('[Cloud Sync] Failed to sync to GitHub:', err);
+    }
+  }
+
   private saveDataDirect(dataToSave: DatabaseSchema) {
     try {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
       fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf-8');
+      if (process.env.VERCEL) {
+        this.syncToGitHub(dataToSave).catch(() => {});
+      }
     } catch (err) {
       console.error('[DB] Failed to save database file:', err);
     }

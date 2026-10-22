@@ -34,10 +34,21 @@ export function removeStoredToken() {
   offlineStore.setCurrentUserId(null);
 }
 
-/** Ambil base URL server yang tersimpan, default ke server laptop http://192.168.1.2:3000 */
+/** Ambil base URL server yang tersimpan, default ke Vercel Cloud https://tamvestaa.vercel.app */
 export function getServerUrl(): string {
   const stored = localStorage.getItem(SERVER_URL_KEY);
-  if (stored !== null && stored !== undefined) {
+  // Bersihkan IP lokal lama laptop jika sebelumnya tersimpan di memori HP
+  if (
+    stored &&
+    (stored.includes('192.168.') ||
+      stored.includes('localhost') ||
+      stored.includes('127.0.0.1') ||
+      stored.includes(':3000'))
+  ) {
+    localStorage.removeItem(SERVER_URL_KEY);
+    return DEFAULT_SERVER_URL;
+  }
+  if (stored) {
     return stored;
   }
   return DEFAULT_SERVER_URL;
