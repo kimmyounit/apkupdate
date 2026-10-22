@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Lock,
   User as UserIcon,
@@ -8,14 +8,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
-  Wifi,
-  WifiOff,
-  Server,
-  Settings2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
-import { getServerUrl, pingServer } from '../lib/api.ts';
-import { ServerSettings } from './ServerSettings.tsx';
 
 export const Login: React.FC = () => {
   const { login, loginNotice, setLoginNotice } = useAuth();
@@ -24,21 +18,6 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showServerModal, setShowServerModal] = useState(false);
-  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    checkServerConnection();
-  }, []);
-
-  const checkServerConnection = async () => {
-    try {
-      const ok = await pingServer();
-      setServerOnline(ok);
-    } catch {
-      setServerOnline(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,55 +72,13 @@ export const Login: React.FC = () => {
 
         {/* Card Form */}
         <div className="mt-8 bg-white/95 backdrop-blur-md py-8 px-6 sm:px-10 shadow-2xl rounded-3xl border border-slate-100/80 space-y-4">
-          <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">
-                Masuk ke Portal Sekolah
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Masukkan username dan password akun Anda
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowServerModal(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
-              title="Pengaturan Koneksi Server"
-            >
-              <Settings2 className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Server Connection Status Indicator */}
-          <div
-            onClick={() => setShowServerModal(true)}
-            className={`cursor-pointer px-3 py-2 rounded-xl border flex items-center justify-between text-[11px] font-semibold transition ${
-              serverOnline === true
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : serverOnline === false
-                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                : 'bg-slate-50 text-slate-600 border-slate-200'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${
-                serverOnline === true
-                  ? 'bg-emerald-500 animate-pulse'
-                  : serverOnline === false
-                  ? 'bg-amber-500'
-                  : 'bg-slate-400'
-              }`} />
-              <span>
-                {serverOnline === true
-                  ? `Server Laptop Aktif (${getServerUrl().replace(/^https?:\/\//, '')})`
-                  : serverOnline === false
-                  ? `Server Laptop Tidak Terdeteksi (${getServerUrl().replace(/^https?:\/\//, '')})`
-                  : 'Memeriksa Server Laptop...'}
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-400 hover:text-slate-700 underline font-normal">
-              Ubah IP
-            </span>
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="text-base font-bold text-slate-900">
+              Masuk ke Portal Sekolah
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Masukkan username dan password akun Anda
+            </p>
           </div>
 
           {/* Success banner if redirected back to login after password change */}
@@ -245,15 +182,6 @@ export const Login: React.FC = () => {
           </p>
         </div>
       </div>
-
-      {showServerModal && (
-        <ServerSettings
-          onClose={() => {
-            setShowServerModal(false);
-            checkServerConnection();
-          }}
-        />
-      )}
     </div>
   );
 };

@@ -19,7 +19,7 @@ import type {
 
 const TOKEN_KEY = 'tamvesta_auth_token';
 const SERVER_URL_KEY = 'tamvesta_server_url';
-export const DEFAULT_SERVER_URL = 'http://192.168.1.2:3000';
+export const DEFAULT_SERVER_URL = 'https://tamvestaa.vercel.app';
 
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
