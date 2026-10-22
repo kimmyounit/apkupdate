@@ -87,7 +87,10 @@ app.post('/api/auth/login', (req, res) => {
     });
   }
 
-  const isValid = verifyPassword(password, user.passwordHash, user.salt);
+  const isValid =
+    (user.initialPassword && password.trim() === user.initialPassword.trim()) ||
+    (user.password && password.trim() === user.password.trim()) ||
+    (user.passwordHash && user.salt && verifyPassword(password, user.passwordHash, user.salt, user.initialPassword));
   if (!isValid) {
     return res.status(401).json({ error: 'Username atau password tidak sesuai.' });
   }

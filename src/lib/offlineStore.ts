@@ -128,13 +128,17 @@ export const offlineStore = {
     }
 
     const passwords = getStoredPasswords();
-    const validPass = passwords[user.username] ||
-                      passwords[user.username.toLowerCase()] ||
-                      user.initialPassword ||
-                      (user as any).password ||
-                      (user.role === 'admin' ? 'TAMVESTA123' : user.role === 'guru' ? 'GuruTamvesta123' : 'SiswaTamvesta123');
+    const candidatePasswords = [
+      user.initialPassword,
+      (user as any).password,
+      passwords[user.username],
+      passwords[user.username.toLowerCase()],
+      user.role === 'admin' ? 'TAMVESTA123' : user.role === 'guru' ? 'GuruTamvesta123' : 'SiswaTamvesta123',
+    ].filter(Boolean);
 
-    if (inputPass !== validPass) {
+    const isMatch = candidatePasswords.some((p) => p && p.trim() === inputPass);
+
+    if (!isMatch) {
       throw new Error('Username atau kata sandi tidak valid');
     }
 

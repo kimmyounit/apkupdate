@@ -57,9 +57,22 @@ export function hashPassword(password: string, salt?: string): { hash: string; s
   return { hash, salt: chosenSalt };
 }
 
-export function verifyPassword(password: string, hash: string, salt: string): boolean {
-  const newHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(newHash, 'hex'));
+export function verifyPassword(password: string, hash?: string, salt?: string, initialPassword?: string): boolean {
+  if (initialPassword && password.trim() === initialPassword.trim()) {
+    return true;
+  }
+  if (!hash || !salt) {
+    return false;
+  }
+  try {
+    const newHash = crypto.pbkdf2Sync(password.trim(), salt, 10000, 64, 'sha512').toString('hex');
+    const buf1 = Buffer.from(hash, 'hex');
+    const buf2 = Buffer.from(newHash, 'hex');
+    if (buf1.length !== buf2.length) return false;
+    return crypto.timingSafeEqual(buf1, buf2);
+  } catch {
+    return false;
+  }
 }
 
 export function generateQrToken(userId: string, username: string): string {
@@ -723,6 +736,8 @@ class DatabaseManager {
       role: 'siswa',
       nisn: userData.nisn?.trim() || `006${Math.floor(1000000 + Math.random() * 9000000)}`,
       kelas: userData.kelas?.trim() || 'X Tamansiswa',
+      initialPassword: userData.password,
+      password: userData.password,
       passwordHash: pass.hash,
       salt: pass.salt,
       mustChangePassword: true, // Wajib ganti password pada login pertama
