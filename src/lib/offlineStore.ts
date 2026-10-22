@@ -128,7 +128,11 @@ export const offlineStore = {
     }
 
     const passwords = getStoredPasswords();
-    const validPass = passwords[user.username] || (user.role === 'admin' ? 'TAMVESTA123' : user.role === 'guru' ? 'GuruTamvesta123' : 'SiswaTamvesta123');
+    const validPass = passwords[user.username] ||
+                      passwords[user.username.toLowerCase()] ||
+                      user.initialPassword ||
+                      (user as any).password ||
+                      (user.role === 'admin' ? 'TAMVESTA123' : user.role === 'guru' ? 'GuruTamvesta123' : 'SiswaTamvesta123');
 
     if (inputPass !== validPass) {
       throw new Error('Username atau kata sandi tidak valid');
@@ -1059,6 +1063,37 @@ export const offlineStore = {
   // -------------------------------------------------------------
   // MANAJEMEN GURU, CENTANG BIRU & SISWA/ALUMNI
   // -------------------------------------------------------------
+  createStudent(studentData: Partial<User> & { password?: string }) {
+    const db = loadDB();
+    const username = (studentData.username || `siswa_${Date.now()}`).trim().toLowerCase();
+    const existing = db.users.find((u) => u.username.toLowerCase() === username);
+    if (existing) throw new Error('Username siswa sudah digunakan.');
+
+    const initialPassword = studentData.password || 'SiswaTamvesta123';
+    const user: User = {
+      id: `stu_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      username,
+      name: (studentData.name || 'Siswa Baru').trim(),
+      role: 'siswa',
+      classGrade: studentData.classGrade || 'X',
+      classMajor: studentData.classMajor || 'TKJ 1',
+      kelas: `${studentData.classGrade || 'X'} ${studentData.classMajor || 'TKJ 1'}`,
+      initialPassword,
+      passwordHash: '',
+      salt: '',
+      mustChangePassword: false,
+      isActive: true,
+      qrToken: `TAMVESTA:STUDENT:${username}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    savePassword(user.username, initialPassword);
+    db.users.unshift(user);
+    saveDB(db);
+    return user;
+  },
+
   createTeacherAccount(data: any) {
     const db = loadDB();
     const existing = db.users.find((u) => u.username.toLowerCase() === data.username.toLowerCase());

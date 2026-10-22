@@ -136,6 +136,7 @@ async function tryServerRequest<T>(endpoint: string, options: RequestInit = {}):
 export const api = {
   // Auth
   login: async (credentials: { username: string; password: string }) => {
+    let serverError: any = null;
     try {
       const res = await tryServerRequest<{ token: string; user: User; mustChangePassword: boolean }>('/api/auth/login', {
         method: 'POST',
@@ -146,14 +147,20 @@ export const api = {
       offlineStore.syncUserFromServer(res.user);
       return res;
     } catch (err: any) {
-      // Jika server aktif dan menolak secara spesifik (kredensial salah / dinonaktifkan)
-      if (err.status && err.status >= 400 && err.status < 500) {
+      serverError = err;
+      // Khusus jika akun dinonaktifkan secara eksplisit oleh server
+      if (err.status === 403) {
         throw err;
       }
-      // Jika server laptop mati/unreachable, coba offline store
+    }
+
+    // Cek di penyimpanan lokal jika server tidak menemukan atau offline
+    try {
       const res = offlineStore.login(credentials);
       setStoredToken(res.token);
       return res;
+    } catch (offlineErr) {
+      throw serverError || offlineErr;
     }
   },
 
@@ -258,27 +265,15 @@ export const api = {
   },
 
   createStudent: async (studentData: Partial<User> & { password?: string }) => {
+    const localStudent = offlineStore.createStudent(studentData);
     try {
-      return await tryServerRequest<{ message: string; student: User }>('/api/admin/students', {
+      const res = await tryServerRequest<{ message: string; student: User }>('/api/admin/students', {
         method: 'POST',
         body: JSON.stringify(studentData),
       });
+      return res;
     } catch (_) {
-      const user: User = {
-        id: 'user_student_' + Date.now(),
-        username: studentData.username || 'siswa_' + Date.now(),
-        name: studentData.name || 'Siswa Baru',
-        role: 'siswa',
-        classGrade: studentData.classGrade,
-        classMajor: studentData.classMajor,
-        isActive: true,
-        passwordHash: '',
-        salt: '',
-        qrToken: 'qr_' + Date.now(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      return { message: 'Siswa berhasil ditambahkan', student: user };
+      return { message: 'Siswa berhasil ditambahkan', student: localStudent };
     }
   },
 
@@ -992,13 +987,14 @@ export const api = {
   // MANAJEMEN GURU, CENTANG BIRU & ALUMNI
   // -------------------------------------------------------------
   createTeacher: async (data: any) => {
+    const t = offlineStore.createTeacherAccount(data);
     try {
-      return await tryServerRequest<{ message: string; teacher: any }>('/api/admin/teachers', {
+      const res = await tryServerRequest<{ message: string; teacher: any }>('/api/admin/teachers', {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      return res;
     } catch (_) {
-      const t = offlineStore.createTeacherAccount(data);
       return { message: 'Akun guru berhasil dibuat', teacher: t };
     }
   },

@@ -62,7 +62,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
         <div className="flex items-center justify-between h-16">
           {/* Logo & School Name */}
           <div
-            onClick={() => handleNav(user.role === 'siswa' ? 'mapel' : 'dashboard')}
+            onClick={() => handleNav(userRole === 'siswa' ? 'mapel' : 'dashboard')}
             className="flex items-center gap-3 cursor-pointer group shrink-0"
           >
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform border border-emerald-600/30 bg-emerald-700 flex items-center justify-center">
@@ -92,7 +92,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
           {/* Desktop Center Navigation Links */}
           <div className="hidden lg:flex items-center gap-1.5">
-            {user.role === 'siswa' && (
+            {userRole === 'siswa' && (
               <>
                 <button
                   onClick={() => handleNav('mapel')}
@@ -144,7 +144,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
               </>
             )}
 
-            {(user.role === 'admin' || user.role === 'kepala_sekolah') && (
+            {(userRole === 'admin' || userRole === 'kepala_sekolah') && (
               <>
                 <button
                   onClick={() => handleNav('dashboard')}
@@ -155,7 +155,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
                   }`}
                 >
                   <Shield className="w-4 h-4" />
-                  <span>Dashboard Admin</span>
+                  <span>{userRole === 'kepala_sekolah' ? 'Dashboard Kepsek' : 'Dashboard Admin'}</span>
                 </button>
 
                 <button
@@ -172,35 +172,49 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
               </>
             )}
 
-            {user.role === 'guru' && (
+            {userRole === 'guru' && (
               <>
                 <button
                   onClick={() => handleNav('dashboard')}
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
                     currentTab === 'dashboard'
-                      ? 'bg-emerald-600 text-white shadow-sm'
+                      ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <HelpCircle className="w-4 h-4" />
-                  <span>Manajemen Quiz</span>
+                  <span>Dashboard Guru</span>
                 </button>
 
                 <button
                   onClick={() => handleNav('scanner')}
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
                     currentTab === 'scanner'
-                      ? 'bg-emerald-600 text-white shadow-sm'
+                      ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <ScanLine className="w-4 h-4" />
-                  <span>Scanner QR</span>
+                  <span>Scanner QR Absensi</span>
                 </button>
               </>
             )}
 
-            {user.role === 'panitia' && (
+            {userRole === 'tata_usaha' && (
+              <button
+                onClick={() => handleNav('dashboard')}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                  currentTab === 'dashboard'
+                    ? 'bg-teal-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                <span>Dashboard Tata Usaha</span>
+              </button>
+            )}
+
+            {userRole === 'panitia' && (
               <button
                 onClick={() => handleNav('scanner')}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
@@ -274,7 +288,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
             </span>
           </div>
 
-          {user.role === 'siswa' && (
+          {userRole === 'siswa' && (
             <>
               <button
                 onClick={() => handleNav('mapel')}
@@ -318,7 +332,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
             </>
           )}
 
-          {(user.role === 'admin' || user.role === 'kepala_sekolah') && (
+          {(userRole === 'admin' || userRole === 'kepala_sekolah') && (
             <>
               <button
                 onClick={() => handleNav('dashboard')}
@@ -327,7 +341,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
                 }`}
               >
                 <Shield className="w-4 h-4" />
-                <span>Dashboard Admin</span>
+                <span>{userRole === 'kepala_sekolah' ? 'Dashboard Kepala Sekolah' : 'Dashboard Admin'}</span>
               </button>
 
               <button
@@ -337,33 +351,45 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
                 }`}
               >
                 <ScanLine className="w-4 h-4" />
-                <span>Scanner QR Absensi Laptop</span>
+                <span>Scanner QR Absensi</span>
               </button>
             </>
           )}
 
-          {user.role === 'guru' && (
+          {userRole === 'guru' && (
             <>
               <button
                 onClick={() => handleNav('dashboard')}
                 className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
-                  currentTab === 'dashboard' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50'
+                  currentTab === 'dashboard' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
                 <HelpCircle className="w-4 h-4" />
-                <span>Manajemen Quiz Guru</span>
+                <span>Dashboard Guru</span>
               </button>
 
               <button
                 onClick={() => handleNav('scanner')}
                 className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
-                  currentTab === 'scanner' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50'
+                  currentTab === 'scanner' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
                 <ScanLine className="w-4 h-4" />
-                <span>Scanner QR</span>
+                <span>Scanner QR Absensi</span>
               </button>
             </>
+          )}
+
+          {userRole === 'tata_usaha' && (
+            <button
+              onClick={() => handleNav('dashboard')}
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                currentTab === 'dashboard' ? 'bg-teal-600 text-white' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <Shield className="w-4 h-4" />
+              <span>Dashboard Tata Usaha</span>
+            </button>
           )}
 
           <button
