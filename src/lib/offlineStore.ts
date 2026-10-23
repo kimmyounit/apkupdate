@@ -67,21 +67,35 @@ function loadDB(): StandaloneDB {
     });
   }
 
-  // Bersihkan semua akun contoh/demo siswa bawaan agar database bersih hanya akun yang didaftarkan admin
+  // Bersihkan semua akun contoh/demo bawaan agar database bersih hanya akun yang didaftarkan admin
   if (Array.isArray(db.users)) {
+    const demoUsernames = [
+      'guru.matematika',
+      'guru.bahasa',
+      'kepala.sekolah',
+      'panitia.osis',
+      'bintang.siswa',
+      'alvaro1234',
+      'itskimzz',
+      'tamansiswa1',
+    ];
     db.users = db.users.filter((u) => {
-      if (u.role !== 'siswa') return true;
       const lower = u.username.toLowerCase();
-      const isDemo =
-        lower.startsWith('siswa.smp') ||
-        lower.startsWith('siswa.sd') ||
-        lower === 'alvaro1234' ||
-        lower === 'itskimzz' ||
-        lower === 'tamansiswa1' ||
-        lower === 'bintang.siswa';
-      return !isDemo;
+      if (u.role === 'siswa') return false; // Hapus semua siswa bawaan
+      if (demoUsernames.includes(lower)) return false;
+      return true;
     });
   }
+
+  // Bersihkan data contoh (mata pelajaran, artikel, kuis, pengumuman, dsb.)
+  if (Array.isArray((db as any).subjects)) (db as any).subjects = [];
+  if (Array.isArray((db as any).articles)) (db as any).articles = [];
+  if (Array.isArray((db as any).posts)) (db as any).posts = [];
+  if (Array.isArray((db as any).books)) (db as any).books = [];
+  if (Array.isArray((db as any).announcements)) (db as any).announcements = [];
+  if (Array.isArray((db as any).quizzes)) (db as any).quizzes = [];
+  if (Array.isArray((db as any).attendanceEvents)) (db as any).attendanceEvents = [];
+  if (Array.isArray((db as any).tuitionBills)) (db as any).tuitionBills = [];
 
   saveDB(db);
   return db;
@@ -104,10 +118,6 @@ function getStoredPasswords(): Record<string, string> {
 
   const defaults: Record<string, string> = {
     'TAMANSISWA': 'TAMVESTA123',
-    'bintang.siswa': 'SiswaTamvesta123',
-    'guru.matematika': 'GuruTamvesta123',
-    'guru.bahasa': 'GuruTamvesta123',
-    'kepala.sekolah': 'KepalaTamvesta123',
   };
 
   if (Array.isArray((defaultData as any).users)) {

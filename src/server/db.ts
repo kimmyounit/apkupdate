@@ -260,43 +260,8 @@ export function getInitialData(): DatabaseSchema {
     };
   });
 
-  // 3. Akun Guru Demo Tambahan
-  const guru1Pass = hashPassword('GuruTamvesta123');
-  const guru1: User = {
-    id: 'user_guru_budi',
-    username: 'guru.matematika',
-    name: 'Budi Santoso, S.Pd.',
-    role: 'guru',
-    jabatan: 'Guru Matematika',
-    initialPassword: 'GuruTamvesta123',
-    passwordHash: guru1Pass.hash,
-    salt: guru1Pass.salt,
-    mustChangePassword: false,
-    isActive: true,
-    qrToken: generateQrToken('user_guru_budi', 'guru.matematika'),
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  const guru2Pass = hashPassword('GuruTamvesta123');
-  const guru2: User = {
-    id: 'user_guru_siti',
-    username: 'guru.bahasa',
-    name: 'Dra. Siti Rahmawati, M.Pd.',
-    role: 'guru',
-    jabatan: 'Guru Bahasa Indonesia',
-    initialPassword: 'GuruTamvesta123',
-    passwordHash: guru2Pass.hash,
-    salt: guru2Pass.salt,
-    mustChangePassword: false,
-    isActive: true,
-    qrToken: generateQrToken('user_guru_siti', 'guru.bahasa'),
-    createdAt: now,
-    updatedAt: now,
-  };
-
   return {
-    users: [adminUser, ...staffUsers, guru1, guru2],
+    users: [adminUser, ...staffUsers],
     subjects: [],
     books: [],
     announcements: [],
@@ -309,83 +274,9 @@ export function getInitialData(): DatabaseSchema {
     stories: [],
     notes: [],
     notifications: [],
-    articles: [
-      {
-        id: 'art_1',
-        authorId: 'user_staff_guru_matematika',
-        authorName: 'Budi Santoso, S.Pd.',
-        authorSubject: 'Matematika Peminatan',
-        title: 'Strategi Efektif Menyelesaikan Soal Penalaran Matematika',
-        summary: 'Metode berpikir terstruktur untuk menaklukkan soal-soal matematika tingkat lanjut dengan cepat dan tepat.',
-        content: `Matematika bukan sekadar menghafal rumus, melainkan melatih logika berpikir sistematis. 
-
-1. Pahami Konsep Dasar: Jangan terburu-buru menghafal rumus cepat sebelum memahami dari mana rumus itu berasal.
-2. Identifikasi Pola: Sebagian besar soal rumit sebenarnya merupakan gabungan dari 2-3 pola sederhana.
-3. Buat Sketsa atau Diagram: Visualisasi sangat membantu menemukan solusi ketika logika abstrak menemui jalan buntu.
-4. Latihan Teratur: Dedikasikan 30 menit setiap hari untuk 5 soal menantang daripada belajar semalaman sebelum ujian.
-
-Semoga bermanfaat untuk siswa-siswi Tamansiswa Batam! Tetap semangat belajar.`,
-        category: 'Artikel Guru',
-        isPublished: true,
-        likesCount: 14,
-        readsCount: 128,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: 'art_2',
-        authorId: 'user_staff_guru_bahasa',
-        authorName: 'Dra. Siti Rahmawati, M.Pd.',
-        authorSubject: 'Bahasa Indonesia',
-        title: 'Metode Pembelajaran Active Recall & Spaced Repetition',
-        summary: 'Teknik belajar berbasis sains otak modern untuk mengingat materi pelajaran jangka panjang tanpa mudah lupa.',
-        content: `Sering merasa sudah belajar semalaman tapi lupa saat ujian? Itu adalah efek kurva lupa (forgetting curve).
-
-Teknik Mengatasi Kurva Lupa:
-1. Active Recall: Setelah membaca 1 bab, tutup buku dan tulis kembali inti sari materi dengan kata-kata sendiri.
-2. Spaced Repetition: Ulangi materi pada interval hari ke-1, hari ke-3, hari ke-7, dan hari ke-21.
-3. Jelaskan ke Teman: Cara terbaik menguji pemahaman adalah dengan menjelaskan konsep tersebut ke orang lain dengan bahasa sederhana.
-
-Cobalah metode ini dalam minggu ini dan rasakan perbedaannya dalam memahami materi!`,
-        category: 'Metode Pembelajaran',
-        isPublished: true,
-        likesCount: 22,
-        readsCount: 210,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ],
+    articles: [],
     classAttendance: [],
-    tuitionBills: [
-      {
-        id: 'bill_1',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentUsername: 'bintang.siswa',
-        studentKelas: 'X TKJ 1',
-        title: 'SPP Bulan Oktober 2026',
-        category: 'SPP',
-        amount: 350000,
-        dueDate: '2026-10-31',
-        status: 'belum_lunas',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'bill_2',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentUsername: 'bintang.siswa',
-        studentKelas: 'X TKJ 1',
-        title: 'Iuran Praktik Kejuruan Semester Ganjil',
-        category: 'Lainnya',
-        amount: 150000,
-        dueDate: '2026-11-15',
-        status: 'lunas',
-        paidAt: '2026-10-15T09:30:00.000Z',
-        notes: 'Lunas via Loket TU Tamansiswa Batam',
-        createdAt: new Date().toISOString(),
-      },
-    ],
+    tuitionBills: [],
     tuitionTransactions: [
       {
         id: 'trx_1',
@@ -427,44 +318,7 @@ Cobalah metode ini dalam minggu ini dan rasakan perbedaannya dalam memahami mate
         createdAt: new Date().toISOString(),
       },
     ],
-    tuChatMessages: [
-      {
-        id: 'msg_1',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentKelas: 'X TKJ 1',
-        senderRole: 'tata_usaha',
-        senderName: 'Layanan Tata Usaha TAMVESTA',
-        message: 'Halo Bintang Pratama! Tagihan SPP bulan Oktober 2026 sebesar Rp 350.000 telah diterbitkan. Pembayaran dapat dilakukan via kasir TU atau transfer bank.',
-        createdAt: '2026-10-10T08:00:00.000Z',
-        isReadByStudent: true,
-        isReadByTu: true,
-      },
-      {
-        id: 'msg_2',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentKelas: 'X TKJ 1',
-        senderRole: 'siswa',
-        senderName: 'Bintang Pratama',
-        message: 'Baik Pak/Bu, terima kasih informasinya. Apakah pembayaran bisa melalui kasir TU pada jam istirahat pertama?',
-        createdAt: '2026-10-10T09:15:00.000Z',
-        isReadByStudent: true,
-        isReadByTu: true,
-      },
-      {
-        id: 'msg_3',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentKelas: 'X TKJ 1',
-        senderRole: 'tata_usaha',
-        senderName: 'Layanan Tata Usaha TAMVESTA',
-        message: 'Bisa Bintang, loket TU buka setiap hari kerja pukul 07.30 - 15.00 WIB termasuk saat jam istirahat. Ditunggu ya!',
-        createdAt: '2026-10-10T09:20:00.000Z',
-        isReadByStudent: true,
-        isReadByTu: true,
-      },
-    ],
+    tuChatMessages: [],
   };
 }
 
