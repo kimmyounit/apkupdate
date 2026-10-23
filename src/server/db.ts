@@ -249,7 +249,7 @@ export function getInitialData(): DatabaseSchema {
       role: staff.role,
       jabatan: staff.jabatan,
       initialPassword: staff.initialPassword,
-      password: initialPassword,
+      password: staff.initialPassword,
       passwordHash: pass.hash,
       salt: pass.salt,
       mustChangePassword: false, // Guru & staf tidak dipaksa ganti password
