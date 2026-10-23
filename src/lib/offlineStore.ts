@@ -71,37 +71,31 @@ function loadDB(): StandaloneDB {
     });
   }
 
-  // Bersihkan semua akun contoh/demo bawaan agar database bersih hanya akun yang didaftarkan admin
+  // Pastikan akun contoh lama tidak masuk
   if (Array.isArray(db.users)) {
     const demoUsernames = [
       'guru.matematika',
       'guru.bahasa',
       'kepala.sekolah',
       'panitia.osis',
-      'bintang.siswa',
       'alvaro1234',
       'itskimzz',
       'tamansiswa1',
     ];
     db.users = db.users.filter((u) => {
       const lower = u.username.toLowerCase();
-      if (u.role === 'siswa') return false; // Hapus semua siswa bawaan
       if (demoUsernames.includes(lower)) return false;
       return true;
     });
   }
 
-  // Bersihkan data contoh (mata pelajaran, artikel, kuis, pengumuman, dsb.)
-  if (Array.isArray((db as any).subjects)) (db as any).subjects = [];
-  if (Array.isArray((db as any).articles)) (db as any).articles = [];
-  if (Array.isArray((db as any).posts)) (db as any).posts = [];
-  if (Array.isArray((db as any).books)) (db as any).books = [];
-  if (Array.isArray((db as any).announcements)) (db as any).announcements = [];
-  if (Array.isArray((db as any).quizzes)) (db as any).quizzes = [];
-  if (Array.isArray((db as any).attendanceEvents)) (db as any).attendanceEvents = [];
-  if (Array.isArray((db as any).tuitionBills)) (db as any).tuitionBills = [];
+  // Pastikan struktur array ada dan tidak di-reset agar postingan & data tidak hilang
+  if (!Array.isArray(db.posts)) db.posts = [];
+  if (!Array.isArray(db.stories)) db.stories = [];
+  if (!Array.isArray(db.users)) db.users = [];
+  if (!Array.isArray(db.notifications)) db.notifications = [];
+  if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
 
-  saveDB(db);
   return db;
 }
 
