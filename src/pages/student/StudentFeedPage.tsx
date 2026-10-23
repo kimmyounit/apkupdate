@@ -77,7 +77,8 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
 
-  const loadFeedData = async () => {
+  const loadFeedData = async (silent = false) => {
+    if (!silent && posts.length === 0) setLoading(true);
     try {
       const [fetchedPosts, fetchedStories, notifs] = await Promise.all([
         api.getPosts(),
@@ -97,6 +98,19 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
 
   useEffect(() => {
     loadFeedData();
+
+    // Auto-refresh feed dan story setiap 8 detik agar postingan dari akun lain langsung muncul otomatis
+    const interval = setInterval(() => {
+      loadFeedData(true);
+    }, 8000);
+
+    const onFocus = () => loadFeedData(true);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   const handleRefresh = () => {

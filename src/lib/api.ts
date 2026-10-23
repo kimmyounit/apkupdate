@@ -648,19 +648,31 @@ export const api = {
 
   // Student Feed Posts
   getPosts: async () => {
+    let serverPosts: StudentPost[] = [];
     try {
-      return await tryServerRequest<StudentPost[]>('/api/posts');
+      serverPosts = await tryServerRequest<StudentPost[]>('/api/posts');
     } catch (_) {
-      return offlineStore.getPosts();
+      serverPosts = [];
     }
+    const localPosts = offlineStore.getPosts();
+    const postMap = new Map<string, StudentPost>();
+    localPosts.forEach((p) => postMap.set(p.id, p));
+    serverPosts.forEach((p) => postMap.set(p.id, p));
+    const merged = Array.from(postMap.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    offlineStore.setPostsList(merged);
+    return merged;
   },
 
   createPost: async (data: { caption: string; mediaUrl?: string; mediaType?: 'photo' | 'video'; mediaName?: string }) => {
     try {
-      return await tryServerRequest<StudentPost>('/api/posts', {
+      const res = await tryServerRequest<StudentPost>('/api/posts', {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      offlineStore.savePostDirect(res);
+      return res;
     } catch (_) {
       return offlineStore.createPost(data);
     }
@@ -736,19 +748,36 @@ export const api = {
 
   // Stories (24h)
   getStories: async () => {
+    let serverStories: Story[] = [];
     try {
-      return await tryServerRequest<Story[]>('/api/stories');
+      serverStories = await tryServerRequest<Story[]>('/api/stories');
     } catch (_) {
-      return offlineStore.getStories();
+      serverStories = [];
     }
+    const localStories = offlineStore.getStories();
+    const storyMap = new Map<string, Story>();
+    const now = Date.now();
+    localStories.forEach((s) => {
+      if (new Date(s.expiresAt).getTime() > now) storyMap.set(s.id, s);
+    });
+    serverStories.forEach((s) => {
+      if (new Date(s.expiresAt).getTime() > now) storyMap.set(s.id, s);
+    });
+    const merged = Array.from(storyMap.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    offlineStore.setStoriesList(merged);
+    return merged;
   },
 
   createStory: async (data: { mediaUrl: string; mediaType: 'photo' | 'video'; caption?: string }) => {
     try {
-      return await tryServerRequest<Story>('/api/stories', {
+      const res = await tryServerRequest<Story>('/api/stories', {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      offlineStore.saveStoryDirect(res);
+      return res;
     } catch (_) {
       return offlineStore.createStory(data);
     }

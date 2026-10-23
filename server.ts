@@ -857,10 +857,10 @@ app.post('/api/posts/:id/like', authMiddleware, (req: AuthenticatedRequest, res)
   return res.json({ success: true, ...result });
 });
 
-// POST /api/posts/:id/comments - Tambah komentar
-app.post('/api/posts/:id/comments', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const { content } = req.body;
-  if (!content || !content.trim()) {
+// POST /api/posts/:id/comments & /api/posts/:id/comment - Tambah komentar
+app.post(['/api/posts/:id/comments', '/api/posts/:id/comment'], authMiddleware, (req: AuthenticatedRequest, res) => {
+  const commentText = req.body.content || req.body.text;
+  if (!commentText || !commentText.trim()) {
     return res.status(400).json({ error: 'Isi komentar tidak boleh kosong.' });
   }
 
@@ -869,7 +869,7 @@ app.post('/api/posts/:id/comments', authMiddleware, (req: AuthenticatedRequest, 
     authorName: req.user!.name,
     authorUsername: req.user!.username,
     authorAvatar: req.user!.avatarUrl,
-    content,
+    content: commentText.trim(),
   });
 
   if (!comment) {
@@ -879,8 +879,8 @@ app.post('/api/posts/:id/comments', authMiddleware, (req: AuthenticatedRequest, 
   return res.status(201).json(comment);
 });
 
-// POST /api/users/:id/toggle-follow - Ikuti / Berhenti Mengikuti akun siswa
-app.post('/api/users/:id/toggle-follow', authMiddleware, (req: AuthenticatedRequest, res) => {
+// POST /api/users/:id/toggle-follow & /api/users/:id/follow - Ikuti / Berhenti Mengikuti
+app.post(['/api/users/:id/toggle-follow', '/api/users/:id/follow'], authMiddleware, (req: AuthenticatedRequest, res) => {
   const targetId = req.params.id;
   if (targetId === req.user!.id) {
     return res.status(400).json({ error: 'Tidak dapat mengikuti akun sendiri.' });

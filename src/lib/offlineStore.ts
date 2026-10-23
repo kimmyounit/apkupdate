@@ -330,6 +330,42 @@ export const offlineStore = {
     return { message: 'Kata sandi berhasil direset' };
   },
 
+  savePostDirect(post: StudentPost) {
+    const db = loadDB();
+    if (!Array.isArray(db.posts)) db.posts = [];
+    const idx = db.posts.findIndex((p) => p.id === post.id);
+    if (idx > -1) {
+      db.posts[idx] = { ...db.posts[idx], ...post };
+    } else {
+      db.posts.unshift(post);
+    }
+    saveDB(db);
+  },
+
+  setPostsList(posts: StudentPost[]) {
+    const db = loadDB();
+    db.posts = posts;
+    saveDB(db);
+  },
+
+  saveStoryDirect(story: Story) {
+    const db = loadDB();
+    if (!Array.isArray(db.stories)) db.stories = [];
+    const idx = db.stories.findIndex((s) => s.id === story.id);
+    if (idx > -1) {
+      db.stories[idx] = { ...db.stories[idx], ...story };
+    } else {
+      db.stories.unshift(story);
+    }
+    saveDB(db);
+  },
+
+  setStoriesList(stories: Story[]) {
+    const db = loadDB();
+    db.stories = stories;
+    saveDB(db);
+  },
+
   // Posts (Feed Siswa)
   getPosts(): StudentPost[] {
     const db = loadDB();
@@ -349,6 +385,7 @@ export const offlineStore = {
       authorName: user.name,
       authorUsername: user.username,
       authorAvatar: user.avatarUrl,
+      authorKelas: user.kelas || '',
       caption: data.caption,
       mediaUrl: data.mediaUrl,
       mediaType: data.mediaType ?? 'none',
@@ -525,6 +562,7 @@ export const offlineStore = {
       authorName: user.name,
       authorUsername: user.username,
       authorAvatar: user.avatarUrl,
+      authorKelas: user.kelas || '',
       mediaUrl: data.mediaUrl,
       mediaType: data.mediaType ?? 'none',
       caption: data.caption,
