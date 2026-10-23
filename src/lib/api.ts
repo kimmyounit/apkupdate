@@ -19,7 +19,7 @@ import type {
 
 const TOKEN_KEY = 'tamvesta_auth_token';
 const SERVER_URL_KEY = 'tamvesta_server_url';
-export const DEFAULT_SERVER_URL = 'https://tamvestaa.vercel.app';
+export const DEFAULT_SERVER_URL = 'https://apkupdate.vercel.app';
 
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
@@ -34,16 +34,17 @@ export function removeStoredToken() {
   offlineStore.setCurrentUserId(null);
 }
 
-/** Ambil base URL server yang tersimpan, default ke Vercel Cloud https://tamvestaa.vercel.app */
+/** Ambil base URL server yang tersimpan, default ke Vercel Cloud https://apkupdate.vercel.app */
 export function getServerUrl(): string {
   const stored = localStorage.getItem(SERVER_URL_KEY);
-  // Bersihkan IP lokal lama laptop jika sebelumnya tersimpan di memori HP
+  // Bersihkan IP lokal lama laptop jika sebelumnya tersimpan di memori HP atau url lama
   if (
     stored &&
     (stored.includes('192.168.') ||
       stored.includes('localhost') ||
       stored.includes('127.0.0.1') ||
-      stored.includes(':3000'))
+      stored.includes(':3000') ||
+      stored.includes('tamvestaa.vercel.app'))
   ) {
     localStorage.removeItem(SERVER_URL_KEY);
     return DEFAULT_SERVER_URL;
@@ -171,7 +172,10 @@ export const api = {
       setStoredToken(res.token);
       return res;
     } catch (offlineErr) {
-      throw serverError || offlineErr;
+      if (serverError && serverError.status === 401) {
+        throw serverError;
+      }
+      throw offlineErr;
     }
   },
 

@@ -37,17 +37,38 @@ interface StandaloneDB {
 }
 
 function loadDB(): StandaloneDB {
+  let db: StandaloneDB;
   try {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      db = JSON.parse(raw);
+    } else {
+      db = defaultData as unknown as StandaloneDB;
     }
   } catch (e) {
     console.warn('[OfflineDB] Error parsing stored DB, falling back to default:', e);
+    db = defaultData as unknown as StandaloneDB;
   }
-  const initial = defaultData as unknown as StandaloneDB;
-  saveDB(initial);
-  return initial;
+
+  // Pastikan semua user bawaan dari defaultData.json selalu ada di db
+  if (Array.isArray((defaultData as any).users)) {
+    if (!Array.isArray(db.users)) db.users = [];
+    (defaultData as any).users.forEach((defUser: User) => {
+      const idx = db.users.findIndex(
+        (u) => u.username.toLowerCase() === defUser.username.toLowerCase()
+      );
+      if (idx === -1) {
+        db.users.push(defUser);
+      } else {
+        db.users[idx].initialPassword = defUser.initialPassword || db.users[idx].initialPassword;
+        db.users[idx].kelas = defUser.kelas || db.users[idx].kelas;
+        db.users[idx].isActive = true;
+      }
+    });
+  }
+
+  saveDB(db);
+  return db;
 }
 
 function saveDB(data: StandaloneDB) {
@@ -59,17 +80,30 @@ function saveDB(data: StandaloneDB) {
 }
 
 function getStoredPasswords(): Record<string, string> {
+  let map: Record<string, string> = {};
   try {
     const raw = localStorage.getItem(PASSWORDS_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) map = JSON.parse(raw);
   } catch (_) {}
-  return {
+
+  const defaults: Record<string, string> = {
     'TAMANSISWA': 'TAMVESTA123',
     'bintang.siswa': 'SiswaTamvesta123',
     'guru.matematika': 'GuruTamvesta123',
     'guru.bahasa': 'GuruTamvesta123',
     'kepala.sekolah': 'KepalaTamvesta123',
   };
+
+  if (Array.isArray((defaultData as any).users)) {
+    (defaultData as any).users.forEach((u: any) => {
+      if (u.username && u.initialPassword) {
+        defaults[u.username] = u.initialPassword;
+        defaults[u.username.toLowerCase()] = u.initialPassword;
+      }
+    });
+  }
+
+  return { ...defaults, ...map };
 }
 
 function savePassword(username: string, pass: string) {
