@@ -204,12 +204,6 @@ app.get('/api/student/tickets', authMiddleware, (req: AuthenticatedRequest, res)
   const safe = mine.map(({ newPasswordHash, newSalt, newPassword, ...rest }: any) => rest);
   return res.json(safe);
 });
-  }
-  return res.status(201).json({
-    message: 'Permintaan reset password berhasil diajukan kepada Administrator.',
-    request: result.request,
-  });
-});
 
 // GET /api/admin/password-reset-requests (Admin only)
 app.get('/api/admin/password-reset-requests', authMiddleware, requireRole(['admin', 'kepala_sekolah']), (req, res) => {
@@ -233,19 +227,6 @@ app.post('/api/admin/password-reset-requests/:id/process', authMiddleware, requi
   return res.json({
     message: status === 'approved' ? 'Pengajuan ganti sandi telah disetujui. Sandi akun siswa berhasil diperbarui!' : 'Pengajuan ganti sandi telah ditolak.',
     request: result.request,
-  });
-});
-  }
-
-  const result = db.processPasswordResetRequest(id, req.user!, status, tempPassword, adminNote);
-  if (!result.success) {
-    return res.status(400).json({ error: result.error });
-  }
-
-  return res.json({
-    message: status === 'approved' ? 'Permintaan disetujui & password baru diatur!' : 'Permintaan telah ditolak.',
-    request: result.request,
-    tempPassword: result.tempPassword,
   });
 });
 
