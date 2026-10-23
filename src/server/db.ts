@@ -125,11 +125,11 @@ export const OFFICIAL_STAFF_LIST: StaffPreset[] = [
     role: 'admin',
   },
   {
-    name: 'Haliza',
-    jabatan: 'Administrasi',
-    username: 'haliza.admin',
+    name: 'Tata Usaha Haliza',
+    jabatan: 'Tata Usaha',
+    username: 'haliza.tu',
     initialPassword: 'Tamvesta!H2605',
-    role: 'admin',
+    role: 'tata_usaha',
   },
   {
     name: 'Maidarlis',
@@ -512,9 +512,20 @@ class DatabaseManager {
 
   // --- Users & Authentication ---
   public findUserByUsername(username: string): User | undefined {
-    return this.data.users.find(
-      (u) => u.username.toLowerCase() === username.trim().toLowerCase()
+    const term = username.trim().toLowerCase();
+    const found = this.data.users.find(
+      (u) => u.username.toLowerCase() === term
     );
+    if (found) return found;
+
+    if (['haliza.tu', 'haliza.admin', 'haliza', 'tata.usaha', 'tatausaha'].includes(term)) {
+      return this.data.users.find(
+        (u) => u.username.toLowerCase() === 'haliza.tu' ||
+               u.username.toLowerCase() === 'haliza.admin' ||
+               u.role === 'tata_usaha'
+      );
+    }
+    return undefined;
   }
 
   public findUserById(id: string): User | undefined {

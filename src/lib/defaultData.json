@@ -75,10 +75,10 @@
     },
     {
       "id": "user_staff_haliza_admin",
-      "username": "haliza.admin",
-      "name": "Haliza",
-      "role": "admin",
-      "jabatan": "Administrasi",
+      "username": "haliza.tu",
+      "name": "Tata Usaha Haliza",
+      "role": "tata_usaha",
+      "jabatan": "Tata Usaha",
       "initialPassword": "Tamvesta!H2605",
       "passwordHash": "a9bcb56f86dbe30de7c4aa828b844f2705f4d8d5c47b268522e47699e5a52b2d355fe8f2cb0f12ce515efb1c1c062af4e3d87b1e5e3b99ca06bd267c1809a18a",
       "salt": "7350453473fc27a3b554a0e138e541fc",
@@ -86,7 +86,8 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_haliza_admin:1f1a84f3b2ecf094",
       "createdAt": "2026-10-20T12:20:35.206Z",
-      "updatedAt": "2026-10-20T12:20:35.206Z"
+      "updatedAt": "2026-10-20T12:20:35.206Z",
+      "password": "Tamvesta!H2605"
     },
     {
       "id": "user_staff_maidarlis",
