@@ -912,15 +912,30 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Kelas
+                      Kelas (SMP / SD)
                     </label>
                     <input
                       type="text"
+                      list="kelas-smp-sd-options"
                       value={newStudentKelas}
                       onChange={(e) => setNewStudentKelas(e.target.value)}
-                      placeholder="Contoh: X MIPA 1"
+                      placeholder="Pilih atau ketik kelas (SMP / SD)..."
                       className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
+                    <datalist id="kelas-smp-sd-options">
+                      <option value="VII-A SMP" />
+                      <option value="VII-B SMP" />
+                      <option value="VIII-A SMP" />
+                      <option value="VIII-B SMP" />
+                      <option value="IX-A SMP" />
+                      <option value="IX-B SMP" />
+                      <option value="I-A SD" />
+                      <option value="II-A SD" />
+                      <option value="III-A SD" />
+                      <option value="IV-A SD" />
+                      <option value="V-A SD" />
+                      <option value="VI-A SD" />
+                    </datalist>
                   </div>
                 </div>
               </div>

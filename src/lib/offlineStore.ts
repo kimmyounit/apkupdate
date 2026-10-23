@@ -1108,15 +1108,15 @@ export const offlineStore = {
     if (existing) throw new Error('Username siswa sudah digunakan.');
 
     const initialPassword = studentData.password || 'SiswaTamvesta123';
+    const kelas = studentData.kelas?.trim() || 'VII-A SMP';
     const user: User = {
       id: `stu_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       username,
       name: (studentData.name || 'Siswa Baru').trim(),
       role: 'siswa',
-      classGrade: studentData.classGrade || 'X',
-      classMajor: studentData.classMajor || 'TKJ 1',
-      kelas: `${studentData.classGrade || 'X'} ${studentData.classMajor || 'TKJ 1'}`,
+      kelas,
       initialPassword,
+      password: initialPassword,
       passwordHash: '',
       salt: '',
       mustChangePassword: false,
