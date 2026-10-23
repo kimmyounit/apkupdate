@@ -89,7 +89,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
     if (!qrDataUrl) return;
     const link = document.createElement('a');
     link.href = qrDataUrl;
-    link.download = `QR_TAMVESTA_${currentUser.username}_${currentUser.nisn || 'SISWA'}.png`;
+    link.download = `QR_TAMVESTA_${currentUser.username}_${currentUser.gender || "Siswa"}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -279,10 +279,8 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                       </span>
                     )}
                   </div>
-                  {currentUser.nisn && (
-                    <p className="text-[11px] text-slate-500">
-                      NISN: <span className="font-mono font-medium text-slate-700">{currentUser.nisn}</span>
-                    </p>
+                  {currentUser.gender && (
+                    <p className="text-xs text-slate-500">{currentUser.gender}</p>
                   )}
                 </div>
               </div>

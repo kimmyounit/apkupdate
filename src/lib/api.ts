@@ -148,6 +148,18 @@ async function tryServerRequest<T>(endpoint: string, options: RequestInit = {}):
 
 export const api = {
   // Auth
+  registerStudent: async (data: { name: string; username: string; password: string; confirmPassword?: string; gender: 'Laki-laki' | 'Perempuan'; kelas: string }) => {
+    try {
+      return await tryServerRequest<{ message: string; user: User }>('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch (_) {
+      const local = offlineStore.createStudent(data);
+      return { message: 'Pendaftaran akun siswa berhasil! Silakan masuk.', user: local };
+    }
+  },
+
   login: async (credentials: { username: string; password: string }) => {
     let serverError: any = null;
     try {
@@ -228,24 +240,32 @@ export const api = {
     }
   },
 
-  requestPasswordReset: async (data: { username: string; reason?: string }) => {
+  requestPasswordReset: async (data: { newPassword: string; confirmPassword?: string; reason?: string }) => {
     try {
       return await tryServerRequest<{ message: string; request: PasswordResetRequest }>('/api/auth/password-reset-request', {
         method: 'POST',
         body: JSON.stringify(data),
       });
     } catch (_) {
+      const user = offlineStore.getCurrentUser();
+      const req = offlineStore.createPasswordResetRequest({
+        userId: user ? user.id : 'unknown',
+        newPassword: data.newPassword,
+        reason: data.reason,
+      });
       return {
-        message: 'Permintaan reset kata sandi telah dikirim ke administrator.',
-        request: {
-          id: 'req_' + Date.now(),
-          userId: 'user_unknown',
-          username: data.username,
-          status: 'pending',
-          reason: data.reason,
-          createdAt: new Date().toISOString(),
-        },
+        message: 'Pengajuan ganti sandi berhasil dikirim! Menunggu persetujuan Administrator.',
+        request: req,
       };
+    }
+  },
+
+  getStudentTickets: async () => {
+    try {
+      return await tryServerRequest<PasswordResetRequest[]>('/api/student/tickets');
+    } catch (_) {
+      const user = offlineStore.getCurrentUser();
+      return user ? offlineStore.getStudentTickets(user.id) : [];
     }
   },
 
@@ -258,17 +278,18 @@ export const api = {
     }
   },
 
-  processPasswordResetRequest: async (id: string, action: 'approve' | 'reject') => {
+  processPasswordResetRequest: async (id: string, status: 'approved' | 'rejected', adminNote?: string) => {
     try {
-      return await tryServerRequest<{ message: string; newPassword?: string }>(
+      return await tryServerRequest<{ message: string; request?: PasswordResetRequest }>(
         `/api/admin/password-reset-requests/${id}/process`,
         {
           method: 'POST',
-          body: JSON.stringify({ action }),
+          body: JSON.stringify({ status, adminNote }),
         }
       );
     } catch (_) {
-      return { message: `Permintaan reset kata sandi berhasil di-${action === 'approve' ? 'setujui' : 'tolak'}.` };
+      const req = offlineStore.processPasswordResetRequest(id, status, adminNote);
+      return { message: `Pengajuan ganti sandi berhasil di-${status === 'approved' ? 'setujui' : 'tolak'}.`, request: req };
     }
   },
 
@@ -277,6 +298,29 @@ export const api = {
       return await tryServerRequest<User[]>('/api/admin/students');
     } catch (_) {
       return offlineStore.getStudents();
+    }
+  },
+
+  updateStudent: async (id: string, data: Partial<User>) => {
+    try {
+      return await tryServerRequest<{ message: string; student: User }>(`/api/admin/students/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    } catch (_) {
+      const updated = offlineStore.updateStudent(id, data);
+      return { message: 'Data siswa berhasil diperbarui', student: updated as User };
+    }
+  },
+
+  deleteStudent: async (id: string) => {
+    offlineStore.deleteStudent(id);
+    try {
+      return await tryServerRequest<{ message: string }>(`/api/admin/students/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (_) {
+      return { message: 'Akun siswa berhasil dihapus.' };
     }
   },
 

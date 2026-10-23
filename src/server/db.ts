@@ -570,7 +570,7 @@ class DatabaseManager {
     name: string;
     username: string;
     password: string;
-    nisn?: string;
+    gender?: 'Laki-laki' | 'Perempuan';
     kelas?: string;
   }): { success: boolean; user?: User; error?: string } {
     const trimmedUsername = userData.username.trim();
@@ -600,8 +600,8 @@ class DatabaseManager {
       username: trimmedUsername,
       name: userData.name.trim(),
       role: 'siswa',
-      nisn: userData.nisn?.trim() || `006${Math.floor(1000000 + Math.random() * 9000000)}`,
-      kelas: userData.kelas?.trim() || 'VII-A SMP',
+      gender: userData.gender || 'Laki-laki',
+      kelas: userData.kelas?.trim() || 'Kelas 7',
       initialPassword: userData.password,
       password: userData.password,
       passwordHash: pass.hash,
@@ -617,6 +617,27 @@ class DatabaseManager {
     this.data.users.push(newUser);
     this.save();
     return { success: true, user: newUser };
+  }
+
+  public updateStudent(id: string, data: { name?: string; gender?: 'Laki-laki' | 'Perempuan'; kelas?: string; username?: string }): { success: boolean; user?: User; error?: string } {
+    const user = this.findUserById(id);
+    if (!user || user.role !== 'siswa') return { success: false, error: 'Data siswa tidak ditemukan.' };
+
+    if (data.username && data.username.trim().toLowerCase() !== user.username.toLowerCase()) {
+      const trimmed = data.username.trim();
+      const exists = this.findUserByUsername(trimmed);
+      if (exists && exists.id !== user.id) {
+        return { success: false, error: `Username "${trimmed}" sudah digunakan oleh akun lain.` };
+      }
+      user.username = trimmed;
+      user.qrToken = generateQrToken(user.id, trimmed);
+    }
+    if (data.name && data.name.trim()) user.name = data.name.trim();
+    if (data.gender) user.gender = data.gender;
+    if (data.kelas) user.kelas = data.kelas.trim();
+    user.updatedAt = new Date().toISOString();
+    this.save();
+    return { success: true, user };
   }
 
   public toggleUserActive(userId: string): { success: boolean; isActive?: boolean; error?: string } {
@@ -729,15 +750,15 @@ class DatabaseManager {
   }
 
   // Password Reset Requests (for non-admin users)
-  public createPasswordResetRequest(userId: string, reason: string): { success: boolean; request?: PasswordResetRequest; error?: string } {
+  public createPasswordResetRequest(userId: string, newPassword: string, reason?: string): { success: boolean; request?: PasswordResetRequest; error?: string } {
     const user = this.findUserById(userId);
     if (!user) return { success: false, error: 'Pengguna tidak ditemukan.' };
     if (user.role === 'admin' || user.username === 'TAMANSISWA') {
-      return { success: false, error: 'Akun Administrator tidak memerlukan pengajuan reset password.' };
+      return { success: false, error: 'Akun Administrator tidak memerlukan pengajuan ganti sandi.' };
     }
 
-    if (!reason || reason.trim().length < 5) {
-      return { success: false, error: 'Mohon tuliskan alasan atau keterangan permintaan reset password (minimal 5 karakter).' };
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, error: 'Password baru minimal 6 karakter demi keamanan akun.' };
     }
 
     // Check for existing pending request
@@ -745,21 +766,37 @@ class DatabaseManager {
       (r) => r.userId === userId && r.status === 'pending'
     );
     if (existing) {
-      return { success: false, error: 'Anda sudah memiliki permintaan reset password yang sedang menunggu verifikasi Administrator.' };
+      return { success: false, error: 'Anda sudah memiliki pengajuan ganti sandi yang sedang menunggu persetujuan Admin.' };
     }
 
+    const hashed = hashPassword(newPassword);
+    const ticketNum = `TKT-${Math.floor(100000 + Math.random() * 900000)}`;
     const newReq: PasswordResetRequest = {
       id: `pr_${Date.now()}`,
+      ticketNumber: ticketNum,
       userId: user.id,
       username: user.username,
       name: user.name,
+      kelas: user.kelas || '-',
       role: user.role,
-      reason: reason.trim(),
+      reason: (reason || 'Pengajuan ganti sandi').trim(),
       status: 'pending',
+      newPasswordHash: hashed.hash,
+      newSalt: hashed.salt,
+      newPassword: newPassword,
       createdAt: new Date().toISOString(),
     };
 
     this.data.passwordResetRequests.unshift(newReq);
+
+    // Push notification to Admin
+    this.addNotification({
+      title: 'Pengajuan Ganti Sandi Baru',
+      message: `${user.name} (${user.kelas || 'Siswa'}) mengajukan ganti sandi (Tiket: ${ticketNum}).`,
+      type: 'security',
+      targetRole: 'admin',
+    });
+
     this.save();
     return { success: true, request: newReq };
   }
@@ -772,11 +809,13 @@ class DatabaseManager {
     requestId: string,
     adminUser: User,
     status: 'approved' | 'rejected',
-    tempPassword?: string,
     adminNote?: string
-  ): { success: boolean; request?: PasswordResetRequest; tempPassword?: string; error?: string } {
+  ): { success: boolean; request?: PasswordResetRequest; error?: string } {
     const req = this.data.passwordResetRequests.find((r) => r.id === requestId);
-    if (!req) return { success: false, error: 'Permintaan reset password tidak ditemukan.' };
+    if (!req) return { success: false, error: 'Tiket pengajuan ganti sandi tidak ditemukan.' };
+    if (req.status !== 'pending') {
+      return { success: false, error: 'Tiket ini sudah diproses sebelumnya dan tidak dapat diubah lagi.' };
+    }
 
     const user = this.findUserById(req.userId);
     if (!user) return { success: false, error: 'Pengguna akun tidak ditemukan.' };
@@ -786,20 +825,34 @@ class DatabaseManager {
     req.processedBy = adminUser.name;
     req.adminNote = adminNote || (status === 'approved' ? 'Disetujui oleh Administrator' : 'Ditolak');
 
-    let assignedPassword = tempPassword;
     if (status === 'approved') {
-      if (!assignedPassword) {
-        assignedPassword = `TAMVESTA${Math.floor(1000 + Math.random() * 9000)}`;
+      if (req.newPasswordHash && req.newSalt) {
+        user.passwordHash = req.newPasswordHash;
+        user.salt = req.newSalt;
+        user.password = req.newPassword || user.password;
+        user.initialPassword = req.newPassword || user.initialPassword;
+        user.mustChangePassword = false;
+        user.updatedAt = new Date().toISOString();
       }
-      const hashed = hashPassword(assignedPassword);
-      user.passwordHash = hashed.hash;
-      user.salt = hashed.salt;
-      user.mustChangePassword = true;
-      user.updatedAt = new Date().toISOString();
+      // Send notification to student
+      this.addNotification({
+        title: 'Pengajuan Ganti Sandi Disetujui',
+        message: `Pengajuan ganti sandi Anda (Tiket: ${req.ticketNumber || req.id}) telah DISETUJUI oleh Admin. Silakan masuk menggunakan kata sandi baru.`,
+        type: 'security',
+        targetUserId: user.id,
+      });
+    } else {
+      // Send rejection notification to student
+      this.addNotification({
+        title: 'Pengajuan Ganti Sandi Ditolak',
+        message: `Pengajuan ganti sandi Anda (Tiket: ${req.ticketNumber || req.id}) DITOLAK oleh Admin. Alasan: ${req.adminNote}`,
+        type: 'security',
+        targetUserId: user.id,
+      });
     }
 
     this.save();
-    return { success: true, request: req, tempPassword: assignedPassword };
+    return { success: true, request: req };
   }
 
   // --- Subjects ---

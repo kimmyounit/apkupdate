@@ -64,6 +64,28 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   const [newStudentPassword, setNewStudentPassword] = useState('');
   const [newStudentNisn, setNewStudentNisn] = useState('');
   const [newStudentKelas, setNewStudentKelas] = useState('');
+  const [newStudentGender, setNewStudentGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
+  const [studentKelasFilter, setStudentKelasFilter] = useState<string>('all');
+  const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
+
+  // Edit Student Modal state
+  const [editingStudent, setEditingStudent] = useState<User | null>(null);
+  const [editFormName, setEditFormName] = useState('');
+  const [editFormGender, setEditFormGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
+  const [editFormKelas, setEditFormKelas] = useState('');
+  const [editFormUsername, setEditFormUsername] = useState('');
+  const [editStudentLoading, setEditStudentLoading] = useState(false);
+
+  // Delete Student Modal state
+  const [deletingStudent, setDeletingStudent] = useState<User | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Ticket processing modals & state
+  const [ticketFilterStatus, setTicketFilterStatus] = useState<string>('all');
+  const [ticketDetailModal, setTicketDetailModal] = useState<PasswordResetRequest | null>(null);
+  const [rejectingTicket, setRejectingTicket] = useState<PasswordResetRequest | null>(null);
+  const [rejectReasonText, setRejectReasonText] = useState('');
+  const [ticketProcessing, setTicketProcessing] = useState(false);
   const [studentFormSuccess, setStudentFormSuccess] = useState<string | null>(null);
   const [studentFormError, setStudentFormError] = useState<string | null>(null);
   const [studentFormLoading, setStudentFormLoading] = useState(false);
@@ -399,7 +421,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
 
   const loadAllData = async () => {
     try {
-      const [stu, subs, bks, anns, qzs, atts, evs, staff] = await Promise.all([
+      const [stu, subs, bks, anns, qzs, atts, evs, staff, reqs] = await Promise.all([
         api.getStudents(),
         api.getSubjects(),
         api.getBooks(),
@@ -408,7 +430,9 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         api.getQuizAttempts(),
         api.getAttendanceEvents(),
         api.getStaff(),
+        api.getPasswordResetRequests(),
       ]);
+      setResetRequests(reqs || []);
       setStudents(stu);
       setSubjects(subs);
       setBooks(bks);
@@ -456,23 +480,104 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
 
     try {
       const res = await api.createStudent({
-        name: newStudentName,
-        username: newStudentUsername,
+        name: newStudentName.trim(),
+        username: newStudentUsername.trim().toLowerCase(),
         password: newStudentPassword,
-        nisn: newStudentNisn,
-        kelas: newStudentKelas,
+        gender: newStudentGender,
+        kelas: newStudentKelas.trim() || 'Kelas 7',
       });
 
-      setStudentFormSuccess(res.message);
-      // Reset form
+      setStudentFormSuccess(res.message || 'Akun siswa berhasil didaftarkan ke database.');
       handleResetStudentForm();
-      // Reload students
       const updated = await api.getStudents();
       setStudents(updated);
     } catch (err: any) {
       setStudentFormError(err.message || 'Gagal mendaftarkan akun siswa.');
     } finally {
       setStudentFormLoading(false);
+    }
+  };
+
+  const handleOpenEditStudent = (stu: User) => {
+    setEditingStudent(stu);
+    setEditFormName(stu.name);
+    setEditFormGender(stu.gender || 'Laki-laki');
+    setEditFormKelas(stu.kelas || 'Kelas 7');
+    setEditFormUsername(stu.username);
+  };
+
+  const handleSaveEditStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    setEditStudentLoading(true);
+    try {
+      await api.updateStudent(editingStudent.id, {
+        name: editFormName.trim(),
+        gender: editFormGender,
+        kelas: editFormKelas.trim(),
+        username: editFormUsername.trim().toLowerCase(),
+      });
+      alert('Data profil siswa berhasil diperbarui!');
+      setEditingStudent(null);
+      const updated = await api.getStudents();
+      setStudents(updated);
+    } catch (err: any) {
+      alert(err.message || 'Gagal memperbarui data siswa.');
+    } finally {
+      setEditStudentLoading(false);
+    }
+  };
+
+  const handleConfirmDeleteStudent = async () => {
+    if (!deletingStudent) return;
+    setDeleteLoading(true);
+    try {
+      await api.deleteStudent(deletingStudent.id);
+      alert(`Akun siswa "${deletingStudent.name}" (@${deletingStudent.username}) berhasil dihapus dari database.`);
+      setDeletingStudent(null);
+      const updated = await api.getStudents();
+      setStudents(updated);
+    } catch (err: any) {
+      alert(err.message || 'Gagal menghapus akun siswa.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleApproveTicket = async (tkt: PasswordResetRequest) => {
+    if (!window.confirm(`Setujui pengajuan ganti sandi untuk ${tkt.name} (@${tkt.username})?\n\nPassword siswa akan diperbarui menjadi kata sandi baru yang diajukan.`)) {
+      return;
+    }
+    setTicketProcessing(true);
+    try {
+      const res = await api.processPasswordResetRequest(tkt.id, 'approved');
+      alert(res.message || 'Pengajuan ganti sandi telah disetujui.');
+      const updatedReqs = await api.getPasswordResetRequests();
+      setResetRequests(updatedReqs || []);
+      const updatedStu = await api.getStudents();
+      setStudents(updatedStu);
+    } catch (err: any) {
+      alert(err.message || 'Gagal memproses tiket.');
+    } finally {
+      setTicketProcessing(false);
+    }
+  };
+
+  const handleRejectTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rejectingTicket) return;
+    setTicketProcessing(true);
+    try {
+      const res = await api.processPasswordResetRequest(rejectingTicket.id, 'rejected', rejectReasonText.trim() || 'Alasan administratif');
+      alert(res.message || 'Pengajuan ganti sandi telah ditolak.');
+      setRejectingTicket(null);
+      setRejectReasonText('');
+      const updatedReqs = await api.getPasswordResetRequests();
+      setResetRequests(updatedReqs || []);
+    } catch (err: any) {
+      alert(err.message || 'Gagal menolak tiket.');
+    } finally {
+      setTicketProcessing(false);
     }
   };
 
@@ -827,7 +932,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                 Pendaftaran Akun Siswa Baru
               </h2>
               <p className="text-xs text-slate-500">
-                Formulir ini khusus untuk mendaftarkan akun Siswa (role otomatis ditetapkan sebagai Siswa). Password akan disimpan dalam bentuk hash aman.
+                Formulir pendaftaran akun Siswa resmi. Data tersimpan permanen di database server dan siap digunakan login langsung.
               </p>
             </div>
 
@@ -846,8 +951,8 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
             )}
 
             <form onSubmit={handleSaveStudent} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* 1. Nama lengkap siswa */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* 1. Nama lengkap */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     1. Nama Lengkap Siswa *
@@ -858,29 +963,69 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                     onChange={(e) => setNewStudentName(e.target.value)}
                     required
                     placeholder="Contoh: Muhammad Farhan"
-                    className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"
+                    className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
                   />
                 </div>
 
-                {/* 2. Username */}
+                {/* 2. Jenis Kelamin (Dropdown) */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    2. Username (Unik) *
+                    2. Jenis Kelamin *
+                  </label>
+                  <select
+                    value={newStudentGender}
+                    onChange={(e) => setNewStudentGender(e.target.value as any)}
+                    required
+                    className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                  >
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                  </select>
+                </div>
+
+                {/* 3. Kelas (Dropdown 1-9) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    3. Kelas Siswa (Kelas 1 - 9) *
+                  </label>
+                  <select
+                    value={newStudentKelas}
+                    onChange={(e) => setNewStudentKelas(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                  >
+                    <option value="">Pilih Kelas</option>
+                    <option value="Kelas 1">Kelas 1</option>
+                    <option value="Kelas 2">Kelas 2</option>
+                    <option value="Kelas 3">Kelas 3</option>
+                    <option value="Kelas 4">Kelas 4</option>
+                    <option value="Kelas 5">Kelas 5</option>
+                    <option value="Kelas 6">Kelas 6</option>
+                    <option value="Kelas 7">Kelas 7</option>
+                    <option value="Kelas 8">Kelas 8</option>
+                    <option value="Kelas 9">Kelas 9</option>
+                  </select>
+                </div>
+
+                {/* 4. Username */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    4. Username (Unik) *
                   </label>
                   <input
                     type="text"
                     value={newStudentUsername}
-                    onChange={(e) => setNewStudentUsername(e.target.value)}
+                    onChange={(e) => setNewStudentUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
                     required
                     placeholder="Contoh: farhan.siswa"
-                    className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium font-mono"
+                    className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono font-bold"
                   />
                 </div>
 
-                {/* 3. Password */}
+                {/* 5. Password */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    3. Password Awal (Min. 6 Karakter) *
+                    5. Password (Min. 6 Karakter) *
                   </label>
                   <input
                     type="password"
@@ -888,66 +1033,20 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                     onChange={(e) => setNewStudentPassword(e.target.value)}
                     required
                     minLength={6}
-                    placeholder="Masukkan password awal untuk siswa"
-                    className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"
+                    placeholder="Masukkan password akun"
+                    className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    *Siswa diwajibkan mengganti password ini saat login pertama kali.
-                  </p>
-                </div>
-
-                {/* Additional metadata */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      NISN (Opsional)
-                    </label>
-                    <input
-                      type="text"
-                      value={newStudentNisn}
-                      onChange={(e) => setNewStudentNisn(e.target.value)}
-                      placeholder="Contoh: 0061829105"
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Kelas (SMP / SD)
-                    </label>
-                    <input
-                      type="text"
-                      list="kelas-smp-sd-options"
-                      value={newStudentKelas}
-                      onChange={(e) => setNewStudentKelas(e.target.value)}
-                      placeholder="Pilih atau ketik kelas (SMP / SD)..."
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                    />
-                    <datalist id="kelas-smp-sd-options">
-                      <option value="VII-A SMP" />
-                      <option value="VII-B SMP" />
-                      <option value="VIII-A SMP" />
-                      <option value="VIII-B SMP" />
-                      <option value="IX-A SMP" />
-                      <option value="IX-B SMP" />
-                      <option value="I-A SD" />
-                      <option value="II-A SD" />
-                      <option value="III-A SD" />
-                      <option value="IV-A SD" />
-                      <option value="V-A SD" />
-                      <option value="VI-A SD" />
-                    </datalist>
-                  </div>
                 </div>
               </div>
 
-              {/* Action Buttons: 4. Simpan Akun & 5. Reset Formulir */}
+              {/* Action Buttons */}
               <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={handleResetStudentForm}
                   className="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition"
                 >
-                  5. Reset Formulir
+                  Reset Formulir
                 </button>
 
                 <button
@@ -956,7 +1055,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-black shadow-md transition flex items-center gap-2"
                 >
                   <UserPlus className="w-4 h-4" />
-                  <span>{studentFormLoading ? 'Menyimpan...' : '4. Simpan Akun'}</span>
+                  <span>{studentFormLoading ? 'Menyimpan...' : 'Daftarkan Akun Siswa'}</span>
                 </button>
               </div>
             </form>
@@ -974,50 +1073,47 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                  <button
-                    onClick={() => setStudentCategoryFilter('all')}
-                    className={`px-3 py-1 rounded-lg transition ${
-                      studentCategoryFilter === 'all'
-                        ? 'bg-white text-emerald-800 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Semua ({students.length})
-                  </button>
-                  <button
-                    onClick={() => setStudentCategoryFilter('siswa')}
-                    className={`px-3 py-1 rounded-lg transition ${
-                      studentCategoryFilter === 'siswa'
-                        ? 'bg-white text-emerald-800 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Siswa Aktif ({students.filter((s) => !s.isAlumni).length})
-                  </button>
-                  <button
-                    onClick={() => setStudentCategoryFilter('alumni')}
-                    className={`px-3 py-1 rounded-lg transition ${
-                      studentCategoryFilter === 'alumni'
-                        ? 'bg-white text-emerald-800 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Alumni ({students.filter((s) => !!s.isAlumni).length})
-                  </button>
-                </div>
-
-                <div className="relative w-full sm:w-60">
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Search */}
+                <div className="relative w-full sm:w-56">
                   <input
                     type="text"
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
-                    placeholder="Cari nama, username, kelas..."
-                    className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    placeholder="Cari nama / username..."
+                    className="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
                   />
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                 </div>
+
+                {/* Filter Kelas */}
+                <select
+                  value={studentKelasFilter}
+                  onChange={(e) => setStudentKelasFilter(e.target.value)}
+                  className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700"
+                >
+                  <option value="all">Semua Kelas</option>
+                  <option value="Kelas 1">Kelas 1</option>
+                  <option value="Kelas 2">Kelas 2</option>
+                  <option value="Kelas 3">Kelas 3</option>
+                  <option value="Kelas 4">Kelas 4</option>
+                  <option value="Kelas 5">Kelas 5</option>
+                  <option value="Kelas 6">Kelas 6</option>
+                  <option value="Kelas 7">Kelas 7</option>
+                  <option value="Kelas 8">Kelas 8</option>
+                  <option value="Kelas 9">Kelas 9</option>
+                </select>
+
+                {/* Filter Status */}
+                <select
+                  value={studentStatusFilter}
+                  onChange={(e) => setStudentStatusFilter(e.target.value)}
+                  className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700"
+                >
+                  <option value="all">Semua Status</option>
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Nonaktif</option>
+                </select>
               </div>
             </div>
 
@@ -1025,107 +1121,132 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                   <tr>
-                    <th className="p-3.5">Nama Siswa</th>
-                    <th className="p-3.5">Username</th>
-                    <th className="p-3.5">Kelas / NISN</th>
-                    <th className="p-3.5 text-center">Kategori</th>
-                    <th className="p-3.5 text-center">Status Akun</th>
-                    <th className="p-3.5 text-center">Centang Biru</th>
-                    <th className="p-3.5 text-center">QR Code</th>
-                    <th className="p-3.5 text-center">Aksi Manajemen</th>
+                    <th className="p-3 text-center w-10">No</th>
+                    <th className="p-3">Siswa</th>
+                    <th className="p-3">Gender</th>
+                    <th className="p-3">Kelas</th>
+                    <th className="p-3">Username</th>
+                    <th className="p-3">Tgl Daftar</th>
+                    <th className="p-3 text-center">Status</th>
+                    <th className="p-3 text-center">Tindakan</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {filteredStudents.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="p-8 text-center text-slate-400 italic">
-                        Tidak ada data siswa ditemukan.
+                        Belum ada siswa terdaftar yang sesuai.
                       </td>
                     </tr>
                   ) : (
-                    filteredStudents.map((stu) => (
+                    filteredStudents.map((stu, sIdx) => (
                       <tr key={stu.id} className="hover:bg-slate-50/80 transition">
-                        <td className="p-3.5">
-                          <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                            <span>{stu.name}</span>
-                            {stu.isVerified && (
-                              <span className="inline-flex items-center text-blue-600" title="Akun Terverifikasi Resmi">
-                                <ShieldCheck className="w-3.5 h-3.5 fill-blue-600 text-white" />
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-slate-400">ID: {stu.id}</div>
+                        <td className="p-3 text-center font-bold text-slate-400">
+                          {sIdx + 1}
                         </td>
-                        <td className="p-3.5 font-mono font-bold text-slate-700">
+                        <td className="p-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                              <img
+                                src={stu.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(stu.name)}&backgroundColor=0284c7`}
+                                alt={stu.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div>
+                              <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>{stu.name}</span>
+                                {stu.isVerified && (
+                                  <span className="inline-flex items-center text-blue-500" title="Akun Terverifikasi Resmi">
+                                    <CheckCircle2 className="w-3.5 h-3.5 fill-blue-500 text-white" />
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-mono">ID: {stu.id}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-3 text-slate-600 font-semibold">
+                          {stu.gender || 'Laki-laki'}
+                        </td>
+                        <td className="p-3 font-bold text-slate-800">
+                          {stu.kelas || '-'}
+                        </td>
+                        <td className="p-3 font-mono font-bold text-emerald-800">
                           @{stu.username}
                         </td>
-                        <td className="p-3.5">
-                          <div>{stu.kelas || '-'}</div>
-                          <div className="text-[10px] text-slate-400 font-mono">{stu.nisn || '-'}</div>
+                        <td className="p-3 text-slate-500 text-[11px]">
+                          {new Date(stu.createdAt).toLocaleDateString('id-ID')}
                         </td>
-                        <td className="p-3.5 text-center">
-                          <button
-                            onClick={() => handleToggleAlumni(stu.id)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border transition ${
-                              stu.isAlumni
-                                ? 'bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100'
-                                : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                            }`}
-                            title="Klik untuk mengubah kategori Siswa Aktif / Alumni"
-                          >
-                            {stu.isAlumni ? 'ALUMNI' : 'SISWA'}
-                          </button>
-                        </td>
-                        <td className="p-3.5 text-center">
+                        <td className="p-3 text-center">
                           <button
                             onClick={() => handleToggleStudentActive(stu)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border transition ${
-                              stu.isActive
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border transition ${
+                              stu.isActive !== false
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
                                 : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
                             }`}
                             title="Klik untuk mengubah status aktif/nonaktif"
                           >
-                            {stu.isActive ? 'AKTIF' : 'NONAKTIF'}
+                            {stu.isActive !== false ? 'AKTIF' : 'NONAKTIF'}
                           </button>
                         </td>
-                        <td className="p-3.5 text-center">
-                          <button
-                            onClick={() => handleToggleVerified(stu.id)}
-                            className={`p-1.5 rounded-lg border transition inline-flex items-center gap-1 text-[11px] font-bold ${
-                              stu.isVerified
-                                ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
-                                : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-700'
-                            }`}
-                            title={stu.isVerified ? 'Hilangkan centang biru' : 'Berikan centang biru (Verified)'}
-                          >
-                            <ShieldCheck className={`w-3.5 h-3.5 ${stu.isVerified ? 'text-blue-600 fill-blue-600' : 'text-slate-400'}`} />
-                            <span className="text-[10px]">{stu.isVerified ? 'Verified' : 'Biasa'}</span>
-                          </button>
-                        </td>
-                        <td className="p-3.5 text-center">
-                          <button
-                            onClick={() => setPreviewQrStudent(stu)}
-                            className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition inline-flex items-center gap-1 font-bold text-[11px]"
-                            title="Lihat Kartu & QR Code Siswa"
-                          >
-                            <QrCode className="w-4 h-4" />
-                            <span>Lihat QR</span>
-                          </button>
-                        </td>
-                        <td className="p-3.5 text-center">
-                          <button
-                            onClick={() => {
-                              setResettingStudent(stu);
-                              setResetNewPassword('');
-                              setResetSuccess(null);
-                              setResetError(null);
-                            }}
-                            className="px-2.5 py-1 text-slate-700 hover:bg-slate-100 border border-slate-200 rounded-lg text-[11px] font-bold transition inline-flex items-center gap-1"
-                          >
-                            <Key className="w-3.5 h-3.5 text-amber-600" />
-                            <span>Reset Password</span>
-                          </button>
+                        <td className="p-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {/* Detail / QR */}
+                            <button
+                              onClick={() => setPreviewQrStudent(stu)}
+                              className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                              title="Lihat Detail Profil & Kartu Siswa"
+                            >
+                              <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+                            </button>
+
+                            {/* Edit Data */}
+                            <button
+                              onClick={() => handleOpenEditStudent(stu)}
+                              className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                              title="Edit Data Siswa"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-blue-600" />
+                            </button>
+
+                            {/* Centang Biru */}
+                            <button
+                              onClick={() => handleToggleVerified(stu.id)}
+                              className={`p-1.5 rounded-lg border transition ${
+                                stu.isVerified
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : 'bg-slate-50 text-slate-400 border-slate-200'
+                              }`}
+                              title={stu.isVerified ? 'Hilangkan centang biru' : 'Berikan centang biru'}
+                            >
+                              <ShieldCheck className={`w-3.5 h-3.5 ${stu.isVerified ? 'text-blue-600 fill-blue-600' : 'text-slate-400'}`} />
+                            </button>
+
+                            {/* Reset Password */}
+                            <button
+                              onClick={() => {
+                                setResettingStudent(stu);
+                                setResetNewPassword('');
+                                setResetSuccess(null);
+                                setResetError(null);
+                              }}
+                              className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                              title="Reset Password Siswa"
+                            >
+                              <Key className="w-3.5 h-3.5 text-amber-600" />
+                            </button>
+
+                            {/* Hapus Akun */}
+                            <button
+                              onClick={() => setDeletingStudent(stu)}
+                              className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                              title="Hapus Akun Siswa"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -1955,6 +2076,136 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         </div>
       )}
 
+      {/* TAB 8: TIKET PENGAJUAN GANTI SANDI SISWA */}
+      {activeTab === 'tickets' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <span>Tiket Pengajuan Ganti Sandi Siswa</span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-800">
+                  {resetRequests.filter((r) => r.status === 'pending').length} Menunggu Persetujuan
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500">
+                Persetujuan pergantian kata sandi resmi yang diajukan oleh siswa melalui aplikasi
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={ticketFilterStatus}
+                onChange={(e) => setTicketFilterStatus(e.target.value)}
+                className="px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl font-bold text-slate-700"
+              >
+                <option value="all">Semua Status Tiket</option>
+                <option value="pending">Menunggu Persetujuan</option>
+                <option value="approved">Disetujui</option>
+                <option value="rejected">Ditolak</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="p-3 text-center w-12">No</th>
+                    <th className="p-3">No. Tiket</th>
+                    <th className="p-3">Nama Siswa</th>
+                    <th className="p-3">Username</th>
+                    <th className="p-3">Kelas</th>
+                    <th className="p-3">Waktu Pengajuan</th>
+                    <th className="p-3 text-center">Status</th>
+                    <th className="p-3 text-center">Aksi / Keputusan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {resetRequests.filter((r) => ticketFilterStatus === 'all' || r.status === ticketFilterStatus).length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-8 text-center text-slate-400 italic">
+                        Belum ada tiket pengajuan ganti sandi.
+                      </td>
+                    </tr>
+                  ) : (
+                    resetRequests
+                      .filter((r) => ticketFilterStatus === 'all' || r.status === ticketFilterStatus)
+                      .map((tkt, tIdx) => (
+                        <tr key={tkt.id} className="hover:bg-slate-50/80 transition">
+                          <td className="p-3 text-center font-bold text-slate-400">
+                            {tIdx + 1}
+                          </td>
+                          <td className="p-3 font-mono font-bold text-slate-800">
+                            {tkt.ticketNumber || tkt.id}
+                          </td>
+                          <td className="p-3 font-bold text-slate-900">
+                            {tkt.name}
+                          </td>
+                          <td className="p-3 font-mono text-emerald-800">
+                            @{tkt.username}
+                          </td>
+                          <td className="p-3 text-slate-700">
+                            {tkt.kelas || '-'}
+                          </td>
+                          <td className="p-3 text-slate-500 text-[11px]">
+                            {new Date(tkt.createdAt).toLocaleString('id-ID')}
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
+                              tkt.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                              tkt.status === 'rejected' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                              'bg-amber-100 text-amber-800 border border-amber-200 animate-pulse'
+                            }`}>
+                              {tkt.status === 'approved' ? 'Disetujui' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              {/* Detail button */}
+                              <button
+                                onClick={() => setTicketDetailModal(tkt)}
+                                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold"
+                              >
+                                Detail
+                              </button>
+
+                              {tkt.status === 'pending' && (
+                                <>
+                                  {/* ACC button */}
+                                  <button
+                                    onClick={() => handleApproveTicket(tkt)}
+                                    disabled={ticketProcessing}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black shadow-xs transition"
+                                  >
+                                    ACC / Setujui
+                                  </button>
+
+                                  {/* Tolak button */}
+                                  <button
+                                    onClick={() => {
+                                      setRejectingTicket(tkt);
+                                      setRejectReasonText('');
+                                    }}
+                                    disabled={ticketProcessing}
+                                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-black shadow-xs transition"
+                                  >
+                                    Tolak
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: RESET PASSWORD SISWA */}
       {resettingStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
@@ -2009,6 +2260,223 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT DATA SISWA */}
+      {editingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="border-b border-slate-100 pb-3">
+              <h3 className="font-black text-base text-slate-900">Edit Profil Siswa</h3>
+              <p className="text-xs text-slate-500">Perbarui identitas akun siswa terdaftar</p>
+            </div>
+
+            <form onSubmit={handleSaveEditStudent} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap Siswa *</label>
+                <input
+                  type="text"
+                  value={editFormName}
+                  onChange={(e) => setEditFormName(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Jenis Kelamin</label>
+                  <select
+                    value={editFormGender}
+                    onChange={(e) => setEditFormGender(e.target.value as any)}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  >
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Kelas Siswa</label>
+                  <select
+                    value={editFormKelas}
+                    onChange={(e) => setEditFormKelas(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                  >
+                    <option value="Kelas 1">Kelas 1</option>
+                    <option value="Kelas 2">Kelas 2</option>
+                    <option value="Kelas 3">Kelas 3</option>
+                    <option value="Kelas 4">Kelas 4</option>
+                    <option value="Kelas 5">Kelas 5</option>
+                    <option value="Kelas 6">Kelas 6</option>
+                    <option value="Kelas 7">Kelas 7</option>
+                    <option value="Kelas 8">Kelas 8</option>
+                    <option value="Kelas 9">Kelas 9</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Username Akun *</label>
+                <input
+                  type="text"
+                  value={editFormUsername}
+                  onChange={(e) => setEditFormUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
+                  required
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingStudent(null)}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={editStudentLoading}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs"
+                >
+                  {editStudentLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: KONFIRMASI HAPUS AKUN SISWA */}
+      {deletingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 className="font-black text-base text-slate-900">Hapus Akun Siswa?</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Apakah Anda yakin ingin menghapus akun <strong>{deletingStudent.name}</strong> (@{deletingStudent.username})?
+              </p>
+              <p className="text-[11px] text-rose-600 font-semibold mt-1">
+                Akun ini tidak dapat digunakan untuk login lagi setelah dihapus.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingStudent(null)}
+                className="px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteStudent}
+                disabled={deleteLoading}
+                className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-md transition disabled:opacity-50"
+              >
+                {deleteLoading ? 'Menghapus...' : 'Ya, Hapus Akun'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: TOLAK TIKET DENGAN ALASAN */}
+      {rejectingTicket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <h3 className="font-black text-base text-slate-900">Tolak Pengajuan Ganti Sandi</h3>
+            <p className="text-xs text-slate-600">
+              Siswa: <strong>{rejectingTicket.name}</strong> (@{rejectingTicket.username})
+            </p>
+
+            <form onSubmit={handleRejectTicket} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Alasan Penolakan Tiket *
+                </label>
+                <textarea
+                  rows={3}
+                  value={rejectReasonText}
+                  onChange={(e) => setRejectReasonText(e.target.value)}
+                  required
+                  placeholder="Contoh: Identitas pengajuan tidak sesuai / Silakan hubungi bagian TU sekolah..."
+                  className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRejectingTicket(null)}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={ticketProcessing || !rejectReasonText.trim()}
+                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold disabled:opacity-50"
+                >
+                  {ticketProcessing ? 'Memproses...' : 'Konfirmasi Tolak Tiket'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: DETAIL TIKET */}
+      {ticketDetailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-black text-base text-slate-900">Rincian Tiket Sandi</h3>
+                <p className="text-xs font-mono text-emerald-800">{ticketDetailModal.ticketNumber || ticketDetailModal.id}</p>
+              </div>
+              <button
+                onClick={() => setTicketDetailModal(null)}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <p><strong>Nama Siswa:</strong> {ticketDetailModal.name}</p>
+                <p><strong>Username:</strong> @{ticketDetailModal.username}</p>
+                <p><strong>Kelas:</strong> {ticketDetailModal.kelas || '-'}</p>
+                <p><strong>Waktu Diajukan:</strong> {new Date(ticketDetailModal.createdAt).toLocaleString('id-ID')}</p>
+                <p><strong>Alasan Pengajuan:</strong> {ticketDetailModal.reason || '-'}</p>
+                <p><strong>Status Tiket:</strong> <span className="font-bold uppercase">{ticketDetailModal.status}</span></p>
+                {ticketDetailModal.processedAt && (
+                  <p><strong>Diproses Pada:</strong> {new Date(ticketDetailModal.processedAt).toLocaleString('id-ID')} oleh {ticketDetailModal.processedBy}</p>
+                )}
+                {ticketDetailModal.adminNote && (
+                  <p><strong>Catatan Admin:</strong> {ticketDetailModal.adminNote}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setTicketDetailModal(null)}
+                className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

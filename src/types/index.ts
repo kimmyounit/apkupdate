@@ -5,6 +5,7 @@ export interface User {
   username: string;
   name: string;
   role: UserRole;
+  gender?: 'Laki-laki' | 'Perempuan';
   jabatan?: string;
   initialPassword?: string;
   password?: string;
@@ -14,7 +15,6 @@ export interface User {
   isActive: boolean;
   isAlumni?: boolean; // Status Siswa: Siswa Aktif vs Alumni
   isVerified?: boolean; // Centang biru resmi (Verified Badge)
-  nisn?: string;
   kelas?: string;
   classGrade?: string;
   classMajor?: string;
@@ -33,12 +33,17 @@ export interface User {
 
 export interface PasswordResetRequest {
   id: string;
+  ticketNumber?: string;
   userId: string;
   username: string;
   name: string;
+  kelas?: string;
   role: UserRole;
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
+  newPasswordHash?: string;
+  newSalt?: string;
+  newPassword?: string;
   createdAt: string;
   processedAt?: string;
   processedBy?: string;

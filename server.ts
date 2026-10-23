@@ -69,6 +69,27 @@ app.get('/TAMVESTA.apk', (req, res) => {
 // 1. AUTHENTICATION ENDPOINTS
 // -------------------------------------------------------------
 
+// POST /api/auth/register (Pendaftaran Siswa Baru Mandiri)
+app.post('/api/auth/register', (req, res) => {
+  const { name, username, password, confirmPassword, gender, kelas } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Nama lengkap wajib diisi.' });
+  if (!gender || (gender !== 'Laki-laki' && gender !== 'Perempuan')) return res.status(400).json({ error: 'Pilih jenis kelamin (Laki-laki / Perempuan).' });
+  if (!kelas || !kelas.trim()) return res.status(400).json({ error: 'Pilih kelas siswa (Kelas 1 - Kelas 9).' });
+  if (!username || !username.trim()) return res.status(400).json({ error: 'Username wajib diisi.' });
+  if (!password || password.length < 6) return res.status(400).json({ error: 'Password minimal 6 karakter.' });
+  if (password !== confirmPassword) return res.status(400).json({ error: 'Password dan konfirmasi password tidak cocok.' });
+
+  const result = db.createStudent({ name, username, password, gender, kelas });
+  if (!result.success) {
+    return res.status(400).json({ error: result.error });
+  }
+
+  return res.status(201).json({
+    message: 'Pendaftaran akun siswa berhasil! Silakan masuk dengan username dan password Anda.',
+    user: sanitizeUser(result.user),
+  });
+});
+
 // POST /api/auth/login
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body;
@@ -156,12 +177,33 @@ app.put('/api/auth/username', authMiddleware, (req: AuthenticatedRequest, res) =
   });
 });
 
-// POST /api/auth/password-reset-request (Permintaan reset password diajukan ke admin)
+// POST /api/auth/password-reset-request (Permintaan reset/ganti sandi siswa)
 app.post('/api/auth/password-reset-request', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const { reason } = req.body;
-  const result = db.createPasswordResetRequest(req.user!.id, reason);
+  const { newPassword, confirmPassword, reason } = req.body;
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ error: 'Password baru minimal 6 karakter.' });
+  }
+  if (confirmPassword && newPassword !== confirmPassword) {
+    return res.status(400).json({ error: 'Password baru dan konfirmasi password tidak cocok.' });
+  }
+
+  const result = db.createPasswordResetRequest(req.user!.id, newPassword, reason);
   if (!result.success) {
     return res.status(400).json({ error: result.error });
+  }
+  return res.status(201).json({
+    message: 'Pengajuan ganti sandi berhasil dikirim! Menunggu persetujuan Administrator.',
+    request: result.request,
+  });
+});
+
+// GET /api/student/tickets (Riwayat tiket siswa sendiri)
+app.get('/api/student/tickets', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const all = db.getPasswordResetRequests();
+  const mine = all.filter((r) => r.userId === req.user!.id);
+  const safe = mine.map(({ newPasswordHash, newSalt, newPassword, ...rest }: any) => rest);
+  return res.json(safe);
+});
   }
   return res.status(201).json({
     message: 'Permintaan reset password berhasil diajukan kepada Administrator.',
@@ -175,12 +217,24 @@ app.get('/api/admin/password-reset-requests', authMiddleware, requireRole(['admi
   return res.json(requests);
 });
 
-// POST /api/admin/password-reset-requests/:id/process (Admin approves/rejects request)
+// POST /api/admin/password-reset-requests/:id/process (ACC / Tolak Tiket)
 app.post('/api/admin/password-reset-requests/:id/process', authMiddleware, requireRole(['admin']), (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
-  const { status, tempPassword, adminNote } = req.body;
+  const { status, adminNote } = req.body;
   if (!status || (status !== 'approved' && status !== 'rejected')) {
     return res.status(400).json({ error: 'Status harus "approved" atau "rejected".' });
+  }
+
+  const result = db.processPasswordResetRequest(id, req.user!, status, adminNote);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error });
+  }
+
+  return res.json({
+    message: status === 'approved' ? 'Pengajuan ganti sandi telah disetujui. Sandi akun siswa berhasil diperbarui!' : 'Pengajuan ganti sandi telah ditolak.',
+    request: result.request,
+  });
+});
   }
 
   const result = db.processPasswordResetRequest(id, req.user!, status, tempPassword, adminNote);
@@ -234,6 +288,16 @@ app.patch('/api/admin/students/:id/toggle-active', authMiddleware, requireRole([
 });
 
 // DELETE /api/admin/students/:id
+app.put('/api/admin/students/:id', authMiddleware, requireRole(['admin']), (req, res) => {
+  const { id } = req.params;
+  const { name, gender, kelas, username } = req.body;
+  const result = db.updateStudent(id, { name, gender, kelas, username });
+  if (!result.success) {
+    return res.status(400).json({ error: result.error });
+  }
+  return res.json({ message: 'Data siswa berhasil diperbarui.', student: sanitizeUser(result.user) });
+});
+
 app.delete('/api/admin/students/:id', authMiddleware, requireRole(['admin']), (req, res) => {
   const { id } = req.params;
   const ok = db.deleteStudentAccount(id);

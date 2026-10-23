@@ -1150,12 +1150,14 @@ export const offlineStore = {
     if (existing) throw new Error('Username siswa sudah digunakan.');
 
     const initialPassword = studentData.password || 'SiswaTamvesta123';
-    const kelas = studentData.kelas?.trim() || 'VII-A SMP';
+    const kelas = studentData.kelas?.trim() || 'Kelas 7';
+    const gender = studentData.gender || 'Laki-laki';
     const user: User = {
       id: `stu_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       username,
       name: (studentData.name || 'Siswa Baru').trim(),
       role: 'siswa',
+      gender,
       kelas,
       initialPassword,
       password: initialPassword,
@@ -1172,6 +1174,86 @@ export const offlineStore = {
     db.users.unshift(user);
     saveDB(db);
     return user;
+  },
+
+  deleteStudent(id: string) {
+    const db = loadDB();
+    const idx = db.users.findIndex((u) => u.id === id && u.role === 'siswa');
+    if (idx !== -1) {
+      db.users.splice(idx, 1);
+      saveDB(db);
+    }
+  },
+
+  updateStudent(id: string, data: Partial<User>) {
+    const db = loadDB();
+    const u = db.users.find((user) => user.id === id);
+    if (u) {
+      if (data.name) u.name = data.name.trim();
+      if (data.gender) u.gender = data.gender as any;
+      if (data.kelas) u.kelas = data.kelas.trim();
+      if (data.username && data.username.toLowerCase() !== u.username.toLowerCase()) {
+        u.username = data.username.trim().toLowerCase();
+        u.qrToken = `TAMVESTA:STUDENT:${u.username}`;
+      }
+      u.updatedAt = new Date().toISOString();
+      saveDB(db);
+    }
+    return u;
+  },
+
+  createPasswordResetRequest(data: { userId: string; newPassword: string; reason?: string }) {
+    const db = loadDB();
+    const user = db.users.find((u) => u.id === data.userId);
+    if (!user) throw new Error('Pengguna tidak ditemukan.');
+    if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
+    const ticketNumber = `TKT-${Math.floor(100000 + Math.random() * 900000)}`;
+    const req: PasswordResetRequest = {
+      id: `pr_${Date.now()}`,
+      ticketNumber,
+      userId: user.id,
+      username: user.username,
+      name: user.name,
+      kelas: user.kelas || '-',
+      role: user.role,
+      reason: (data.reason || 'Pengajuan ganti sandi').trim(),
+      status: 'pending',
+      newPassword: data.newPassword,
+      createdAt: new Date().toISOString(),
+    };
+    db.passwordResetRequests.unshift(req);
+    saveDB(db);
+    return req;
+  },
+
+  processPasswordResetRequest(id: string, status: 'approved' | 'rejected', adminNote?: string) {
+    const db = loadDB();
+    if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
+    const req = db.passwordResetRequests.find((r) => r.id === id);
+    if (!req) throw new Error('Tiket tidak ditemukan.');
+    if (req.status !== 'pending') throw new Error('Tiket sudah diproses sebelumnya.');
+    req.status = status;
+    req.processedAt = new Date().toISOString();
+    req.processedBy = 'Administrator';
+    req.adminNote = adminNote || (status === 'approved' ? 'Disetujui' : 'Ditolak');
+
+    if (status === 'approved' && req.newPassword) {
+      const user = db.users.find((u) => u.id === req.userId);
+      if (user) {
+        user.password = req.newPassword;
+        user.initialPassword = req.newPassword;
+        user.mustChangePassword = false;
+        savePassword(user.username, req.newPassword);
+      }
+    }
+    saveDB(db);
+    return req;
+  },
+
+  getStudentTickets(userId: string) {
+    const db = loadDB();
+    if (!Array.isArray(db.passwordResetRequests)) return [];
+    return db.passwordResetRequests.filter((r) => r.userId === userId);
   },
 
   createTeacherAccount(data: any) {

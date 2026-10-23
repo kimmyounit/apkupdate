@@ -55,6 +55,22 @@ export const ProfilePage: React.FC = () => {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
 
+  // Password reset request ticket states
+  const [resetNewPass, setResetNewPass] = useState('');
+  const [resetConfirmPass, setResetConfirmPass] = useState('');
+  const [resetReason, setResetReason] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [myTickets, setMyTickets] = useState<any[]>([]);
+
+  const loadMyTickets = async () => {
+    try {
+      const res = await api.getStudentTickets();
+      if (Array.isArray(res)) setMyTickets(res);
+    } catch (_) {}
+  };
+
   useEffect(() => {
     if (!user) return;
     setBioText(user.bio || '');
@@ -63,6 +79,7 @@ export const ProfilePage: React.FC = () => {
     setEmailAddress(user.email || '');
 
     // Load user's posts & public stats
+    loadMyTickets();
     api
       .getPublicProfile(user.username)
       .then((res: any) => {
@@ -94,6 +111,39 @@ export const ProfilePage: React.FC = () => {
       nextAllowedDate = new Date(lastChangeTime + THIRTY_DAYS_MS);
     }
   }
+
+  const handleRequestPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetSuccess(null);
+    setResetError(null);
+
+    if (!resetNewPass || resetNewPass.length < 6) {
+      setResetError('Password baru minimal 6 karakter.');
+      return;
+    }
+    if (resetNewPass !== resetConfirmPass) {
+      setResetError('Password baru dan konfirmasi password tidak cocok.');
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const res = await api.requestPasswordReset({
+        newPassword: resetNewPass,
+        confirmPassword: resetConfirmPass,
+        reason: resetReason.trim() || 'Pengajuan ganti sandi berkala',
+      });
+      setResetSuccess(res.message || 'Pengajuan ganti sandi berhasil dikirim! Menunggu persetujuan Admin.');
+      setResetNewPass('');
+      setResetConfirmPass('');
+      setResetReason('');
+      loadMyTickets();
+    } catch (err: any) {
+      setResetError(err.message || 'Gagal mengajukan perubahan kata sandi.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   // File selection for photo profile
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -252,8 +302,13 @@ export const ProfilePage: React.FC = () => {
                 <School className="w-3 h-3 text-emerald-600" />
                 <span>Akun Siswa Resmi</span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-                {user.name}
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 flex items-center justify-center sm:justify-start gap-1.5">
+                <span>{user.name}</span>
+                {user.isVerified && (
+                  <span className="inline-flex items-center text-blue-500" title="Akun Terverifikasi Resmi">
+                    <CheckCircle2 className="w-5 h-5 fill-blue-500 text-white" />
+                  </span>
+                )}
               </h1>
               <p className="text-xs text-slate-500 font-mono">@{user.username}</p>
             </div>
@@ -363,12 +418,12 @@ export const ProfilePage: React.FC = () => {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">NISN Siswa</label>
+            <label className="text-xs font-bold text-slate-700 block mb-1.5">Jenis Kelamin</label>
             <input
               type="text"
-              value={user.nisn || '-'}
+              value={user.gender || 'Laki-laki'}
               disabled
-              className="w-full px-3.5 py-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 font-mono cursor-not-allowed"
+              className="w-full px-3.5 py-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 cursor-not-allowed"
             />
           </div>
         </div>
@@ -525,22 +580,130 @@ export const ProfilePage: React.FC = () => {
           </p>
         </div>
 
-        {/* 4. Password Protection Note */}
-        <div className="space-y-2 pt-2 border-t border-slate-100">
-          <label className="text-xs font-bold text-slate-700 block">Kata Sandi Akun</label>
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs text-slate-600">
-            <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-slate-400" />
-              <span>Password Terproteksi Enkripsi</span>
-            </div>
-            <span className="text-[11px] font-semibold text-slate-400">••••••••</span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-2.5 text-[11px] text-slate-500 leading-relaxed">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span>
-              Demi keamanan dan ketertiban data sekolah, password tidak dapat diubah sembarangan dari halaman profil siswa.
+        {/* 4. Fitur Pengajuan Ganti Sandi Siswa */}
+        <div className="space-y-4 pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Lock className="w-4 h-4 text-emerald-600" />
+              <span>Pengajuan Ganti Sandi Akun</span>
+            </label>
+            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+              Persetujuan Administrator
             </span>
           </div>
+
+          <form onSubmit={handleRequestPasswordReset} className="p-4 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 block mb-1">Nama Siswa</label>
+                <input
+                  type="text"
+                  value={user.name}
+                  disabled
+                  className="w-full px-3 py-2 bg-slate-200/70 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 block mb-1">Username Siswa</label>
+                <input
+                  type="text"
+                  value={`@${user.username}`}
+                  disabled
+                  className="w-full px-3 py-2 bg-slate-200/70 border border-slate-200 rounded-xl text-xs font-mono font-semibold text-slate-600 cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Password Baru (Min. 6) *</label>
+                <input
+                  type="password"
+                  value={resetNewPass}
+                  onChange={(e) => setResetNewPass(e.target.value)}
+                  placeholder="Masukkan password baru"
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Konfirmasi Password Baru *</label>
+                <input
+                  type="password"
+                  value={resetConfirmPass}
+                  onChange={(e) => setResetConfirmPass(e.target.value)}
+                  placeholder="Ketik ulang password baru"
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">Alasan Pengajuan (Opsional)</label>
+              <textarea
+                rows={2}
+                value={resetReason}
+                onChange={(e) => setResetReason(e.target.value)}
+                placeholder="Contoh: Mengganti sandi berkala untuk keamanan akun..."
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            {resetSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{resetSuccess}</span>
+              </div>
+            )}
+            {resetError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{resetError}</span>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-1">
+              <button
+                type="submit"
+                disabled={resetLoading}
+                className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+              >
+                <span>{resetLoading ? 'Mengirim Tiket...' : 'Kirim Pengajuan Ganti Sandi'}</span>
+              </button>
+            </div>
+          </form>
+
+          {/* Status & Riwayat Tiket Ganti Sandi */}
+          {myTickets.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <h4 className="text-xs font-bold text-slate-700">Status & Riwayat Tiket Pengajuan Sandi</h4>
+              <div className="space-y-2">
+                {myTickets.map((tkt) => (
+                  <div key={tkt.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                    <div>
+                      <div className="font-bold text-slate-800 flex items-center gap-2">
+                        <span>{tkt.ticketNumber || tkt.id}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          tkt.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
+                          tkt.status === 'rejected' ? 'bg-rose-100 text-rose-800' :
+                          'bg-amber-100 text-amber-800'
+                        }`}>
+                          {tkt.status === 'approved' ? 'Disetujui' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Diajukan: {new Date(tkt.createdAt).toLocaleString('id-ID')}
+                        {tkt.adminNote && <span> • Catatan: {tkt.adminNote}</span>}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
