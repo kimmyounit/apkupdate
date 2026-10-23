@@ -17,16 +17,9 @@ import type {
   Story,
   PersonalNote,
   AppNotification,
-  TeacherArticle,
-  ClassAttendanceEntry,
-  TuitionBill,
-  TuitionTransaction,
-  TuDocument,
-  TuChatMessage,
 } from '../types/index.ts';
 
-const DEFAULT_DATA_FILE = path.resolve(process.cwd(), 'data', 'tamvesta-data.json');
-const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'tamvesta-data') : path.resolve(process.cwd(), 'data');
+const DATA_DIR = path.resolve(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'tamvesta-data.json');
 
 export interface DatabaseSchema {
@@ -43,12 +36,6 @@ export interface DatabaseSchema {
   stories: Story[];
   notes: PersonalNote[];
   notifications: AppNotification[];
-  articles: TeacherArticle[];
-  classAttendance: ClassAttendanceEntry[];
-  tuitionBills: TuitionBill[];
-  tuitionTransactions: TuitionTransaction[];
-  tuDocuments: TuDocument[];
-  tuChatMessages: TuChatMessage[];
 }
 
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
@@ -57,22 +44,9 @@ export function hashPassword(password: string, salt?: string): { hash: string; s
   return { hash, salt: chosenSalt };
 }
 
-export function verifyPassword(password: string, hash?: string, salt?: string, initialPassword?: string): boolean {
-  if (initialPassword && password.trim() === initialPassword.trim()) {
-    return true;
-  }
-  if (!hash || !salt) {
-    return false;
-  }
-  try {
-    const newHash = crypto.pbkdf2Sync(password.trim(), salt, 10000, 64, 'sha512').toString('hex');
-    const buf1 = Buffer.from(hash, 'hex');
-    const buf2 = Buffer.from(newHash, 'hex');
-    if (buf1.length !== buf2.length) return false;
-    return crypto.timingSafeEqual(buf1, buf2);
-  } catch {
-    return false;
-  }
+export function verifyPassword(password: string, hash: string, salt: string): boolean {
+  const newHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(newHash, 'hex'));
 }
 
 export function generateQrToken(userId: string, username: string): string {
@@ -294,8 +268,66 @@ export function getInitialData(): DatabaseSchema {
     updatedAt: now,
   };
 
+  // 4. Akun Siswa Demo — SMP Tamansiswa Batam
+  interface SiswaPreset {
+    id: string; username: string; name: string; nisn: string; kelas: string; password: string;
+  }
+  const smpStudents: SiswaPreset[] = [
+    { id: 'siswa_smp_7a_001', username: 'siswa.smp7a.001', name: 'Ahmad Fauzi',          nisn: '1234567801', kelas: 'VII-A SMP', password: 'Siswa7A001' },
+    { id: 'siswa_smp_7a_002', username: 'siswa.smp7a.002', name: 'Bunga Pertiwi',        nisn: '1234567802', kelas: 'VII-A SMP', password: 'Siswa7A002' },
+    { id: 'siswa_smp_7a_003', username: 'siswa.smp7a.003', name: 'Cahya Ramadhan',       nisn: '1234567803', kelas: 'VII-A SMP', password: 'Siswa7A003' },
+    { id: 'siswa_smp_7b_001', username: 'siswa.smp7b.001', name: 'Dinda Aulia',          nisn: '1234567804', kelas: 'VII-B SMP', password: 'Siswa7B001' },
+    { id: 'siswa_smp_7b_002', username: 'siswa.smp7b.002', name: 'Eka Prasetyo',         nisn: '1234567805', kelas: 'VII-B SMP', password: 'Siswa7B002' },
+    { id: 'siswa_smp_8a_001', username: 'siswa.smp8a.001', name: 'Fajar Nugroho',        nisn: '1234567806', kelas: 'VIII-A SMP', password: 'Siswa8A001' },
+    { id: 'siswa_smp_8a_002', username: 'siswa.smp8a.002', name: 'Gita Kusuma',          nisn: '1234567807', kelas: 'VIII-A SMP', password: 'Siswa8A002' },
+    { id: 'siswa_smp_8a_003', username: 'siswa.smp8a.003', name: 'Hendra Wijaya',        nisn: '1234567808', kelas: 'VIII-A SMP', password: 'Siswa8A003' },
+    { id: 'siswa_smp_8b_001', username: 'siswa.smp8b.001', name: 'Indah Lestari',        nisn: '1234567809', kelas: 'VIII-B SMP', password: 'Siswa8B001' },
+    { id: 'siswa_smp_8b_002', username: 'siswa.smp8b.002', name: 'Joko Susilo',          nisn: '1234567810', kelas: 'VIII-B SMP', password: 'Siswa8B002' },
+    { id: 'siswa_smp_9a_001', username: 'siswa.smp9a.001', name: 'Kartika Dewi',         nisn: '1234567811', kelas: 'IX-A SMP', password: 'Siswa9A001' },
+    { id: 'siswa_smp_9a_002', username: 'siswa.smp9a.002', name: 'Lukman Hakim',         nisn: '1234567812', kelas: 'IX-A SMP', password: 'Siswa9A002' },
+    { id: 'siswa_smp_9a_003', username: 'siswa.smp9a.003', name: 'Melati Sari',          nisn: '1234567813', kelas: 'IX-A SMP', password: 'Siswa9A003' },
+    { id: 'siswa_smp_9b_001', username: 'siswa.smp9b.001', name: 'Nanda Putra',          nisn: '1234567814', kelas: 'IX-B SMP', password: 'Siswa9B001' },
+    { id: 'siswa_smp_9b_002', username: 'siswa.smp9b.002', name: 'Olivia Putri',         nisn: '1234567815', kelas: 'IX-B SMP', password: 'Siswa9B002' },
+  ];
+
+  // 5. Akun Siswa Demo — SD Tamansiswa Batam
+  const sdStudents: SiswaPreset[] = [
+    { id: 'siswa_sd_1a_001',  username: 'siswa.sd1a.001',  name: 'Putri Rahayu',         nisn: '2234567801', kelas: 'I-A SD',   password: 'Siswa1A001' },
+    { id: 'siswa_sd_1a_002',  username: 'siswa.sd1a.002',  name: 'Qori Ananda',           nisn: '2234567802', kelas: 'I-A SD',   password: 'Siswa1A002' },
+    { id: 'siswa_sd_2a_001',  username: 'siswa.sd2a.001',  name: 'Rizky Maulana',         nisn: '2234567803', kelas: 'II-A SD',  password: 'Siswa2A001' },
+    { id: 'siswa_sd_2a_002',  username: 'siswa.sd2a.002',  name: 'Siti Aminah',           nisn: '2234567804', kelas: 'II-A SD',  password: 'Siswa2A002' },
+    { id: 'siswa_sd_3a_001',  username: 'siswa.sd3a.001',  name: 'Taufik Hidayat',        nisn: '2234567805', kelas: 'III-A SD', password: 'Siswa3A001' },
+    { id: 'siswa_sd_3a_002',  username: 'siswa.sd3a.002',  name: 'Umi Kalsum',            nisn: '2234567806', kelas: 'III-A SD', password: 'Siswa3A002' },
+    { id: 'siswa_sd_4a_001',  username: 'siswa.sd4a.001',  name: 'Vino Pratama',          nisn: '2234567807', kelas: 'IV-A SD',  password: 'Siswa4A001' },
+    { id: 'siswa_sd_4a_002',  username: 'siswa.sd4a.002',  name: 'Wulan Sari',            nisn: '2234567808', kelas: 'IV-A SD',  password: 'Siswa4A002' },
+    { id: 'siswa_sd_5a_001',  username: 'siswa.sd5a.001',  name: 'Xena Maharani',         nisn: '2234567809', kelas: 'V-A SD',   password: 'Siswa5A001' },
+    { id: 'siswa_sd_5a_002',  username: 'siswa.sd5a.002',  name: 'Yoga Santoso',          nisn: '2234567810', kelas: 'V-A SD',   password: 'Siswa5A002' },
+    { id: 'siswa_sd_6a_001',  username: 'siswa.sd6a.001',  name: 'Zahra Aulia',           nisn: '2234567811', kelas: 'VI-A SD',  password: 'Siswa6A001' },
+    { id: 'siswa_sd_6a_002',  username: 'siswa.sd6a.002',  name: 'Aldi Firmansyah',       nisn: '2234567812', kelas: 'VI-A SD',  password: 'Siswa6A002' },
+  ];
+
+  const allStudents: User[] = [...smpStudents, ...sdStudents].map((s) => {
+    const pass = hashPassword(s.password);
+    return {
+      id: s.id,
+      username: s.username,
+      name: s.name,
+      role: 'siswa' as UserRole,
+      nisn: s.nisn,
+      kelas: s.kelas,
+      initialPassword: s.password,
+      passwordHash: pass.hash,
+      salt: pass.salt,
+      mustChangePassword: false, // Siswa TIDAK dipaksa ganti password
+      isActive: true,
+      qrToken: generateQrToken(s.id, s.username),
+      createdAt: now,
+      updatedAt: now,
+    };
+  });
+
   return {
-    users: [adminUser, ...staffUsers, guru1, guru2],
+    users: [adminUser, ...staffUsers, guru1, guru2, ...allStudents],
     subjects: [],
     books: [],
     announcements: [],
@@ -308,162 +340,6 @@ export function getInitialData(): DatabaseSchema {
     stories: [],
     notes: [],
     notifications: [],
-    articles: [
-      {
-        id: 'art_1',
-        authorId: 'user_staff_guru_matematika',
-        authorName: 'Budi Santoso, S.Pd.',
-        authorSubject: 'Matematika Peminatan',
-        title: 'Strategi Efektif Menyelesaikan Soal Penalaran Matematika',
-        summary: 'Metode berpikir terstruktur untuk menaklukkan soal-soal matematika tingkat lanjut dengan cepat dan tepat.',
-        content: `Matematika bukan sekadar menghafal rumus, melainkan melatih logika berpikir sistematis. 
-
-1. Pahami Konsep Dasar: Jangan terburu-buru menghafal rumus cepat sebelum memahami dari mana rumus itu berasal.
-2. Identifikasi Pola: Sebagian besar soal rumit sebenarnya merupakan gabungan dari 2-3 pola sederhana.
-3. Buat Sketsa atau Diagram: Visualisasi sangat membantu menemukan solusi ketika logika abstrak menemui jalan buntu.
-4. Latihan Teratur: Dedikasikan 30 menit setiap hari untuk 5 soal menantang daripada belajar semalaman sebelum ujian.
-
-Semoga bermanfaat untuk siswa-siswi Tamansiswa Batam! Tetap semangat belajar.`,
-        category: 'Artikel Guru',
-        isPublished: true,
-        likesCount: 14,
-        readsCount: 128,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: 'art_2',
-        authorId: 'user_staff_guru_bahasa',
-        authorName: 'Dra. Siti Rahmawati, M.Pd.',
-        authorSubject: 'Bahasa Indonesia',
-        title: 'Metode Pembelajaran Active Recall & Spaced Repetition',
-        summary: 'Teknik belajar berbasis sains otak modern untuk mengingat materi pelajaran jangka panjang tanpa mudah lupa.',
-        content: `Sering merasa sudah belajar semalaman tapi lupa saat ujian? Itu adalah efek kurva lupa (forgetting curve).
-
-Teknik Mengatasi Kurva Lupa:
-1. Active Recall: Setelah membaca 1 bab, tutup buku dan tulis kembali inti sari materi dengan kata-kata sendiri.
-2. Spaced Repetition: Ulangi materi pada interval hari ke-1, hari ke-3, hari ke-7, dan hari ke-21.
-3. Jelaskan ke Teman: Cara terbaik menguji pemahaman adalah dengan menjelaskan konsep tersebut ke orang lain dengan bahasa sederhana.
-
-Cobalah metode ini dalam minggu ini dan rasakan perbedaannya dalam memahami materi!`,
-        category: 'Metode Pembelajaran',
-        isPublished: true,
-        likesCount: 22,
-        readsCount: 210,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ],
-    classAttendance: [],
-    tuitionBills: [
-      {
-        id: 'bill_1',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentUsername: 'bintang.siswa',
-        studentKelas: 'X TKJ 1',
-        title: 'SPP Bulan Oktober 2026',
-        category: 'SPP',
-        amount: 350000,
-        dueDate: '2026-10-31',
-        status: 'belum_lunas',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'bill_2',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentUsername: 'bintang.siswa',
-        studentKelas: 'X TKJ 1',
-        title: 'Iuran Praktik Kejuruan Semester Ganjil',
-        category: 'Lainnya',
-        amount: 150000,
-        dueDate: '2026-11-15',
-        status: 'lunas',
-        paidAt: '2026-10-15T09:30:00.000Z',
-        notes: 'Lunas via Loket TU Tamansiswa Batam',
-        createdAt: new Date().toISOString(),
-      },
-    ],
-    tuitionTransactions: [
-      {
-        id: 'trx_1',
-        billId: 'bill_2',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentKelas: 'X TKJ 1',
-        amount: 150000,
-        type: 'pemasukan',
-        category: 'Iuran Praktik Kejuruan',
-        paymentMethod: 'Tunai / Kasir TU',
-        verifiedBy: 'Staf Tata Usaha',
-        verifiedAt: '2026-10-15T09:30:00.000Z',
-        receiptNumber: 'KW-2026-1001',
-        description: 'Pembayaran Iuran Praktik Kejuruan Semester Ganjil',
-      },
-    ],
-    tuDocuments: [
-      {
-        id: 'doc_1',
-        title: 'Surat Keterangan Siswa Aktif - Bintang Pratama',
-        docNumber: '421.3/TS-BTM/TU/X/2026',
-        category: 'Surat Keterangan Siswa',
-        date: '2026-10-18',
-        recipientOrSender: 'Bintang Pratama (X TKJ 1)',
-        status: 'Selesai',
-        notes: 'Keperluan pengajuan beasiswa prestasi',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'doc_2',
-        title: 'Surat Undangan Rapat Komite Sekolah & Orang Tua',
-        docNumber: '005/TS-BTM/KOMITE/X/2026',
-        category: 'Surat Keluar',
-        date: '2026-10-25',
-        recipientOrSender: 'Seluruh Orang Tua / Wali Siswa',
-        status: 'Arsip',
-        notes: 'Rapat semester ganjil tahun ajaran 2026/2027',
-        createdAt: new Date().toISOString(),
-      },
-    ],
-    tuChatMessages: [
-      {
-        id: 'msg_1',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentKelas: 'X TKJ 1',
-        senderRole: 'tata_usaha',
-        senderName: 'Layanan Tata Usaha TAMVESTA',
-        message: 'Halo Bintang Pratama! Tagihan SPP bulan Oktober 2026 sebesar Rp 350.000 telah diterbitkan. Pembayaran dapat dilakukan via kasir TU atau transfer bank.',
-        createdAt: '2026-10-10T08:00:00.000Z',
-        isReadByStudent: true,
-        isReadByTu: true,
-      },
-      {
-        id: 'msg_2',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentKelas: 'X TKJ 1',
-        senderRole: 'siswa',
-        senderName: 'Bintang Pratama',
-        message: 'Baik Pak/Bu, terima kasih informasinya. Apakah pembayaran bisa melalui kasir TU pada jam istirahat pertama?',
-        createdAt: '2026-10-10T09:15:00.000Z',
-        isReadByStudent: true,
-        isReadByTu: true,
-      },
-      {
-        id: 'msg_3',
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentKelas: 'X TKJ 1',
-        senderRole: 'tata_usaha',
-        senderName: 'Layanan Tata Usaha TAMVESTA',
-        message: 'Bisa Bintang, loket TU buka setiap hari kerja pukul 07.30 - 15.00 WIB termasuk saat jam istirahat. Ditunggu ya!',
-        createdAt: '2026-10-10T09:20:00.000Z',
-        isReadByStudent: true,
-        isReadByTu: true,
-      },
-    ],
   };
 }
 
@@ -479,12 +355,6 @@ class DatabaseManager {
     try {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
-      }
-
-      if (process.env.VERCEL && !fs.existsSync(DATA_FILE) && fs.existsSync(DEFAULT_DATA_FILE)) {
-        try {
-          fs.copyFileSync(DEFAULT_DATA_FILE, DATA_FILE);
-        } catch (_) {}
       }
 
       if (fs.existsSync(DATA_FILE)) {
@@ -543,6 +413,25 @@ class DatabaseManager {
           });
         }
 
+        // Pastikan semua akun siswa demo SMP & SD ada di database
+        const initial = getInitialData();
+        const demoStudents = initial.users.filter(u => u.role === 'siswa');
+        demoStudents.forEach((student) => {
+          const existing = parsed.users.find((u: User) => u.username === student.username);
+          if (!existing) {
+            parsed.users.push(student);
+          } else {
+            // Refresh password & data jika akun sudah ada
+            existing.passwordHash = student.passwordHash;
+            existing.salt = student.salt;
+            existing.initialPassword = student.initialPassword;
+            existing.kelas = student.kelas;
+            existing.nisn = student.nisn;
+            existing.mustChangePassword = false;
+            existing.isActive = true;
+          }
+        });
+
         this.saveDataDirect(parsed);
 
         return {
@@ -559,12 +448,6 @@ class DatabaseManager {
           stories: parsed.stories || [],
           notes: parsed.notes || [],
           notifications: parsed.notifications || [],
-          articles: parsed.articles || [],
-          classAttendance: parsed.classAttendance || [],
-          tuitionBills: parsed.tuitionBills || [],
-          tuitionTransactions: parsed.tuitionTransactions || [],
-          tuDocuments: parsed.tuDocuments || [],
-          tuChatMessages: parsed.tuChatMessages || [],
         };
       }
     } catch (err) {
@@ -592,54 +475,12 @@ class DatabaseManager {
     this.save();
   }
 
-  private async syncToGitHub(dataToSave: DatabaseSchema) {
-    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-    if (!token) return;
-
-    try {
-      const url = 'https://api.github.com/repos/kimmyounit/tamvestaa/contents/data/tamvesta-data.json';
-      const getRes = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'User-Agent': 'TAMVESTA-Cloud-Sync',
-          Accept: 'application/vnd.github.v3+json',
-        },
-      });
-      let sha = '';
-      if (getRes.ok) {
-        const getJson: any = await getRes.json();
-        sha = getJson.sha;
-      }
-
-      const content = Buffer.from(JSON.stringify(dataToSave, null, 2)).toString('base64');
-      await fetch(url, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'User-Agent': 'TAMVESTA-Cloud-Sync',
-          Accept: 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: 'Sync TAMVESTA cloud database [skip ci]',
-          content,
-          sha: sha || undefined,
-        }),
-      });
-    } catch (err) {
-      console.warn('[Cloud Sync] Failed to sync to GitHub:', err);
-    }
-  }
-
   private saveDataDirect(dataToSave: DatabaseSchema) {
     try {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
       fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf-8');
-      if (process.env.VERCEL) {
-        this.syncToGitHub(dataToSave).catch(() => {});
-      }
     } catch (err) {
       console.error('[DB] Failed to save database file:', err);
     }
@@ -736,8 +577,6 @@ class DatabaseManager {
       role: 'siswa',
       nisn: userData.nisn?.trim() || `006${Math.floor(1000000 + Math.random() * 9000000)}`,
       kelas: userData.kelas?.trim() || 'X Tamansiswa',
-      initialPassword: userData.password,
-      password: userData.password,
       passwordHash: pass.hash,
       salt: pass.salt,
       mustChangePassword: true, // Wajib ganti password pada login pertama
@@ -1469,18 +1308,12 @@ class DatabaseManager {
     return post;
   }
 
-  updateUserProfile(userId: string, data: { bio?: string; avatarUrl?: string; phone?: string; email?: string }): User | null {
+  updateUserProfile(userId: string, data: { bio?: string; avatarUrl?: string }): User | null {
     const user = this.data.users.find((u) => u.id === userId);
     if (!user) return null;
 
     if (data.bio !== undefined) {
       user.bio = data.bio.trim().substring(0, 300);
-    }
-    if (data.phone !== undefined) {
-      user.phone = data.phone.trim();
-    }
-    if (data.email !== undefined) {
-      user.email = data.email.trim();
     }
     if (data.avatarUrl !== undefined) {
       user.avatarUrl = data.avatarUrl;
@@ -1815,312 +1648,6 @@ class DatabaseManager {
     this.data.notifications.unshift(newNotif);
     this.save();
     return newNotif;
-  }
-
-  // -------------------------------------------------------------
-  // ARTIKEL GURU & METODE PEMBELAJARAN
-  // -------------------------------------------------------------
-  getArticles(category?: string, onlyPublished?: boolean): TeacherArticle[] {
-    if (!Array.isArray(this.data.articles)) this.data.articles = [];
-    let list = [...this.data.articles];
-    if (category) {
-      list = list.filter((a) => a.category === category);
-    }
-    if (onlyPublished) {
-      list = list.filter((a) => a.isPublished);
-    }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  getArticleById(id: string): TeacherArticle | null {
-    if (!Array.isArray(this.data.articles)) this.data.articles = [];
-    return this.data.articles.find((a) => a.id === id) || null;
-  }
-
-  createArticle(data: Partial<TeacherArticle>): TeacherArticle {
-    if (!Array.isArray(this.data.articles)) this.data.articles = [];
-    const newArt: TeacherArticle = {
-      id: `art_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      authorId: data.authorId || 'user_guru',
-      authorName: data.authorName || 'Guru Tamansiswa',
-      authorAvatar: data.authorAvatar,
-      authorSubject: data.authorSubject || 'Mata Pelajaran',
-      title: (data.title || '').trim(),
-      summary: (data.summary || '').trim(),
-      content: (data.content || '').trim(),
-      category: data.category === 'Metode Pembelajaran' ? 'Metode Pembelajaran' : 'Artikel Guru',
-      coverUrl: data.coverUrl,
-      isPublished: data.isPublished !== undefined ? data.isPublished : true,
-      likesCount: 0,
-      readsCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    this.data.articles.unshift(newArt);
-    this.save();
-    return newArt;
-  }
-
-  updateArticle(id: string, data: Partial<TeacherArticle>): TeacherArticle {
-    if (!Array.isArray(this.data.articles)) this.data.articles = [];
-    const art = this.data.articles.find((a) => a.id === id);
-    if (!art) throw new Error('Artikel tidak ditemukan');
-
-    if (data.title !== undefined) art.title = data.title.trim();
-    if (data.summary !== undefined) art.summary = data.summary.trim();
-    if (data.content !== undefined) art.content = data.content.trim();
-    if (data.category !== undefined) art.category = data.category;
-    if (data.coverUrl !== undefined) art.coverUrl = data.coverUrl;
-    if (data.isPublished !== undefined) art.isPublished = data.isPublished;
-    art.updatedAt = new Date().toISOString();
-
-    this.save();
-    return art;
-  }
-
-  deleteArticle(id: string): boolean {
-    if (!Array.isArray(this.data.articles)) return false;
-    this.data.articles = this.data.articles.filter((a) => a.id !== id);
-    this.save();
-    return true;
-  }
-
-  // -------------------------------------------------------------
-  // ABSENSI GURU KELAS (QR CODE & MANUAL)
-  // -------------------------------------------------------------
-  recordClassAttendance(entries: ClassAttendanceEntry[]): ClassAttendanceEntry[] {
-    if (!Array.isArray(this.data.classAttendance)) this.data.classAttendance = [];
-    entries.forEach((e) => {
-      const existingIdx = this.data.classAttendance.findIndex(
-        (item) => item.studentId === e.studentId && item.date === e.date && item.kelas === e.kelas
-      );
-      if (existingIdx > -1) {
-        this.data.classAttendance[existingIdx] = { ...this.data.classAttendance[existingIdx], ...e };
-      } else {
-        this.data.classAttendance.push(e);
-      }
-    });
-    this.save();
-    return entries;
-  }
-
-  getClassAttendance(filters: { date?: string; kelas?: string; studentId?: string; status?: string }): ClassAttendanceEntry[] {
-    if (!Array.isArray(this.data.classAttendance)) this.data.classAttendance = [];
-    let list = [...this.data.classAttendance];
-    if (filters.date) list = list.filter((a) => a.date === filters.date);
-    if (filters.kelas) list = list.filter((a) => (a.kelas || a.studentKelas || '').toLowerCase() === filters.kelas!.toLowerCase());
-    if (filters.studentId) list = list.filter((a) => a.studentId === filters.studentId);
-    if (filters.status && filters.status !== 'semua') list = list.filter((a) => a.status === filters.status);
-    return list;
-  }
-
-  // -------------------------------------------------------------
-  // TATA USAHA (TU) - TAGIHAN, TRANSAKSI, DOKUMEN & CHAT
-  // -------------------------------------------------------------
-  getTuitionBills(studentId?: string, kelas?: string, status?: string): TuitionBill[] {
-    if (!Array.isArray(this.data.tuitionBills)) this.data.tuitionBills = [];
-    let list = [...this.data.tuitionBills];
-    if (studentId) list = list.filter((b) => b.studentId === studentId);
-    if (kelas) list = list.filter((b) => b.studentKelas.toLowerCase() === kelas.toLowerCase());
-    if (status && status !== 'semua') list = list.filter((b) => b.status === status);
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  createTuitionBill(data: Partial<TuitionBill>): TuitionBill {
-    if (!Array.isArray(this.data.tuitionBills)) this.data.tuitionBills = [];
-    const bill: TuitionBill = {
-      id: `bill_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      studentId: data.studentId || '',
-      studentName: data.studentName || '',
-      studentUsername: data.studentUsername || '',
-      studentKelas: data.studentKelas || 'X',
-      title: data.title || 'Tagihan Biaya Sekolah',
-      category: data.category || 'SPP',
-      amount: Number(data.amount) || 0,
-      dueDate: data.dueDate || new Date().toISOString().split('T')[0],
-      status: data.status || 'belum_lunas',
-      notes: data.notes,
-      createdAt: new Date().toISOString(),
-    };
-    this.data.tuitionBills.unshift(bill);
-    this.save();
-    return bill;
-  }
-
-  updateTuitionBill(id: string, data: Partial<TuitionBill>): TuitionBill {
-    if (!Array.isArray(this.data.tuitionBills)) this.data.tuitionBills = [];
-    const bill = this.data.tuitionBills.find((b) => b.id === id);
-    if (!bill) throw new Error('Tagihan tidak ditemukan');
-    Object.assign(bill, data);
-    this.save();
-    return bill;
-  }
-
-  deleteTuitionBill(id: string): boolean {
-    if (!Array.isArray(this.data.tuitionBills)) return false;
-    this.data.tuitionBills = this.data.tuitionBills.filter((b) => b.id !== id);
-    this.save();
-    return true;
-  }
-
-  getTuitionTransactions(type?: string): TuitionTransaction[] {
-    if (!Array.isArray(this.data.tuitionTransactions)) this.data.tuitionTransactions = [];
-    let list = [...this.data.tuitionTransactions];
-    if (type && type !== 'semua') list = list.filter((t) => t.type === type);
-    return list.sort((a, b) => new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime());
-  }
-
-  createTuitionTransaction(data: Partial<TuitionTransaction>): TuitionTransaction {
-    if (!Array.isArray(this.data.tuitionTransactions)) this.data.tuitionTransactions = [];
-    const trx: TuitionTransaction = {
-      id: `trx_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      billId: data.billId,
-      studentId: data.studentId,
-      studentName: data.studentName,
-      studentKelas: data.studentKelas,
-      amount: Number(data.amount) || 0,
-      type: data.type || 'pemasukan',
-      category: data.category || 'SPP',
-      paymentMethod: data.paymentMethod || 'Tunai / Kasir TU',
-      verifiedBy: data.verifiedBy || 'Staf Tata Usaha',
-      verifiedAt: new Date().toISOString(),
-      receiptNumber: data.receiptNumber || `KW-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      description: data.description || 'Transaksi keuangan sekolah',
-    };
-    this.data.tuitionTransactions.unshift(trx);
-    this.save();
-    return trx;
-  }
-
-  getTuDocuments(category?: string): TuDocument[] {
-    if (!Array.isArray(this.data.tuDocuments)) this.data.tuDocuments = [];
-    let list = [...this.data.tuDocuments];
-    if (category && category !== 'semua') list = list.filter((d) => d.category === category);
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  createTuDocument(data: Partial<TuDocument>): TuDocument {
-    if (!Array.isArray(this.data.tuDocuments)) this.data.tuDocuments = [];
-    const doc: TuDocument = {
-      id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      title: data.title || '',
-      docNumber: data.docNumber || `${Math.floor(100 + Math.random() * 900)}/TS-BTM/TU/${new Date().getFullYear()}`,
-      category: data.category || 'Surat Keluar',
-      date: data.date || new Date().toISOString().split('T')[0],
-      recipientOrSender: data.recipientOrSender || 'Umum',
-      fileUrl: data.fileUrl,
-      status: data.status || 'Selesai',
-      notes: data.notes,
-      createdAt: new Date().toISOString(),
-    };
-    this.data.tuDocuments.unshift(doc);
-    this.save();
-    return doc;
-  }
-
-  deleteTuDocument(id: string): boolean {
-    if (!Array.isArray(this.data.tuDocuments)) return false;
-    this.data.tuDocuments = this.data.tuDocuments.filter((d) => d.id !== id);
-    this.save();
-    return true;
-  }
-
-  getTuChatMessages(studentId?: string): TuChatMessage[] {
-    if (!Array.isArray(this.data.tuChatMessages)) this.data.tuChatMessages = [];
-    let list = [...this.data.tuChatMessages];
-    if (studentId) list = list.filter((m) => m.studentId === studentId);
-    return list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }
-
-  createTuChatMessage(data: Partial<TuChatMessage>): TuChatMessage {
-    if (!Array.isArray(this.data.tuChatMessages)) this.data.tuChatMessages = [];
-    const msg: TuChatMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      studentId: data.studentId || '',
-      studentName: data.studentName || 'Siswa',
-      studentKelas: data.studentKelas,
-      senderRole: data.senderRole || 'siswa',
-      senderName: data.senderName || 'Pengguna',
-      message: (data.message || '').trim(),
-      proofUrl: data.proofUrl,
-      billId: data.billId,
-      createdAt: new Date().toISOString(),
-      isReadByTu: data.senderRole === 'tata_usaha',
-      isReadByStudent: data.senderRole === 'siswa',
-    };
-    this.data.tuChatMessages.push(msg);
-    this.save();
-    return msg;
-  }
-
-  // -------------------------------------------------------------
-  // MANAJEMEN PENGGUNA (GURU, ALUMNI & CENTANG BIRU)
-  // -------------------------------------------------------------
-  createTeacherAccount(data: { name: string; username: string; password?: string; jabatan?: string; email?: string; phone?: string }): User {
-    const existing = this.data.users.find((u) => u.username.toLowerCase() === data.username.toLowerCase());
-    if (existing) throw new Error('Username guru sudah digunakan.');
-
-    const initialPassword = data.password || 'GuruTamvesta123';
-    const pass = hashPassword(initialPassword);
-    const newTeacher: User = {
-      id: `user_teacher_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      username: data.username.trim().toLowerCase(),
-      name: data.name.trim(),
-      role: 'guru',
-      jabatan: data.jabatan || 'Guru Mata Pelajaran',
-      initialPassword,
-      passwordHash: pass.hash,
-      salt: pass.salt,
-      mustChangePassword: false,
-      isActive: true,
-      isVerified: true, // Guru otomatis terverifikasi
-      email: data.email,
-      phone: data.phone,
-      qrToken: generateQrToken(data.username, data.name),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    this.data.users.unshift(newTeacher);
-    this.save();
-    return newTeacher;
-  }
-
-  updateTeacherAccount(id: string, data: Partial<User>): User {
-    const teacher = this.data.users.find((u) => u.id === id);
-    if (!teacher) throw new Error('Akun guru tidak ditemukan.');
-    if (data.name) teacher.name = data.name.trim();
-    if (data.jabatan) teacher.jabatan = data.jabatan.trim();
-    if (data.email !== undefined) teacher.email = data.email;
-    if (data.phone !== undefined) teacher.phone = data.phone;
-    if (data.isActive !== undefined) teacher.isActive = data.isActive;
-    if (data.isVerified !== undefined) teacher.isVerified = data.isVerified;
-    teacher.updatedAt = new Date().toISOString();
-    this.save();
-    return teacher;
-  }
-
-  deleteTeacherAccount(id: string): boolean {
-    const idx = this.data.users.findIndex((u) => u.id === id);
-    if (idx === -1) return false;
-    this.data.users.splice(idx, 1);
-    this.save();
-    return true;
-  }
-
-  toggleVerifiedBadge(userId: string): { isVerified: boolean } {
-    const user = this.data.users.find((u) => u.id === userId);
-    if (!user) throw new Error('Pengguna tidak ditemukan.');
-    user.isVerified = !user.isVerified;
-    this.save();
-    return { isVerified: user.isVerified };
-  }
-
-  toggleAlumniStatus(studentId: string): { isAlumni: boolean } {
-    const student = this.data.users.find((u) => u.id === studentId);
-    if (!student) throw new Error('Siswa tidak ditemukan.');
-    student.isAlumni = !student.isAlumni;
-    this.save();
-    return { isAlumni: student.isAlumni };
   }
 }
 
