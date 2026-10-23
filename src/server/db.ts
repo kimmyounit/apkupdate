@@ -1965,6 +1965,14 @@ class DatabaseManager {
     return teacher;
   }
 
+  deleteStudentAccount(id: string): boolean {
+    const idx = this.data.users.findIndex((u) => u.id === id && u.role === 'siswa');
+    if (idx === -1) return false;
+    this.data.users.splice(idx, 1);
+    this.save();
+    return true;
+  }
+
   deleteTeacherAccount(id: string): boolean {
     const idx = this.data.users.findIndex((u) => u.id === id);
     if (idx === -1) return false;

@@ -233,6 +233,14 @@ app.patch('/api/admin/students/:id/toggle-active', authMiddleware, requireRole([
   });
 });
 
+// DELETE /api/admin/students/:id
+app.delete('/api/admin/students/:id', authMiddleware, requireRole(['admin']), (req, res) => {
+  const { id } = req.params;
+  const ok = db.deleteStudentAccount(id);
+  if (!ok) return res.status(404).json({ error: 'Siswa tidak ditemukan.' });
+  return res.json({ message: 'Akun siswa berhasil dihapus.' });
+});
+
 // POST /api/admin/students/:id/reset-password
 app.post('/api/admin/students/:id/reset-password', authMiddleware, requireRole(['admin']), (req, res) => {
   const { id } = req.params;
