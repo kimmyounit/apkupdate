@@ -67,6 +67,22 @@ function loadDB(): StandaloneDB {
     });
   }
 
+  // Bersihkan semua akun contoh/demo siswa bawaan agar database bersih hanya akun yang didaftarkan admin
+  if (Array.isArray(db.users)) {
+    db.users = db.users.filter((u) => {
+      if (u.role !== 'siswa') return true;
+      const lower = u.username.toLowerCase();
+      const isDemo =
+        lower.startsWith('siswa.smp') ||
+        lower.startsWith('siswa.sd') ||
+        lower === 'alvaro1234' ||
+        lower === 'itskimzz' ||
+        lower === 'tamansiswa1' ||
+        lower === 'bintang.siswa';
+      return !isDemo;
+    });
+  }
+
   saveDB(db);
   return db;
 }
