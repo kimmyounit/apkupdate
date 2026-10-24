@@ -183,7 +183,7 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
                   Pusat Komando & Pengawasan Sekolah
                 </h1>
                 <p className="text-xs sm:text-sm text-purple-200/90 max-w-2xl leading-relaxed">
-                  Selamat datang, <strong>{user?.name || 'Kepala Sekolah'}</strong> (ST Bambang Sapto Nugroho S.Pd). Pantau performa akademik, kehadiran harian siswa, tata kelola akun guru, dan rekapitulasi operasional Perguruan Tamansiswa Batam.
+                  Selamat datang, <strong>{user?.name || 'Kepala Sekolah SMP'}</strong> (ST Bambang Sapto Nugroho S.Pd - Kepala Sekolah SMP). Pantau performa akademik, kehadiran harian siswa, tata kelola akun guru, dan rekapitulasi operasional Perguruan Tamansiswa Batam.
                 </p>
               </>
             )}
@@ -790,7 +790,7 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
 
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200">
-                        Ditujukan: Titus Wahyu Diatmiko & Kepala Sekolah
+                        Ditujukan: Titus Wahyu Diatmiko, Kepala Sekolah SMP, & Kepala Sekolah SD
                       </span>
                     </div>
                   </div>
@@ -836,7 +836,7 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
                       ID Arsip: <span className="font-mono text-slate-600">{rep.id}</span>
                     </div>
                     <div className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl">
-                      ✓ Disahkan Pemimpin Perguruan & Kepala Sekolah
+                      ✓ Disahkan Pemimpin Perguruan & Para Kepala Sekolah
                     </div>
                   </div>
                 </div>

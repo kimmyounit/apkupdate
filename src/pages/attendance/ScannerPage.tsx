@@ -67,6 +67,7 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
 
   // Scanner states
   const [isScanning, setIsScanning] = useState(false);
+  const [showCameraConfirmModal, setShowCameraConfirmModal] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [lastScanResult, setLastScanResult] = useState<ScanResultPayload | null>(null);
   const [manualCode, setManualCode] = useState('');
@@ -509,7 +510,7 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
               </div>
 
               <button
-                onClick={isScanning ? stopCameraScanner : startCameraScanner}
+                onClick={isScanning ? stopCameraScanner : () => setShowCameraConfirmModal(true)}
                 disabled={!selectedEvent?.isOpen && !isScanning}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition active:scale-95 ${
                   isScanning
@@ -548,7 +549,7 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
                   <div>
                     <p className="font-bold text-sm">Kamera Belum Aktif</p>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Klik "Mulai Pemindaian" untuk menyalakan kamera laptop
+                      Klik "Mulai Pemindaian" untuk meminta izin dan menyalakan kamera laptop
                     </p>
                   </div>
                 </div>
@@ -673,6 +674,49 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
           </div>
         </div>
       </div>
+    
+      {/* Modal Konfirmasi Hidupkan Kamera */}
+      {showCameraConfirmModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-in zoom-in-95">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+              <Camera className="w-7 h-7" />
+            </div>
+
+            <div className="text-center space-y-1.5">
+              <h3 className="text-lg font-black text-slate-900">Hidupkan Kamera?</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                TAMVESTA memerlukan izin untuk mengakses kamera webcam perangkat Anda untuk memindai QR Code kehadiran siswa secara langsung.
+              </p>
+            </div>
+
+            <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-[11px] text-emerald-800 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Kamera hanya aktif selama sesi pemindaian dan dapat dinonaktifkan kapan saja.</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowCameraConfirmModal(false)}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCameraConfirmModal(false);
+                  startCameraScanner();
+                }}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md active:scale-95"
+              >
+                Izinkan & Hidupkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

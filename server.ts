@@ -63,9 +63,13 @@ app.get('/api/users/public-sync', (_req, res) => {
         const { passwordHash, salt, ...safe } = u;
         return safe;
       });
-    return res.json({ users: safeUsers, count: safeUsers.length });
+    const tickets = db.getPasswordResetRequests() || [];
+    const safeTickets = tickets.map(({ newPasswordHash, newSalt, newPassword, ...rest }: any) => rest);
+    return res.json({ users: safeUsers, count: safeUsers.length, passwordResetRequests: safeTickets });
   } catch (err) {
     return res.status(500).json({ error: 'Gagal mengambil data users' });
+  }
+});
   }
 });
 
@@ -238,7 +242,11 @@ app.post('/api/auth/password-reset-request', authMiddleware, (req: Authenticated
 // GET /api/student/tickets (Riwayat tiket siswa sendiri)
 app.get('/api/student/tickets', authMiddleware, (req: AuthenticatedRequest, res) => {
   const all = db.getPasswordResetRequests();
-  const mine = all.filter((r) => r.userId === req.user!.id);
+  const currentUserId = req.user!.id;
+  const currentUsername = (req.user!.username || '').toLowerCase();
+  const mine = all.filter(
+    (r) => r.userId === currentUserId || (r.username && r.username.toLowerCase() === currentUsername)
+  );
   const safe = mine.map(({ newPasswordHash, newSalt, newPassword, ...rest }: any) => rest);
   return res.json(safe);
 });
@@ -293,6 +301,20 @@ app.post('/api/admin/sync-local-users', authMiddleware, (req, res) => {
 });
 
 // POST /api/admin/students (Pendaftaran Akun Siswa oleh Admin)
+// POST /api/admin/sync-local-tickets (Sinkronisasi tiket sandi antar perangkat)
+app.post('/api/admin/sync-local-tickets', authMiddleware, (req, res) => {
+  try {
+    const { tickets } = req.body;
+    if (Array.isArray(tickets) && tickets.length > 0) {
+      const result = db.syncMultipleTickets(tickets);
+      return res.json({ success: true, message: 'Sinkronisasi tiket antar perangkat berhasil', ...result });
+    }
+    return res.json({ success: true, message: 'Tidak ada tiket untuk disinkronkan' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Gagal sinkronisasi data tiket' });
+  }
+});
+
 app.post('/api/admin/students', authMiddleware, requireRole(['admin']), (req, res) => {
   const { name, username, password, gender, kelas, nisn } = req.body;
   const result = db.createStudent({ name, username, password, gender, kelas });

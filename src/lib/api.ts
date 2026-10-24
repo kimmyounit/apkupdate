@@ -210,6 +210,9 @@ export const api = {
         const syncRes = await tryServerRequest<{ users: User[] }>('/api/users/public-sync');
         if (Array.isArray(syncRes?.users) && syncRes.users.length > 0) {
           offlineStore.mergeUsersFromServer(syncRes.users);
+          if (Array.isArray((syncRes as any).passwordResetRequests)) {
+            (syncRes as any).passwordResetRequests.forEach((t: any) => offlineStore.saveTicketDirect(t));
+          }
           // Coba login lagi setelah merge
           try {
             const res2 = offlineStore.login(cleanCredentials);
@@ -306,11 +309,33 @@ export const api = {
   },
 
   getStudentTickets: async () => {
+    const user = offlineStore.getCurrentUser();
+    const local = user ? offlineStore.getStudentTickets(user.id) : [];
     try {
-      return await tryServerRequest<PasswordResetRequest[]>('/api/student/tickets');
+      const serverTickets = await tryServerRequest<PasswordResetRequest[]>('/api/student/tickets');
+      if (Array.isArray(serverTickets)) {
+        serverTickets.forEach((t) => offlineStore.saveTicketDirect(t));
+      }
+      const map = new Map<string, PasswordResetRequest>();
+      local.forEach((t) => map.set(t.id, t));
+      if (Array.isArray(serverTickets)) {
+        serverTickets.forEach((t) => map.set(t.id, t));
+      }
+      // Sync any local tickets (e.g. offline rejections) to server
+    try {
+      if (localRequests.length > 0) {
+        tryServerRequest('/api/admin/sync-local-tickets', {
+          method: 'POST',
+          body: JSON.stringify({ tickets: localRequests }),
+        }).catch(() => {});
+      }
+    } catch (_) {}
+
+    return Array.from(map.values()).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     } catch (_) {
-      const user = offlineStore.getCurrentUser();
-      return user ? offlineStore.getStudentTickets(user.id) : [];
+      return local;
     }
   },
 

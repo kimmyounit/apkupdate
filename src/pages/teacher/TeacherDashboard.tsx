@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+import * as XLSX from 'xlsx';
 import React, { useState, useEffect } from 'react';
 import {
   HelpCircle,
@@ -31,7 +33,13 @@ import {
   UserX,
   FileText,
   Filter,
-} from 'lucide-react';
+  QrCode,
+  Download,
+  Upload,
+  FileSpreadsheet,
+  Printer,
+  Paperclip,
+  FolderDown} from 'lucide-react';
 import { api } from '../../lib/api.ts';
 import type {
   Quiz,
@@ -120,8 +128,26 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   const [globalSuccess, setGlobalSuccess] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
 
-  // Available classes list
-  const classList = [
+  // Comprehensive classes list for SD, SMP, and SMK
+  const defaultClassList = [
+    // SD (Sekolah Dasar)
+    'Kelas 1 SD',
+    'Kelas 2 SD',
+    'Kelas 3 SD',
+    'Kelas 4 SD',
+    'Kelas 5 SD',
+    'Kelas 6 SD',
+    // SMP (Sekolah Menengah Pertama)
+    'VII-A SMP',
+    'VII-B SMP',
+    'VIII-A SMP',
+    'VIII-B SMP',
+    'IX-A SMP',
+    'IX-B SMP',
+    'Kelas 7 SMP',
+    'Kelas 8 SMP',
+    'Kelas 9 SMP',
+    // SMK (Sekolah Menengah Kejuruan)
     'X TKJ 1',
     'X TKJ 2',
     'X RPL 1',
@@ -135,6 +161,28 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     'XII RPL 1',
     'XII RPL 2',
   ];
+
+  // Dynamic classList combining presets and actual student data
+  const classList = Array.from(
+    new Set([
+      ...defaultClassList,
+      ...(allStudents || []).map((s) => s.kelas).filter(Boolean) as string[],
+    ])
+  );
+
+  // Custom class input & attendance state
+  const [customKelasInput, setCustomKelasInput] = useState('');
+  const [showAddCustomClass, setShowAddCustomClass] = useState(false);
+  const [selectedStudentForQr, setSelectedStudentForQr] = useState<User | null>(null);
+  const [qrModalDataUrl, setQrModalDataUrl] = useState<string>('');
+  const [attachedAttendanceFile, setAttachedAttendanceFile] = useState<{
+    name: string;
+    size: string;
+    dataUrl: string;
+    uploadedAt: string;
+  } | null>(null);
+  const [lastBackupTime, setLastBackupTime] = useState<string | null>(null);
+  const [autoBackupMessage, setAutoBackupMessage] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -423,7 +471,12 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   // ===================== ATTENDANCE HANDLERS =====================
   // Filter students by selected class
   const classStudents = allStudents.filter(
-    (stu) => (stu.kelas || '').toLowerCase() === selectedKelas.toLowerCase() && !stu.isAlumni
+    (stu) => {
+      if (stu.isAlumni) return false;
+      const k = (stu.kelas || '').trim().toLowerCase();
+      const sel = selectedKelas.trim().toLowerCase();
+      return k === sel || (sel.startsWith('kelas ') && k === sel.replace('kelas ', '')) || (k.startsWith('kelas ') && sel === k.replace('kelas ', ''));
+    }
   );
 
   const handleSetStudentStatus = (studentId: string, status: 'hadir' | 'izin' | 'sakit' | 'alpa') => {
@@ -469,13 +522,207 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
       });
 
       await api.recordClassAttendance(entries);
+
+      // Otomatis ke-backup di aplikasi (Local storage + Cloud)
+      try {
+        const backupKey = `tamvesta_backup_attendance_${selectedKelas}_${attendanceDate}`;
+        localStorage.setItem(backupKey, JSON.stringify({
+          kelas: selectedKelas,
+          date: attendanceDate,
+          entries,
+          attachedFile: attachedAttendanceFile,
+          savedAt: new Date().toISOString(),
+          savedBy: user?.name || 'Guru Pengampu',
+        }));
+      } catch (_) {}
+
+      const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      setLastBackupTime(timeStr);
       setAttendanceSuccess(`Absensi kelas ${selectedKelas} (${entries.length} siswa) berhasil disimpan!`);
+      setAutoBackupMessage(`✓ Otomatis ter-backup di aplikasi TAMVESTA (${timeStr} WIB)`);
+      setTimeout(() => setAutoBackupMessage(null), 6000);
       setTimeout(() => setAttendanceSuccess(null), 4000);
     } catch (err: any) {
       setGlobalError(err.message || 'Gagal menyimpan absensi kelas.');
       setTimeout(() => setGlobalError(null), 4000);
     } finally {
       setAttendanceSaving(false);
+    }
+  };
+
+  // Handle Upload / Lampiran File Absensi Fisik (Foto / Dokumen)
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      alert('Ukuran file maksimal 20MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const fileData = {
+        name: file.name,
+        size: (file.size / 1024).toFixed(1) + ' KB',
+        dataUrl: reader.result as string,
+        uploadedAt: new Date().toISOString(),
+      };
+      setAttachedAttendanceFile(fileData);
+      try {
+        localStorage.setItem(
+          `tamvesta_attendance_file_${selectedKelas}_${attendanceDate}`,
+          JSON.stringify(fileData)
+        );
+      } catch (_) {}
+      setAutoBackupMessage(`File absensi "${file.name}" berhasil dilampirkan & otomatis ter-backup di aplikasi.`);
+      setTimeout(() => setAutoBackupMessage(null), 6000);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Unduh File Absensi Excel (.xlsx)
+  const handleExportAttendanceExcel = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+      const stats = {
+        hadir: classStudents.filter((s) => (attendanceMap[s.id]?.status || 'hadir') === 'hadir').length,
+        izin: classStudents.filter((s) => attendanceMap[s.id]?.status === 'izin').length,
+        sakit: classStudents.filter((s) => attendanceMap[s.id]?.status === 'sakit').length,
+        alpa: classStudents.filter((s) => attendanceMap[s.id]?.status === 'alpa').length,
+      };
+
+      // Sheet 1: Rincian Siswa
+      const rows = classStudents.map((s, idx) => {
+        const cur = attendanceMap[s.id] || { status: 'hadir', notes: '' };
+        return {
+          'No': idx + 1,
+          'Nama Siswa': s.name,
+          'Username': s.username,
+          'NISN': s.nisn || '-',
+          'Kelas': s.kelas || selectedKelas,
+          'Status Kehadiran': cur.status.toUpperCase(),
+          'Keterangan': cur.notes || '-',
+          'Tanggal': attendanceDate,
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, 'Daftar Presensi');
+
+      // Sheet 2: Ringkasan
+      const summaryRows = [
+        { 'Parameter': 'Lembaga', 'Nilai': 'Perguruan Tamansiswa Batam' },
+        { 'Parameter': 'Kelas', 'Nilai': selectedKelas },
+        { 'Parameter': 'Tanggal Absensi', 'Nilai': attendanceDate },
+        { 'Parameter': 'Guru Pengampu', 'Nilai': user?.name || 'Guru' },
+        { 'Parameter': 'Total Siswa', 'Nilai': classStudents.length },
+        { 'Parameter': 'Jumlah Hadir', 'Nilai': stats.hadir },
+        { 'Parameter': 'Jumlah Izin', 'Nilai': stats.izin },
+        { 'Parameter': 'Jumlah Sakit', 'Nilai': stats.sakit },
+        { 'Parameter': 'Jumlah Alpa', 'Nilai': stats.alpa },
+        { 'Parameter': 'Status Backup', 'Nilai': 'Tersimpan & Terarsip Otomatis di TAMVESTA' },
+      ];
+      const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Ringkasan Kelas');
+
+      XLSX.writeFile(wb, `File_Absen_${selectedKelas.replace(/\s+/g, '_')}_${attendanceDate}.xlsx`);
+    } catch (err: any) {
+      alert('Gagal mengekspor Excel: ' + err.message);
+    }
+  };
+
+  // Unduh File Absensi Word (.doc)
+  const handleExportAttendanceWord = () => {
+    try {
+      const stats = {
+        hadir: classStudents.filter((s) => (attendanceMap[s.id]?.status || 'hadir') === 'hadir').length,
+        izin: classStudents.filter((s) => attendanceMap[s.id]?.status === 'izin').length,
+        sakit: classStudents.filter((s) => attendanceMap[s.id]?.status === 'sakit').length,
+        alpa: classStudents.filter((s) => attendanceMap[s.id]?.status === 'alpa').length,
+      };
+
+      const tableRows = classStudents
+        .map((s, idx) => {
+          const cur = attendanceMap[s.id] || { status: 'hadir', notes: '' };
+          return `<tr>
+            <td style="text-align:center;">${idx + 1}</td>
+            <td><strong>${s.name}</strong></td>
+            <td>${s.nisn || '-'}</td>
+            <td>${s.kelas || selectedKelas}</td>
+            <td style="text-align:center; font-weight:bold;">${cur.status.toUpperCase()}</td>
+            <td>${cur.notes || '-'}</td>
+          </tr>`;
+        })
+        .join('');
+
+      const docHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>Daftar Hadir Siswa - ${selectedKelas}</title>
+        <style>
+          body { font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.4; }
+          .kop { text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 16px; }
+          .kop h2 { margin: 0; font-size: 15pt; }
+          .kop p { margin: 2px 0; font-size: 9pt; }
+          .title { text-align: center; font-size: 13pt; font-weight: bold; text-decoration: underline; margin-bottom: 12px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10pt; }
+          th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .sign { width: 100%; margin-top: 30px; }
+          .sign td { border: none; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="kop">
+          <h2>YAYASAN PERGURUAN TAMANSISWA BATAM</h2>
+          <p>Daftar Presensi & Kehadiran Peserta Didik — TAMVESTA</p>
+          <p>Periode Tanggal: ${attendanceDate} | Kelas: ${selectedKelas}</p>
+        </div>
+        <div class="title">LEMBAR PRESENSI KEHADIRAN KELAS</div>
+        <p><strong>Total Siswa:</strong> ${classStudents.length} | <strong>Hadir:</strong> ${stats.hadir} | <strong>Izin:</strong> ${stats.izin} | <strong>Sakit:</strong> ${stats.sakit} | <strong>Alpa:</strong> ${stats.alpa}</p>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 30px; text-align:center;">No</th>
+              <th>Nama Siswa</th>
+              <th style="width: 90px;">NISN</th>
+              <th style="width: 80px;">Kelas</th>
+              <th style="width: 80px; text-align:center;">Status</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+        <table class="sign">
+          <tr>
+            <td>
+              <p>Mengetahui,</p>
+              <p><strong>Kepala Sekolah</strong></p>
+              <div style="height: 50px;"></div>
+              <p><u>( ......................................... )</u></p>
+            </td>
+            <td>
+              <p>Batam, ${attendanceDate}</p>
+              <p><strong>Guru Pengampu Mata Pelajaran</strong></p>
+              <div style="height: 50px;"></div>
+              <p><u>( ${user?.name || 'Guru Pengampu'} )</u></p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>`;
+
+      const blob = new Blob(['\ufeff' + docHtml], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `File_Absen_${selectedKelas.replace(/\s+/g, '_')}_${attendanceDate}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert('Gagal mengekspor Word: ' + err.message);
     }
   };
 
@@ -798,64 +1045,209 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
       {activeTab === 'attendance' && (
         <div className="space-y-6">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-5">
-            {/* Header filter kelas dan tanggal */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-              <div>
-                <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-                  <UserCheck className="w-5 h-5 text-indigo-700" />
-                  <span>Pencatatan Presensi & Absensi Siswa Per Kelas</span>
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Pilih kelas, tentukan status kehadiran (Hadir, Izin, Sakit, Alpa), dan simpan ke database sekolah
-                </p>
+            {/* Header filter kelas, file absen & tanggal */}
+            <div className="space-y-4 border-b border-slate-100 pb-5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+                    <UserCheck className="w-5 h-5 text-indigo-700" />
+                    <span>Pencatatan Presensi & Absensi Siswa Per Kelas</span>
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Pilih kelas (SD, SMP, SMK), lampirkan file absen, ekspor berkas, dan otomatis ter-backup di aplikasi.
+                  </p>
+                </div>
+
+                {/* Auto-backup status pill */}
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Otomatis Ter-backup di Aplikasi</span>
+                  </span>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Pilih Kelas
-                  </label>
-                  <select
-                    value={selectedKelas}
-                    onChange={(e) => setSelectedKelas(e.target.value)}
-                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  >
-                    {classList.map((kls) => (
-                      <option key={kls} value={kls}>
-                        {kls}
-                      </option>
-                    ))}
-                  </select>
+              {/* Class Selector, Date & File Actions Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Pilih Tingkat / Kelas
+                    </label>
+                    <select
+                      value={selectedKelas}
+                      onChange={(e) => setSelectedKelas(e.target.value)}
+                      className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-2xs"
+                    >
+                      <optgroup label="Tingkat SD (Sekolah Dasar)">
+                        {classList.filter((k) => k.includes('SD')).map((kls) => (
+                          <option key={kls} value={kls}>{kls}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Tingkat SMP (Sekolah Menengah Pertama)">
+                        {classList.filter((k) => k.includes('SMP')).map((kls) => (
+                          <option key={kls} value={kls}>{kls}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Tingkat SMK (Sekolah Menengah Kejuruan)">
+                        {classList.filter((k) => !k.includes('SD') && !k.includes('SMP')).map((kls) => (
+                          <option key={kls} value={kls}>{kls}</option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Tanggal Presensi
+                    </label>
+                    <input
+                      type="date"
+                      value={attendanceDate}
+                      onChange={(e) => setAttendanceDate(e.target.value)}
+                      className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-2xs"
+                    />
+                  </div>
+
+                  {/* Tambah Kelas Kustom Modal Trigger */}
+                  <div className="pt-4">
+                    {showAddCustomClass ? (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          placeholder="Nama kelas baru..."
+                          value={customKelasInput}
+                          onChange={(e) => setCustomKelasInput(e.target.value)}
+                          className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl font-bold w-36"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (customKelasInput.trim()) {
+                              setSelectedKelas(customKelasInput.trim());
+                              setCustomKelasInput('');
+                              setShowAddCustomClass(false);
+                            }
+                          }}
+                          className="px-2.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold"
+                        >
+                          Pilih
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddCustomClass(false)}
+                          className="p-1.5 text-slate-400 hover:text-slate-600 text-xs"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddCustomClass(true)}
+                        className="px-2.5 py-2 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl text-[11px] font-bold transition shadow-2xs flex items-center gap-1"
+                        title="Ketik nama kelas custom jika tidak ada di daftar"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Kelas Lain</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Tanggal Presensi
-                  </label>
-                  <input
-                    type="date"
-                    value={attendanceDate}
-                    onChange={(e) => setAttendanceDate(e.target.value)}
-                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                </div>
-
-                <div className="pt-5 flex items-center gap-2">
+                {/* File Absen & Quick Buttons */}
+                <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0">
                   <button
                     onClick={handleMarkAllHadir}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+                    className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition shadow-2xs"
                   >
                     Set Semua Hadir
                   </button>
+
                   <button
                     onClick={onOpenScanner}
-                    className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                    className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs active:scale-95"
                   >
-                    <ScanLine className="w-4 h-4 text-indigo-600" />
+                    <ScanLine className="w-4 h-4 text-amber-300" />
                     <span>Scan QR Siswa</span>
                   </button>
+
+                  {/* Unduh Excel (.xlsx) */}
+                  <button
+                    onClick={handleExportAttendanceExcel}
+                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                    title="Unduh File Absensi Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>File Excel</span>
+                  </button>
+
+                  {/* Unduh Word (.doc) */}
+                  <button
+                    onClick={handleExportAttendanceWord}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                    title="Unduh Lembar Absensi Word (.doc)"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>File Word</span>
+                  </button>
+
+                  {/* Upload File Absen Fisik */}
+                  <label className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95">
+                    <Paperclip className="w-4 h-4" />
+                    <span>Lampirkan File</span>
+                    <input
+                      type="file"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+                    />
+                  </label>
                 </div>
               </div>
+
+              {/* Attached file banner if any */}
+              {attachedAttendanceFile && (
+                <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <Paperclip className="w-4 h-4 text-amber-700 shrink-0" />
+                    <div>
+                      <p className="font-bold text-slate-800">File Absen Terlampir: {attachedAttendanceFile.name}</p>
+                      <p className="text-[10px] text-slate-500">Ukuran: {attachedAttendanceFile.size} • Otomatis tersimpan di backup aplikasi</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={attachedAttendanceFile.dataUrl}
+                      download={attachedAttendanceFile.name}
+                      className="px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-lg text-[10px] flex items-center gap-1 shadow-2xs"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>Unduh File</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAttachedAttendanceFile(null);
+                        try {
+                          localStorage.removeItem(`tamvesta_attendance_file_${selectedKelas}_${attendanceDate}`);
+                        } catch (_) {}
+                      }}
+                      className="p-1 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px]"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Auto Backup Notification */}
+              {autoBackupMessage && (
+                <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl text-xs font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{autoBackupMessage}</span>
+                </div>
+              )}
             </div>
 
             {/* Attendance Success Notification */}
@@ -893,8 +1285,22 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                         <tr key={stu.id} className="hover:bg-slate-50/70 transition">
                           <td className="p-3.5 text-center font-bold text-slate-400">{idx + 1}</td>
                           <td className="p-3.5">
-                            <div className="font-bold text-slate-900">{stu.name}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">@{stu.username}</div>
+                            <div className="flex items-center gap-2.5">
+                              {/* QR Code preview trigger button beside student name */}
+                              <button
+                                type="button"
+                                onClick={() => setSelectedStudentForQr(stu)}
+                                title={`Tampilkan QR Code Absensi ${stu.name}`}
+                                className="p-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition group flex items-center gap-1 shrink-0 active:scale-95 shadow-2xs"
+                              >
+                                <QrCode className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                                <span className="text-[10px] font-bold hidden sm:inline">QR</span>
+                              </button>
+                              <div className="min-w-0">
+                                <div className="font-bold text-slate-900 truncate">{stu.name}</div>
+                                <div className="text-[10px] text-slate-400 font-mono truncate">@{stu.username}</div>
+                              </div>
+                            </div>
                           </td>
                           <td className="p-3.5 text-slate-700">
                             <div>{stu.kelas || selectedKelas}</div>
@@ -1687,6 +2093,75 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+    
+      {/* Modal Pratinjau QR Code Siswa (Muncul saat klik tombol QR di samping nama siswa) */}
+      {selectedStudentForQr && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-in zoom-in-95 text-center">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full">
+                QR Presensi Siswa
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedStudentForQr(null)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-full"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <h3 className="text-base font-black text-slate-900">{selectedStudentForQr.name}</h3>
+              <p className="text-xs text-slate-500 font-mono">@{selectedStudentForQr.username}</p>
+              <div className="mt-1 flex items-center justify-center gap-2 text-xs">
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold">
+                  {selectedStudentForQr.kelas || selectedKelas}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-mono text-[10px]">
+                  NISN: {selectedStudentForQr.nisn || '-'}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-white border-2 border-slate-200 rounded-2xl inline-block shadow-inner mx-auto">
+              {qrModalDataUrl ? (
+                <img
+                  src={qrModalDataUrl}
+                  alt={`QR Code ${selectedStudentForQr.name}`}
+                  className="w-48 h-48 object-contain mx-auto"
+                />
+              ) : (
+                <div className="w-48 h-48 flex items-center justify-center text-slate-400 text-xs">
+                  Membuat QR Code...
+                </div>
+              )}
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-tight">
+              Arahkan webcam / scanner panitia ke QR code ini untuk mencatat kehadiran siswa secara instan.
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <a
+                href={qrModalDataUrl}
+                download={`QR_${selectedStudentForQr.name.replace(/\s+/g, '_')}.png`}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Unduh PNG</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => setSelectedStudentForQr(null)}
+                className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

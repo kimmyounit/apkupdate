@@ -113,7 +113,7 @@ export interface StaffPreset {
 export const OFFICIAL_STAFF_LIST: StaffPreset[] = [
   {
     name: 'ST Bambang Sapto Nugroho S.Pd',
-    jabatan: 'Kepala Sekolah',
+    jabatan: 'Kepala Sekolah SMP',
     username: 'bambang.kepsek',
     initialPassword: 'Tamvesta!B2601',
     role: 'kepala_sekolah',
@@ -2311,6 +2311,26 @@ class DatabaseManager {
     return { isAlumni: student.isAlumni };
   }
 
+  syncMultipleTickets(tickets: any[]): { count: number } {
+    if (!Array.isArray(this.data.passwordResetRequests)) this.data.passwordResetRequests = [];
+    let count = 0;
+    tickets.forEach((incoming) => {
+      if (!incoming || !incoming.id) return;
+      const idx = this.data.passwordResetRequests.findIndex((r) => r.id === incoming.id || r.ticketNumber === incoming.ticketNumber);
+      if (idx >= 0) {
+        if (incoming.status !== 'pending' || this.data.passwordResetRequests[idx].status === 'pending') {
+          this.data.passwordResetRequests[idx] = { ...this.data.passwordResetRequests[idx], ...incoming };
+          count++;
+        }
+      } else {
+        this.data.passwordResetRequests.unshift(incoming);
+        count++;
+      }
+    });
+    if (count > 0) this.save();
+    return { count };
+  }
+
   getTuMonthlyReports(): any[] {
     if (!Array.isArray(this.data.tuMonthlyReports)) this.data.tuMonthlyReports = [];
     return [...this.data.tuMonthlyReports].sort(
@@ -2328,8 +2348,9 @@ class DatabaseManager {
       sentBy: data.sentBy || 'Tata Usaha Haliza',
       sentByUsername: data.sentByUsername || 'haliza.tu',
       recipients: [
-        'Titus Wahyu Diatmiko (Pemimpin Tamansiswa Batam)',
-        'ST Bambang Sapto Nugroho S.Pd (Kepala Sekolah)',
+        'Titus Wahyu Diatmiko (Pemimpin Perguruan Tamansiswa Batam)',
+        'ST Bambang Sapto Nugroho S.Pd (Kepala Sekolah SMP)',
+        'Margaretha Hendriani (Kepala Sekolah SD)',
       ],
       summary: data.summary || {
         totalRevenue: 0,

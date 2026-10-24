@@ -20,7 +20,10 @@ import {
   RefreshCw,
   Clock,
   ShieldCheck,
+  History,
+  XCircle,
 } from 'lucide-react';
+import type { PasswordResetRequest } from '../types/index.ts';
 import type { User } from '../types/index.ts';
 import { api, setStoredToken } from '../lib/api.ts';
 import { useAuth } from '../context/AuthContext.tsx';
@@ -54,6 +57,27 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
   const [resetReason, setResetReason] = useState('');
   const [submittingReset, setSubmittingReset] = useState(false);
   const [resetMessage, setResetMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [studentTickets, setStudentTickets] = useState<PasswordResetRequest[]>([]);
+  const [loadingTickets, setLoadingTickets] = useState(false);
+
+  const loadTickets = async () => {
+    setLoadingTickets(true);
+    try {
+      const tickets = await api.getStudentTickets();
+      if (Array.isArray(tickets)) {
+        setStudentTickets(tickets);
+      }
+    } catch (_) {
+    } finally {
+      setLoadingTickets(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      loadTickets();
+    }
+  }, [isOpen, currentUser]);
 
   useEffect(() => {
     setCurrentUser(initialUser);
@@ -158,6 +182,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
         text: res.message || 'Permintaan berhasil diajukan ke Admin. Admin akan melakukan verifikasi sebelum memproses.',
       });
       setResetReason('');
+      await loadTickets();
     } catch (err: any) {
       setResetMessage({
         type: 'error',
@@ -521,6 +546,114 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                   )}
                 </button>
               </form>
+
+              {/* Riwayat Pengajuan Tiket Sandi (Termasuk Status Ditolak) */}
+              <div className="pt-3 border-t border-amber-200/60 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                    <History className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Riwayat Tiket Sandi Perangkat</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={loadTickets}
+                    disabled={loadingTickets}
+                    className="text-[10px] text-amber-800 hover:text-amber-950 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${loadingTickets ? 'animate-spin' : ''}`} />
+                    <span>Perbarui Status</span>
+                  </button>
+                </div>
+
+                {studentTickets.length === 0 ? (
+                  <p className="text-[11px] text-slate-500 italic p-3 bg-white/90 rounded-xl border border-amber-100 text-center">
+                    Belum ada riwayat pengajuan tiket sandi di perangkat ini.
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {studentTickets.map((tkt) => {
+                      const isRejected = tkt.status === 'rejected';
+                      const isApproved = tkt.status === 'approved';
+
+                      return (
+                        <div
+                          key={tkt.id}
+                          className={`p-3 rounded-xl border text-xs space-y-1.5 transition ${
+                            isRejected
+                              ? 'bg-rose-50/95 border-rose-300 text-rose-950'
+                              : isApproved
+                              ? 'bg-emerald-50/95 border-emerald-300 text-emerald-950'
+                              : 'bg-amber-50/95 border-amber-300 text-amber-950'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <span className="font-mono font-bold text-[11px] px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-800">
+                                {tkt.ticketNumber || tkt.id}
+                              </span>
+                              <p className="text-[10px] text-slate-500 mt-1">
+                                Diajukan: {new Date(tkt.createdAt).toLocaleString('id-ID')}
+                              </p>
+                            </div>
+
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                                isRejected
+                                  ? 'bg-rose-600 text-white shadow-xs'
+                                  : isApproved
+                                  ? 'bg-emerald-600 text-white shadow-xs'
+                                  : 'bg-amber-500 text-white animate-pulse'
+                              }`}
+                            >
+                              {isRejected ? 'DITOLAK' : isApproved ? 'DISETUJUI' : 'MENUNGGU VERIFIKASI'}
+                            </span>
+                          </div>
+
+                          <p className="text-[11px] text-slate-700 bg-white/70 p-1.5 rounded-lg border border-slate-100">
+                            <span className="font-bold">Alasan Pengajuan:</span> {tkt.reason || '-'}
+                          </p>
+
+                          {isRejected && (
+                            <div className="p-2.5 bg-rose-100/90 border border-rose-200 rounded-lg text-[11px] text-rose-900 space-y-1">
+                              <div className="flex items-center gap-1.5 font-bold text-rose-800">
+                                <XCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+                                <span>Status: Ditolak oleh Admin (Tercatat di History Device)</span>
+                              </div>
+                              {tkt.processedAt && (
+                                <p className="text-[10px] text-rose-700">
+                                  Ditolak pada: {new Date(tkt.processedAt).toLocaleString('id-ID')} {tkt.processedBy ? `oleh ${tkt.processedBy}` : ''}
+                                </p>
+                              )}
+                              <p className="text-[11px] font-medium pt-0.5">
+                                <strong className="text-rose-950">Alasan Penolakan:</strong> {tkt.adminNote || 'Tidak memenuhi kriteria verifikasi identitas'}
+                              </p>
+                            </div>
+                          )}
+
+                          {isApproved && (
+                            <div className="p-2.5 bg-emerald-100/90 border border-emerald-200 rounded-lg text-[11px] text-emerald-900 space-y-1">
+                              <div className="flex items-center gap-1.5 font-bold text-emerald-800">
+                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                                <span>Status: Disetujui oleh Admin</span>
+                              </div>
+                              {tkt.processedAt && (
+                                <p className="text-[10px] text-emerald-700">
+                                  Disetujui pada: {new Date(tkt.processedAt).toLocaleString('id-ID')}
+                                </p>
+                              )}
+                              {tkt.adminNote && (
+                                <p className="text-[11px]">
+                                  <strong>Catatan:</strong> {tkt.adminNote}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
             <button

@@ -366,7 +366,7 @@ export const TuDashboard: React.FC = () => {
         },
         notes: reportNotes.trim() || 'Laporan bulanan tata usaha telah diverifikasi dan siap ditinjau pimpinan.',
       });
-      setReportSuccessMsg(`Laporan rekapitulasi ${monthLabel} berhasil dikirimkan ke Pemimpin Perguruan (Bpk. Titus Wahyu Diatmiko) & Kepala Sekolah (Bpk. ST Bambang Sapto Nugroho S.Pd)!`);
+      setReportSuccessMsg(`Laporan rekapitulasi ${monthLabel} berhasil dikirimkan ke Pemimpin Perguruan (Bpk. Titus Wahyu Diatmiko), Kepala Sekolah SMP (Bpk. ST Bambang Sapto Nugroho S.Pd), dan Kepala Sekolah SD (Ibu Margaretha Hendriani)!`);
       setReportNotes('');
       const updatedReports = await api.getTuMonthlyReports();
       setMonthlyReports(updatedReports);
@@ -401,7 +401,8 @@ export const TuDashboard: React.FC = () => {
         { 'Parameter': 'Jumlah Siswa Tagihan Belum Lunas', 'Nilai': `${monthUnpaidBills} siswa` },
         { 'Parameter': 'Jumlah Arsip Surat / Dokumen', 'Nilai': `${filteredDocsByMonth.length} berkas` },
         { 'Parameter': 'Pemimpin Perguruan Tamansiswa Batam', 'Nilai': 'Titus Wahyu Diatmiko (+62 813-7289-4523)' },
-        { 'Parameter': 'Kepala Sekolah', 'Nilai': 'ST Bambang Sapto Nugroho S.Pd' },
+        { 'Parameter': 'Kepala Sekolah SMP', 'Nilai': 'ST Bambang Sapto Nugroho S.Pd' },
+        { 'Parameter': 'Kepala Sekolah SD', 'Nilai': 'Margaretha Hendriani' },
         { 'Parameter': 'Catatan Pengantar', 'Nilai': reportNotes || 'Data telah divalidasi dan tersimpan di database TAMVESTA.' },
       ];
       const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
@@ -706,26 +707,33 @@ export const TuDashboard: React.FC = () => {
           <table class="sign-table">
             <tr>
               <td>
-                <p style="font-size: 9.5pt; margin: 0;">Mengetahui,</p>
-                <p style="font-size: 10pt; font-weight: bold; margin: 2px 0 0 0;">Kepala Sekolah</p>
-                <div style="height: 60px;"></div>
-                <p style="font-size: 10pt; font-weight: bold; text-decoration: underline; margin: 0;">( ST Bambang Sapto Nugroho S.Pd )</p>
-                <p style="font-size: 8.5pt; color: #64748b; margin: 2px 0 0 0;">Kepala Sekolah SMK Tamansiswa</p>
+                <p style="font-size: 9pt; margin: 0;">Mengetahui,</p>
+                <p style="font-size: 9.5pt; font-weight: bold; margin: 2px 0 0 0;">Kepala Sekolah SMP</p>
+                <div style="height: 50px;"></div>
+                <p style="font-size: 9.5pt; font-weight: bold; text-decoration: underline; margin: 0;">( ST Bambang Sapto Nugroho S.Pd )</p>
+                <p style="font-size: 8pt; color: #64748b; margin: 2px 0 0 0;">Kepala Sekolah SMP Tamansiswa</p>
               </td>
               <td>
-                <p style="font-size: 9.5pt; margin: 0;">Batam, ${printDate}</p>
-                <p style="font-size: 10pt; font-weight: bold; margin: 2px 0 0 0;">Kepala Tata Usaha</p>
-                <div style="height: 60px;"></div>
-                <p style="font-size: 10pt; font-weight: bold; text-decoration: underline; margin: 0;">( ${user?.name || 'Haliza'} )</p>
-                <p style="font-size: 8.5pt; color: #64748b; margin: 2px 0 0 0;">Petugas Administrasi & Keuangan</p>
+                <p style="font-size: 9pt; margin: 0;">Mengetahui,</p>
+                <p style="font-size: 9.5pt; font-weight: bold; margin: 2px 0 0 0;">Kepala Sekolah SD</p>
+                <div style="height: 50px;"></div>
+                <p style="font-size: 9.5pt; font-weight: bold; text-decoration: underline; margin: 0;">( Margaretha Hendriani )</p>
+                <p style="font-size: 8pt; color: #64748b; margin: 2px 0 0 0;">Kepala Sekolah SD Tamansiswa</p>
               </td>
               <td>
-                <p style="font-size: 9.5pt; margin: 0;">Menyetujui & Mengesahkan,</p>
-                <p style="font-size: 10pt; font-weight: bold; margin: 2px 0 0 0;">Pemimpin Perguruan Tamansiswa</p>
-                <div style="height: 60px;"></div>
-                <p style="font-size: 10pt; font-weight: bold; text-decoration: underline; margin: 0;">( Titus Wahyu Diatmiko )</p>
-                <p style="font-size: 8.5pt; color: #64748b; margin: 2px 0 0 0;">Pemimpin Perguruan Tamansiswa Batam</p>
-                <p style="font-size: 8pt; color: #64748b; margin: 2px 0 0 0;">+62 813-7289-4523</p>
+                <p style="font-size: 9pt; margin: 0;">Batam, ${printDate}</p>
+                <p style="font-size: 9.5pt; font-weight: bold; margin: 2px 0 0 0;">Kepala Tata Usaha</p>
+                <div style="height: 50px;"></div>
+                <p style="font-size: 9.5pt; font-weight: bold; text-decoration: underline; margin: 0;">( ${user?.name || 'Haliza'} )</p>
+                <p style="font-size: 8pt; color: #64748b; margin: 2px 0 0 0;">Petugas Administrasi & Keuangan</p>
+              </td>
+              <td>
+                <p style="font-size: 9pt; margin: 0;">Menyetujui & Mengesahkan,</p>
+                <p style="font-size: 9.5pt; font-weight: bold; margin: 2px 0 0 0;">Pemimpin Perguruan</p>
+                <div style="height: 50px;"></div>
+                <p style="font-size: 9.5pt; font-weight: bold; text-decoration: underline; margin: 0;">( Titus Wahyu Diatmiko )</p>
+                <p style="font-size: 8pt; color: #64748b; margin: 2px 0 0 0;">Pemimpin Perguruan Tamansiswa</p>
+                <p style="font-size: 7.5pt; color: #64748b; margin: 1px 0 0 0;">+62 813-7289-4523</p>
               </td>
             </tr>
           </table>
@@ -775,19 +783,49 @@ ${reportNotes || 'Laporan telah diunggah dan tersinkronisasi di sistem TAMVESTA.
 
 Mengetahui:
 *Pemimpin Perguruan Tamansiswa Batam (Titus Wahyu Diatmiko)*
-*Kepala Sekolah (ST Bambang Sapto Nugroho S.Pd)*
+*Kepala Sekolah SMP (ST Bambang Sapto Nugroho S.Pd)*
+*Kepala Sekolah SD (Margaretha Hendriani)*
 `;
     const targetPhone = '6281372894523';
     window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // Kirim WhatsApp ke Kepala Sekolah (ST Bambang Sapto Nugroho S.Pd)
+  // Kirim WhatsApp ke Kepala Sekolah SD (Ibu Margaretha Hendriani)
+  const handleShareWhatsAppMargaretha = () => {
+    const monthLabel = formatMonthName(selectedMonth);
+    const msg = `*LAPORAN BULANAN TATA USAHA - KEPALA SEKOLAH SD*
+Kepada Yth.
+*Ibu Margaretha Hendriani*
+Kepala Sekolah SD Tamansiswa Batam
+
+Laporan rekapitulasi operasional TU:
+📅 Periode: ${monthLabel}
+👤 Pengirim: ${user?.name || 'Tata Usaha Haliza'}
+
+*RINGKASAN:*
+- Total Pemasukan: Rp ${monthIncome.toLocaleString('id-ID')}
+- Total Pengeluaran: Rp ${monthExpense.toLocaleString('id-ID')}
+- Saldo Kas: Rp ${monthNet.toLocaleString('id-ID')}
+- Tagihan Lunas: ${monthPaidBills} siswa
+- Tagihan Belum Lunas: ${monthUnpaidBills} siswa
+
+*Catatan:*
+${reportNotes || 'Data telah tervalidasi di aplikasi TAMVESTA.'}
+
+Tembusan:
+*Pemimpin Perguruan Tamansiswa Batam (Titus Wahyu Diatmiko • +62 813-7289-4523)*
+*Kepala Sekolah SMP (ST Bambang Sapto Nugroho S.Pd)*
+`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  // Kirim WhatsApp ke Kepala Sekolah SMP (ST Bambang Sapto Nugroho S.Pd)
   const handleShareWhatsAppPrincipal = () => {
     const monthLabel = formatMonthName(selectedMonth);
     const msg = `*LAPORAN BULANAN TATA USAHA - KEPALA SEKOLAH*
 Kepada Yth.
 *Bpk. ST Bambang Sapto Nugroho S.Pd*
-Kepala Sekolah SMK Tamansiswa Batam
+Kepala Sekolah SMP Tamansiswa Batam
 
 Laporan rekapitulasi operasional TU:
 📅 Periode: ${monthLabel}
@@ -1558,25 +1596,35 @@ Tembusan:
               <div className="space-y-3">
                 <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                   <span className="text-xs font-bold text-slate-700 block">Daftar Penerima Resmi Laporan:</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
                       <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-800 font-black flex items-center justify-center shrink-0">
                         T
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-slate-800 truncate">Titus Wahyu Diatmiko</p>
-                        <p className="text-[10px] text-purple-700 font-semibold truncate">Pemimpin Perguruan Tamansiswa</p>
+                        <p className="text-[10px] text-purple-700 font-semibold truncate">Pemimpin Perguruan</p>
                         <p className="text-[10px] text-slate-500 font-mono truncate">+62 813-7289-4523</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
+                    <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
                       <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 font-black flex items-center justify-center shrink-0">
                         B
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-slate-800 truncate">ST Bambang Sapto Nugroho S.Pd</p>
-                        <p className="text-[10px] text-emerald-700 font-semibold truncate">Kepala Sekolah SMK Tamansiswa</p>
+                        <p className="text-[10px] text-emerald-700 font-semibold truncate">Kepala Sekolah SMP</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                      <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-800 font-black flex items-center justify-center shrink-0">
+                        M
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-800 truncate">Margaretha Hendriani</p>
+                        <p className="text-[10px] text-blue-700 font-semibold truncate">Kepala Sekolah SD</p>
                       </div>
                     </div>
                   </div>
@@ -1616,11 +1664,20 @@ Tembusan:
 
                   <button
                     onClick={handleShareWhatsAppPrincipal}
-                    className="px-4 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
-                    title="Kirim Ringkasan ke WhatsApp Kepala Sekolah (Bpk. ST Bambang Sapto Nugroho)"
+                    className="px-3.5 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                    title="Kirim Ringkasan ke WhatsApp Kepala Sekolah SMP (Bpk. ST Bambang Sapto Nugroho S.Pd)"
                   >
                     <Share2 className="w-4 h-4" />
-                    <span>WA Kepsek</span>
+                    <span>WA Kepsek SMP</span>
+                  </button>
+
+                  <button
+                    onClick={handleShareWhatsAppMargaretha}
+                    className="px-3.5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                    title="Kirim Ringkasan ke WhatsApp Kepala Sekolah SD (Ibu Margaretha Hendriani)"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>WA Kepsek SD</span>
                   </button>
                 </div>
               </div>

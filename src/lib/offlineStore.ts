@@ -1406,7 +1406,11 @@ export const offlineStore = {
   getStudentTickets(userId: string) {
     const db = loadDB();
     if (!Array.isArray(db.passwordResetRequests)) return [];
-    return db.passwordResetRequests.filter((r) => r.userId === userId);
+    const targetUser = db.users.find((u) => u.id === userId);
+    const targetUn = (targetUser?.username || '').toLowerCase();
+    return db.passwordResetRequests.filter(
+      (r) => r.userId === userId || (targetUn && (r.username || '').toLowerCase() === targetUn)
+    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
   createTeacherAccount(data: any) {
