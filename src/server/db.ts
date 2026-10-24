@@ -680,12 +680,36 @@ class DatabaseManager {
   // --- Users & Authentication ---
   public findUserByUsername(username: string): User | undefined {
     if (!username) return undefined;
-    const term = username.trim().toLowerCase().replace(/^@+/, '');
-    const found = this.data.users.find(
-      (u) => (u.username || '').toLowerCase().replace(/^@+/, '') === term
-    );
+    const raw = username.trim();
+    const term = raw.toLowerCase().replace(/^@+/, '');
+    const alphaNumericTerm = term.replace(/[^a-z0-9]/g, '');
+
+    // 1. Exact or cleaned username match
+    const found = this.data.users.find((u) => {
+      const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
+      if (uName === term) return true;
+      if (alphaNumericTerm && uName.replace(/[^a-z0-9]/g, '') === alphaNumericTerm) return true;
+      return false;
+    });
     if (found) return found;
 
+    // 2. Full Name match (in case student enters their name instead of username)
+    const foundByName = this.data.users.find((u) => {
+      const fullName = (u.name || '').trim().toLowerCase();
+      if (!fullName) return false;
+      if (fullName === term) return true;
+      if (alphaNumericTerm && fullName.replace(/[^a-z0-9]/g, '') === alphaNumericTerm) return true;
+      return false;
+    });
+    if (foundByName) return foundByName;
+
+    // 3. NISN match
+    const foundByNisn = this.data.users.find((u) => {
+      return (u as any).nisn && String((u as any).nisn).trim() === raw;
+    });
+    if (foundByNisn) return foundByNisn;
+
+    // 4. Staff aliases
     if (['haliza.tu', 'haliza.admin', 'haliza', 'tata.usaha', 'tatausaha'].includes(term)) {
       return this.data.users.find(
         (u) => (u.username || '').toLowerCase().replace(/^@+/, '') === 'haliza.tu' ||
