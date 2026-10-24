@@ -54,6 +54,7 @@ import type {
 } from '../../types/index.ts';
 import { StudentProfileModal } from '../../components/StudentProfileModal.tsx';
 import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
+import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
 
 type AdminTab = 'students' | 'staff' | 'subjects' | 'library' | 'announcements' | 'quizzes' | 'events' | 'tickets';
 
@@ -1544,11 +1545,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                                     SISWA
                                   </span>
                                 )}
-                                {stu.isVerified && (
-                                  <span className="inline-flex items-center text-blue-500" title="Siswa Terverifikasi (Centang Biru Aktif)">
-                                    <CheckCircle2 className="w-3.5 h-3.5 fill-blue-500 text-white" />
-                                  </span>
-                                )}
+                                {stu.isVerified && <VerifiedBadge size="xs" />}
                               </div>
                               <span className="text-[10px] text-slate-400 font-mono">ID: {stu.id}</span>
                             </div>
@@ -1873,11 +1870,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                           <td className="p-3.5">
                             <div className="font-bold text-slate-900 flex items-center gap-1.5">
                               <span>{staff.name}</span>
-                              {staff.isVerified && (
-                                <span className="inline-flex items-center text-blue-600" title="Akun Terverifikasi Resmi">
-                                  <ShieldCheck className="w-3.5 h-3.5 fill-blue-600 text-white" />
-                                </span>
-                              )}
+                              {staff.isVerified && <VerifiedBadge size="xs" />}
                             </div>
                             {staff.username === 'TAMANSISWA' && (
                               <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded">

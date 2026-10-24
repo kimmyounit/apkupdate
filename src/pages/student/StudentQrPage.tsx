@@ -15,6 +15,7 @@ import QRCode from 'qrcode';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { UserProfileModal } from '../../components/UserProfileModal.tsx';
+import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
 
 export const StudentQrPage: React.FC = () => {
   const { user } = useAuth();
@@ -186,7 +187,10 @@ export const StudentQrPage: React.FC = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h2 className="text-lg font-black text-slate-900">{user?.name}</h2>
+              <h2 className="text-lg font-black text-slate-900 flex items-center justify-center gap-1.5 flex-wrap">
+                <span>{user?.name}</span>
+                {user?.isVerified && <VerifiedBadge size="md" />}
+              </h2>
               <p className="text-xs text-slate-500 font-mono mt-0.5">@{user?.username}</p>
               <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-600 font-semibold">
                 <span className="px-2 py-0.5 bg-slate-100 rounded-md">

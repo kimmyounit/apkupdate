@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { StudentProfileModal } from './StudentProfileModal.tsx';
+import { VerifiedBadge } from './VerifiedBadge.tsx';
 
 interface Props {
   currentTab?: string;
@@ -246,8 +247,9 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
             {/* Role badge */}
             <div className="hidden md:flex flex-col items-end text-right">
-              <span className="text-[11px] font-bold text-slate-800 truncate max-w-[140px]">
-                {user.name}
+              <span className="text-[11px] font-bold text-slate-800 truncate max-w-[150px] flex items-center justify-end gap-1">
+                <span className="truncate">{user.name}</span>
+                {user.isVerified && <VerifiedBadge size="xs" />}
               </span>
               <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${badge.color}`}>
                 {badge.label}
@@ -280,7 +282,10 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
         <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-2 animate-in slide-in-from-top-2">
           <div className="p-3 bg-slate-50 rounded-2xl flex items-center justify-between mb-3 border border-slate-100">
             <div>
-              <p className="font-bold text-xs text-slate-900">{user.name}</p>
+              <p className="font-bold text-xs text-slate-900 flex items-center gap-1">
+                <span>{user.name}</span>
+                {user.isVerified && <VerifiedBadge size="xs" />}
+              </p>
               <p className="text-[11px] text-slate-500 font-mono">@{user.username}</p>
             </div>
             <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${badge.color}`}>

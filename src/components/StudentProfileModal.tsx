@@ -25,6 +25,7 @@ import type { User } from '../types/index.ts';
 import { api, setStoredToken } from '../lib/api.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
+import { VerifiedBadge } from './VerifiedBadge.tsx';
 
 interface Props {
   user: User;
@@ -282,11 +283,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                 <div className="flex-1 space-y-1 w-full text-center sm:text-left">
                   <h3 className="font-black text-slate-900 text-base leading-tight flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
                     <span>{currentUser.name}</span>
-                    {currentUser.isVerified && (
-                      <span className="inline-flex items-center text-blue-500" title="Siswa Sudah Terverifikasi Resmi">
-                        <CheckCircle2 className="w-4 h-4 fill-blue-500 text-white shrink-0" />
-                      </span>
-                    )}
+                    {currentUser.isVerified && <VerifiedBadge size="md" />}
                   </h3>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-600">
                     <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-[11px] font-bold text-slate-700">

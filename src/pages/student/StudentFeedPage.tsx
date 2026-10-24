@@ -36,6 +36,7 @@ import { CreateStoryModal } from '../../components/CreateStoryModal.tsx';
 import { StoryViewerModal } from '../../components/StoryViewerModal.tsx';
 import { NotificationsModal } from '../../components/NotificationsModal.tsx';
 import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
+import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
 
 interface StudentFeedPageProps {
   onOpenAnnouncements?: () => void;
@@ -281,8 +282,9 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                 <School className="w-3 h-3 text-amber-300" />
                 <span>Selamat Datang Tamvesta</span>
               </div>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white leading-tight truncate max-w-[200px] sm:max-w-none">
-                Hello!, {user?.name || 'Siswa'}
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white leading-tight truncate max-w-[200px] sm:max-w-none flex items-center gap-1.5 flex-wrap">
+                <span>Hello!, {user?.name || 'Siswa'}</span>
+                {user?.isVerified && <VerifiedBadge size="md" />}
               </h1>
               <p className="text-[11px] text-teal-100 flex items-center gap-1.5">
                 <span>@{user?.username}</span>
@@ -540,11 +542,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                           className="font-bold text-xs sm:text-sm text-slate-900 hover:text-emerald-700 transition flex items-center gap-1"
                         >
                           <span>{post.authorName}</span>
-                          {post.authorIsVerified && (
-                            <span className="inline-flex items-center text-blue-500" title="Siswa Terverifikasi">
-                              <CheckCircle2 className="w-3.5 h-3.5 fill-blue-500 text-white shrink-0" />
-                            </span>
-                          )}
+                          {post.authorIsVerified && <VerifiedBadge size="xs" />}
                         </button>
                         {(post as any).authorIsAlumni ? (
                           <span className="px-1.5 py-0.2 rounded text-[10px] bg-purple-50 text-purple-700 font-bold border border-purple-200">

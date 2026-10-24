@@ -945,7 +945,7 @@ app.put('/api/users/profile', authMiddleware, (req: AuthenticatedRequest, res) =
 });
 
 // GET /api/users/profile/:username - Profil publik & postingan siswa/guru
-app.get('/api/users/profile/:username', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.get(['/api/users/profile/:username', '/api/users/:username/public-profile'], authMiddleware, (req: AuthenticatedRequest, res) => {
   const profileData = db.getUserProfileWithPosts(req.params.username);
   if (!profileData) {
     return res.status(404).json({ error: 'Profil pengguna tidak ditemukan.' });

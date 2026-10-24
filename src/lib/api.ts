@@ -1337,11 +1337,17 @@ export const api = {
 
   getPublicProfile: async (userId: string) => {
     try {
-      return await tryServerRequest<any>(`/api/users/${userId}/public-profile`);
+      return await tryServerRequest<any>(`/api/users/profile/${userId}`);
     } catch (_) {
-      const all = offlineStore.getStudents();
-      const target = all.find((u) => u.id === userId || u.username === userId);
-      return target || null;
+      try {
+        return await tryServerRequest<any>(`/api/users/${userId}/public-profile`);
+      } catch (__) {
+        const all = offlineStore.getStudents();
+        const target = all.find((u) => u.id === userId || u.username === userId);
+        return target
+          ? { user: target, posts: [], followersCount: 0, followingCount: 0 }
+          : null;
+      }
     }
   },
 };

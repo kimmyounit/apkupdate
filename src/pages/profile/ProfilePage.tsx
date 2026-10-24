@@ -21,6 +21,8 @@ import {
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../lib/api.ts';
 import { PhotoCropModal } from '../../components/PhotoCropModal.tsx';
+import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
+import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
 import type { StudentPost } from '../../types/index.ts';
 
 export const ProfilePage: React.FC = () => {
@@ -63,6 +65,12 @@ export const ProfilePage: React.FC = () => {
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
   const [resetError, setResetError] = useState<string | null>(null);
   const [myTickets, setMyTickets] = useState<any[]>([]);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Refresh user data immediately to pull latest verified badge status
+    refreshUser();
+  }, []);
 
   const loadMyTickets = async () => {
     try {
@@ -263,7 +271,18 @@ export const ProfilePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
           {/* Avatar with Camera Overlay */}
           <div className="relative group shrink-0">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-3 border-emerald-500/40 shadow-xl bg-slate-100 flex items-center justify-center">
+            <div
+              className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-3 border-emerald-500/40 shadow-xl bg-slate-100 flex items-center justify-center cursor-zoom-in"
+              onClick={() =>
+                setLightboxImage(
+                  user.avatarUrl ||
+                    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                      user.name || 'User'
+                    )}&backgroundColor=0284c7`
+                )
+              }
+              title="Klik foto untuk memperbesar"
+            >
               {updatingPhoto ? (
                 <div className="w-8 h-8 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin" />
               ) : (
@@ -275,7 +294,7 @@ export const ProfilePage: React.FC = () => {
                     )}&backgroundColor=0284c7`
                   }
                   alt={user.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:scale-105 transition"
                 />
               )}
             </div>
@@ -304,19 +323,15 @@ export const ProfilePage: React.FC = () => {
                   <span>{user.isAlumni ? 'Alumni Perguruan Tamansiswa' : 'Akun Siswa Resmi'}</span>
                 </div>
                 {user.isVerified && (
-                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold">
-                    <CheckCircle2 className="w-3 h-3 fill-blue-500 text-white" />
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold shadow-xs">
+                    <VerifiedBadge size="xs" />
                     <span>Siswa Terverifikasi</span>
                   </div>
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 flex items-center justify-center sm:justify-start gap-1.5">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                 <span>{user.name}</span>
-                {user.isVerified && (
-                  <span className="inline-flex items-center text-blue-500" title="Siswa Sudah Terverifikasi Resmi (Centang Biru)">
-                    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 fill-blue-500 text-white shrink-0 drop-shadow-xs" />
-                  </span>
-                )}
+                {user.isVerified && <VerifiedBadge size="lg" />}
               </h1>
               <p className="text-xs text-slate-500 font-mono">@{user.username}</p>
             </div>
@@ -398,17 +413,27 @@ export const ProfilePage: React.FC = () => {
         {/* 1. Nama Lengkap (Admin Assigned - Read Only) */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-slate-700">Nama Lengkap Siswa</label>
+            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <span>Nama Lengkap Siswa</span>
+              {user.isVerified && <VerifiedBadge size="sm" />}
+            </label>
             <span className="text-[10px] text-slate-400 font-semibold bg-slate-100 px-2 py-0.5 rounded-full">
               Ditetapkan Sekolah (Tidak dapat diubah)
             </span>
           </div>
-          <input
-            type="text"
-            value={user.name}
-            disabled
-            className="w-full px-3.5 py-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 cursor-not-allowed"
-          />
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              value={user.name}
+              disabled
+              className="w-full pl-3.5 pr-10 py-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 cursor-not-allowed"
+            />
+            {user.isVerified && (
+              <span className="absolute right-3">
+                <VerifiedBadge size="sm" />
+              </span>
+            )}
+          </div>
           <p className="text-[11px] text-slate-400">
             Nama resmi sesuai buku induk dapodik sekolah. Jika ada kekeliruan, hubungi bagian tata usaha.
           </p>
@@ -453,7 +478,7 @@ export const ProfilePage: React.FC = () => {
             <label className="text-xs font-bold text-slate-700 block mb-1">Status Verifikasi Resmi</label>
             {user.isVerified ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold">
-                <CheckCircle2 className="w-4 h-4 fill-blue-500 text-white" />
+                <VerifiedBadge size="sm" />
                 <span>Siswa Sudah Terverifikasi (Centang Biru Aktif)</span>
               </span>
             ) : (
@@ -796,6 +821,13 @@ export const ProfilePage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Pembesar Foto Profil */}
+      <ImageLightboxModal
+        imageUrl={lightboxImage}
+        title={`Foto Profil • ${user.name}`}
+        onClose={() => setLightboxImage(null)}
+      />
     </div>
   );
 };

@@ -17,6 +17,7 @@ import {
 import { api } from '../lib/api.ts';
 import type { StudentPost, User } from '../types/index.ts';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
+import { VerifiedBadge } from './VerifiedBadge.tsx';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -146,11 +147,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   <div>
                     <h2 className="text-lg font-black text-slate-900 leading-snug flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
                       <span>{profileUser.name}</span>
-                      {profileUser.isVerified && (
-                        <span className="inline-flex items-center text-blue-500" title="Siswa Sudah Terverifikasi Resmi">
-                          <CheckCircle2 className="w-4 h-4 fill-blue-500 text-white shrink-0" />
-                        </span>
-                      )}
+                      {profileUser.isVerified && <VerifiedBadge size="md" />}
                     </h2>
                     <p className="text-xs text-emerald-700 font-semibold flex items-center justify-center sm:justify-start gap-1.5 mt-0.5 flex-wrap">
                       <span>@{profileUser.username}</span>
