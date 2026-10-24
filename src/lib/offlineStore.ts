@@ -154,7 +154,11 @@ function getStoredPasswords(): Record<string, string> {
 
 function savePassword(username: string, pass: string) {
   const map = getStoredPasswords();
+  const clean = username.trim().toLowerCase().replace(/^@+/, '');
   map[username] = pass;
+  map[username.toLowerCase()] = pass;
+  map[clean] = pass;
+  map[`@${clean}`] = pass;
   localStorage.setItem(PASSWORDS_KEY, JSON.stringify(map));
 }
 
@@ -175,8 +179,9 @@ export const offlineStore = {
     if (!user || !user.id) return;
     const db = loadDB();
     if (!Array.isArray(db.users)) db.users = [];
+    const cleanUser = (user.username || '').toLowerCase().replace(/^@+/, '');
     const idx = db.users.findIndex(
-      (u) => u.id === user.id || u.username.toLowerCase() === user.username.toLowerCase()
+      (u) => u.id === user.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanUser
     );
     if (idx >= 0) {
       db.users[idx] = { ...db.users[idx], ...user };
@@ -184,7 +189,50 @@ export const offlineStore = {
       db.users.push(user);
     }
     saveDB(db);
-    this.setCurrentUserId(user.id);
+  },
+
+  saveStudentFromServer(serverStudent: User, password?: string) {
+    if (!serverStudent || !serverStudent.id) return;
+    const db = loadDB();
+    if (!Array.isArray(db.users)) db.users = [];
+    const cleanUsername = (serverStudent.username || '').toLowerCase().replace(/^@+/, '');
+    const idx = db.users.findIndex(
+      (u) => u.id === serverStudent.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanUsername
+    );
+    const initialPass = password || serverStudent.initialPassword || (serverStudent as any).password || 'SiswaTamvesta123';
+    const studentToSave: User = {
+      ...serverStudent,
+      username: cleanUsername,
+      initialPassword: initialPass,
+      password: initialPass,
+      mustChangePassword: serverStudent.mustChangePassword !== undefined ? serverStudent.mustChangePassword : true,
+    };
+    if (idx >= 0) {
+      db.users[idx] = { ...db.users[idx], ...studentToSave };
+    } else {
+      db.users.unshift(studentToSave);
+    }
+    if (initialPass) {
+      savePassword(cleanUsername, initialPass);
+      savePassword(serverStudent.username, initialPass);
+    }
+    saveDB(db);
+  },
+
+  syncStudentEntity(serverStudent: User) {
+    if (!serverStudent || !serverStudent.id) return;
+    const db = loadDB();
+    if (!Array.isArray(db.users)) db.users = [];
+    const cleanUsername = (serverStudent.username || '').toLowerCase().replace(/^@+/, '');
+    const idx = db.users.findIndex(
+      (u) => u.id === serverStudent.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanUsername
+    );
+    if (idx >= 0) {
+      db.users[idx] = { ...db.users[idx], ...serverStudent };
+    } else {
+      db.users.push(serverStudent);
+    }
+    saveDB(db);
   },
 
   getCurrentUser(): User | null {
@@ -196,12 +244,12 @@ export const offlineStore = {
 
   login(credentials: { username: string; password: string }) {
     const db = loadDB();
-    const inputUser = credentials.username.trim().toLowerCase();
+    const inputUser = credentials.username.trim().toLowerCase().replace(/^@+/, '');
     const inputPass = credentials.password.trim();
 
     const user = db.users.find((u) => {
       if (u.isActive === false) return false;
-      const uName = u.username.toLowerCase();
+      const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
       if (uName === inputUser) return true;
       if (['haliza.tu', 'haliza.admin', 'haliza', 'tata.usaha', 'tatausaha'].includes(inputUser)) {
         return uName === 'haliza.tu' || uName === 'haliza.admin' || (u.role === 'tata_usaha' && u.name.toLowerCase().includes('haliza'));
@@ -214,11 +262,14 @@ export const offlineStore = {
     }
 
     const passwords = getStoredPasswords();
+    const cleanUsername = (user.username || '').toLowerCase().replace(/^@+/, '');
     const candidatePasswords = [
       user.initialPassword,
       (user as any).password,
       passwords[user.username],
       passwords[user.username.toLowerCase()],
+      passwords[cleanUsername],
+      passwords[`@${cleanUsername}`],
       user.role === 'admin' ? 'TAMVESTA123' : user.role === 'tata_usaha' ? 'Tamvesta!H2605' : user.role === 'guru' ? 'GuruTamvesta123' : 'SiswaTamvesta123',
       'Tamvesta!H2605',
       'TAMVESTA123',
@@ -232,7 +283,7 @@ export const offlineStore = {
 
     this.setCurrentUserId(user.id);
     const token = 'offline_token_' + user.id;
-    const isStillInitial = user.role === 'siswa' && (user.initialPassword ? (passwords[user.username] === user.initialPassword || !passwords[user.username]) : true);
+    const isStillInitial = user.role === 'siswa' && (user.initialPassword ? (passwords[cleanUsername] === user.initialPassword || passwords[user.username] === user.initialPassword || !passwords[cleanUsername]) : true);
     const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword === true || isStillInitial) : !!user.mustChangePassword);
     const cleanUser = { ...user, mustChangePassword: mustChange };
     return { token, user: cleanUser, mustChangePassword: mustChange };
@@ -1098,11 +1149,12 @@ export const offlineStore = {
   // -------------------------------------------------------------
   createStudent(studentData: Partial<User> & { password?: string }) {
     const db = loadDB();
-    const username = (studentData.username || `siswa_${Date.now()}`).trim().toLowerCase();
-    const existing = db.users.find((u) => u.username.toLowerCase() === username);
+    const rawUsername = studentData.username || `siswa_${Date.now()}`;
+    const username = rawUsername.trim().toLowerCase().replace(/^@+/, '');
+    const existing = db.users.find((u) => (u.username || '').toLowerCase().replace(/^@+/, '') === username);
     if (existing) throw new Error('Username siswa sudah digunakan.');
 
-    const initialPassword = studentData.password || 'SiswaTamvesta123';
+    const initialPassword = studentData.password?.trim() || 'SiswaTamvesta123';
     const kelas = studentData.kelas?.trim() || 'Kelas 7';
     const gender = studentData.gender || 'Laki-laki';
     const user: User = {
@@ -1116,14 +1168,16 @@ export const offlineStore = {
       password: initialPassword,
       passwordHash: '',
       salt: '',
-      mustChangePassword: false,
+      mustChangePassword: true,
       isActive: true,
       qrToken: `TAMVESTA:STUDENT:${username}`,
+      avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(studentData.name || 'Siswa')}&backgroundColor=0284c7`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     savePassword(user.username, initialPassword);
+    savePassword(username, initialPassword);
     db.users.unshift(user);
     saveDB(db);
     return user;

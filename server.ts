@@ -97,7 +97,8 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(400).json({ error: 'Username dan password wajib diisi.' });
   }
 
-  const user = db.findUserByUsername(username);
+  const cleanUsername = String(username).trim().toLowerCase().replace(/^@+/, '');
+  const user = db.findUserByUsername(cleanUsername);
   if (!user) {
     return res.status(401).json({ error: 'Username atau password tidak ditemukan.' });
   }
@@ -108,11 +109,12 @@ app.post('/api/auth/login', (req, res) => {
     });
   }
 
+  const inputPass = String(password).trim();
   const isValid =
-    (user.initialPassword && password.trim() === user.initialPassword.trim()) ||
-    (user.password && password.trim() === user.password.trim()) ||
-    (user.passwordHash && user.salt && verifyPassword(password, user.passwordHash, user.salt, user.initialPassword)) ||
-    (user.role === 'tata_usaha' && (password.trim() === 'Tamvesta!H2605' || password.trim() === 'TAMVESTA123'));
+    (user.initialPassword && inputPass === user.initialPassword.trim()) ||
+    (user.password && inputPass === user.password.trim()) ||
+    (user.passwordHash && user.salt && verifyPassword(inputPass, user.passwordHash, user.salt, user.initialPassword)) ||
+    (user.role === 'tata_usaha' && (inputPass === 'Tamvesta!H2605' || inputPass === 'TAMVESTA123'));
   if (!isValid) {
     return res.status(401).json({ error: 'Username atau password tidak sesuai.' });
   }
@@ -248,8 +250,8 @@ app.get('/api/admin/students', authMiddleware, requireRole(['admin', 'kepala_sek
 
 // POST /api/admin/students (Pendaftaran Akun Siswa oleh Admin)
 app.post('/api/admin/students', authMiddleware, requireRole(['admin']), (req, res) => {
-  const { name, username, password, nisn, kelas } = req.body;
-  const result = db.createStudent({ name, username, password, nisn, kelas });
+  const { name, username, password, gender, kelas, nisn } = req.body;
+  const result = db.createStudent({ name, username, password, gender, kelas });
 
   if (!result.success) {
     return res.status(400).json({ error: result.error });

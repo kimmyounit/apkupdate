@@ -362,27 +362,40 @@ class DatabaseManager {
   /** Muat data terbaru dari GitHub (untuk Vercel cold start persistence) */
   private async loadFromGitHubAsync(): Promise<void> {
     const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-    if (!token) return;
     try {
-      const url = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json';
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'User-Agent': 'TAMVESTA-Cloud-Sync',
-          Accept: 'application/vnd.github.v3+json',
-        },
-      });
-      if (!res.ok) return;
-      const json: any = await res.json();
-      if (!json.content) return;
-      const decoded = Buffer.from(json.content, 'base64').toString('utf-8');
-      const parsed = JSON.parse(decoded);
+      let parsed: any = null;
+      if (token) {
+        const url = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json';
+        const res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'User-Agent': 'TAMVESTA-Cloud-Sync',
+            Accept: 'application/vnd.github.v3+json',
+          },
+        });
+        if (res.ok) {
+          const json: any = await res.json();
+          if (json.content) {
+            const decoded = Buffer.from(json.content, 'base64').toString('utf-8');
+            parsed = JSON.parse(decoded);
+          }
+        }
+      }
+      if (!parsed) {
+        const rawRes = await fetch('https://raw.githubusercontent.com/kimmyounit/apkupdate/main/data/tamvesta-data.json', {
+          headers: { 'User-Agent': 'TAMVESTA-Cloud-Sync' },
+        });
+        if (rawRes.ok) {
+          parsed = await rawRes.json();
+        }
+      }
       if (!parsed || !Array.isArray(parsed.users)) return;
 
       if (Array.isArray(parsed.users)) {
         parsed.users.forEach((ghUser: any) => {
+          const cleanGh = (ghUser.username || '').toLowerCase().replace(/^@+/, '');
           const existing = this.data.users.find(
-            (u) => u.id === ghUser.id || u.username.toLowerCase() === ghUser.username.toLowerCase()
+            (u) => u.id === ghUser.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanGh
           );
           if (!existing) {
             this.data.users.push(ghUser);
@@ -636,16 +649,17 @@ class DatabaseManager {
 
   // --- Users & Authentication ---
   public findUserByUsername(username: string): User | undefined {
-    const term = username.trim().toLowerCase();
+    if (!username) return undefined;
+    const term = username.trim().toLowerCase().replace(/^@+/, '');
     const found = this.data.users.find(
-      (u) => u.username.toLowerCase() === term
+      (u) => (u.username || '').toLowerCase().replace(/^@+/, '') === term
     );
     if (found) return found;
 
     if (['haliza.tu', 'haliza.admin', 'haliza', 'tata.usaha', 'tatausaha'].includes(term)) {
       return this.data.users.find(
-        (u) => u.username.toLowerCase() === 'haliza.tu' ||
-               u.username.toLowerCase() === 'haliza.admin' ||
+        (u) => (u.username || '').toLowerCase().replace(/^@+/, '') === 'haliza.tu' ||
+               (u.username || '').toLowerCase().replace(/^@+/, '') === 'haliza.admin' ||
                u.role === 'tata_usaha'
       );
     }
@@ -697,11 +711,12 @@ class DatabaseManager {
     gender?: 'Laki-laki' | 'Perempuan';
     kelas?: string;
   }): { success: boolean; user?: User; error?: string } {
-    const trimmedUsername = userData.username.trim();
-    if (!trimmedUsername) {
+    const rawUsername = userData.username || '';
+    const cleanUsername = rawUsername.trim().toLowerCase().replace(/^@+/, '');
+    if (!cleanUsername) {
       return { success: false, error: 'Username wajib diisi.' };
     }
-    if (!userData.name.trim()) {
+    if (!userData.name || !userData.name.trim()) {
       return { success: false, error: 'Nama lengkap siswa wajib diisi.' };
     }
     if (!userData.password || userData.password.length < 6) {
@@ -709,25 +724,25 @@ class DatabaseManager {
     }
 
     // Check unique username
-    const exists = this.findUserByUsername(trimmedUsername);
+    const exists = this.findUserByUsername(cleanUsername);
     if (exists) {
-      return { success: false, error: `Username "${trimmedUsername}" sudah terdaftar. Gunakan username lain.` };
+      return { success: false, error: `Username "${cleanUsername}" sudah terdaftar. Gunakan username lain.` };
     }
 
     const now = new Date().toISOString();
     const id = `stu_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const pass = hashPassword(userData.password);
-    const qrToken = generateQrToken(id, trimmedUsername);
+    const pass = hashPassword(userData.password.trim());
+    const qrToken = generateQrToken(id, cleanUsername);
 
     const newUser: User = {
       id,
-      username: trimmedUsername,
+      username: cleanUsername,
       name: userData.name.trim(),
       role: 'siswa',
       gender: userData.gender || 'Laki-laki',
       kelas: userData.kelas?.trim() || 'Kelas 7',
-      initialPassword: userData.password,
-      password: userData.password,
+      initialPassword: userData.password.trim(),
+      password: userData.password.trim(),
       passwordHash: pass.hash,
       salt: pass.salt,
       mustChangePassword: true, // Siswa wajib mengganti kata sandi awal agar aman
@@ -785,9 +800,12 @@ class DatabaseManager {
     if (!newPassword || newPassword.length < 6) {
       return { success: false, error: 'Password baru minimal 6 karakter.' };
     }
-    const hashed = hashPassword(newPassword);
+    const cleanPass = newPassword.trim();
+    const hashed = hashPassword(cleanPass);
     user.passwordHash = hashed.hash;
     user.salt = hashed.salt;
+    user.initialPassword = cleanPass;
+    user.password = cleanPass;
     user.mustChangePassword = true;
     user.updatedAt = new Date().toISOString();
     this.save();

@@ -162,10 +162,14 @@ export const api = {
 
   login: async (credentials: { username: string; password: string }) => {
     let serverError: any = null;
+    const cleanCredentials = {
+      username: credentials.username.trim().toLowerCase().replace(/^@+/, ''),
+      password: credentials.password,
+    };
     try {
       const res = await tryServerRequest<{ token: string; user: User; mustChangePassword: boolean }>('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify(credentials),
+        body: JSON.stringify(cleanCredentials),
       });
       setStoredToken(res.token);
       offlineStore.setCurrentUserId(res.user.id);
@@ -181,7 +185,7 @@ export const api = {
 
     // Cek di penyimpanan lokal jika server tidak menemukan atau offline
     try {
-      const res = offlineStore.login(credentials);
+      const res = offlineStore.login(cleanCredentials);
       setStoredToken(res.token);
       return res;
     } catch (offlineErr) {
@@ -293,22 +297,35 @@ export const api = {
     }
   },
 
-    getStudents: async () => {
-    const localStudents = offlineStore.getStudents();
+  getStudents: async () => {
     let serverStudents: User[] = [];
     try {
       serverStudents = await tryServerRequest<User[]>('/api/admin/students');
     } catch (_) {
       serverStudents = [];
     }
+
+    const localStudents = offlineStore.getStudents();
     const studentMap = new Map<string, User>();
-    // Pertahankan akun siswa lokal terlebih dahulu
-    localStudents.forEach((s) => studentMap.set(s.id, s));
+
     if (Array.isArray(serverStudents) && serverStudents.length > 0) {
       serverStudents.forEach((s) => {
         studentMap.set(s.id, s);
+        offlineStore.syncStudentEntity(s);
       });
+      localStudents.forEach((ls) => {
+        const cleanU = (ls.username || '').toLowerCase().replace(/^@+/, '');
+        const existsInServer = serverStudents.some(
+          (ss) => ss.id === ls.id || (ss.username || '').toLowerCase().replace(/^@+/, '') === cleanU
+        );
+        if (!existsInServer) {
+          studentMap.set(ls.id, ls);
+        }
+      });
+    } else {
+      localStudents.forEach((s) => studentMap.set(s.id, s));
     }
+
     return Array.from(studentMap.values());
   },
 
@@ -336,15 +353,19 @@ export const api = {
   },
 
   createStudent: async (studentData: Partial<User> & { password?: string }) => {
-    const localStudent = offlineStore.createStudent(studentData);
+    const rawPass = studentData.password || 'SiswaTamvesta123';
     try {
       const res = await tryServerRequest<{ message: string; student: User }>('/api/admin/students', {
         method: 'POST',
         body: JSON.stringify(studentData),
       });
+      if (res && res.student) {
+        offlineStore.saveStudentFromServer(res.student, rawPass);
+      }
       return res;
     } catch (_) {
-      return { message: 'Siswa berhasil ditambahkan', student: localStudent };
+      const localStudent = offlineStore.createStudent(studentData);
+      return { message: 'Akun siswa berhasil didaftarkan (mode offline).', student: localStudent };
     }
   },
 
@@ -359,15 +380,15 @@ export const api = {
   },
 
   resetStudentPassword: async (studentId: string, newPassword?: string) => {
+    if (newPassword) {
+      offlineStore.resetStudentPassword(studentId, newPassword);
+    }
     try {
       return await tryServerRequest<{ message: string }>(`/api/admin/students/${studentId}/reset-password`, {
         method: 'POST',
         body: JSON.stringify({ newPassword }),
       });
     } catch (_) {
-      if (newPassword) {
-        offlineStore.resetStudentPassword(studentId, newPassword);
-      }
       return { message: 'Kata sandi siswa berhasil direset.' };
     }
   },
