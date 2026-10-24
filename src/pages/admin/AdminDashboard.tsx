@@ -35,6 +35,7 @@ import {
   Check,
   FileSpreadsheet,
   Filter,
+  RefreshCw,
   X,
 } from 'lucide-react';
 import { api } from '../../lib/api.ts';
@@ -528,12 +529,29 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     }
   };
 
+  const [isRefreshingTickets, setIsRefreshingTickets] = useState(false);
+
+  const handleRefreshTickets = async () => {
+    setIsRefreshingTickets(true);
+    try {
+      const tickets = await api.getPasswordResetRequests();
+      setResetRequests(tickets || []);
+    } catch (err: any) {
+      console.warn('Gagal memuat tiket:', err);
+    } finally {
+      setIsRefreshingTickets(false);
+    }
+  };
+
   const handleConfirmDeleteStudent = async () => {
     if (!deletingStudent) return;
+    const targetId = deletingStudent.id;
     setDeleteLoading(true);
     try {
-      await api.deleteStudent(deletingStudent.id);
-      alert(`Akun siswa "${deletingStudent.name}" (@${deletingStudent.username}) berhasil dihapus dari database.`);
+      await api.deleteStudent(targetId);
+      // Kurangi langsung dari state agar berkurang selamanya secara instan
+      setStudents((prev) => prev.filter((s) => s.id !== targetId));
+      alert(`Akun siswa "${deletingStudent.name}" (@${deletingStudent.username}) berhasil dihapus selamanya dari database.`);
       setDeletingStudent(null);
       const updated = await api.getStudents();
       setStudents(updated);
@@ -916,6 +934,11 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         >
           <Shield className="w-4 h-4 shrink-0" />
           <span className="truncate">Tiket Sandi Siswa</span>
+          {resetRequests.filter((r) => r.status === 'pending').length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+              {resetRequests.filter((r) => r.status === 'pending').length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -1156,8 +1179,12 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                           {sIdx + 1}
                         </td>
                         <td className="p-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                          <div
+                            className="flex items-center gap-2.5 cursor-pointer group"
+                            onClick={() => setPreviewQrStudent(stu)}
+                            title="Klik untuk melihat profil lengkap & QR siswa"
+                          >
+                            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0 group-hover:ring-2 ring-emerald-500 transition">
                               <img
                                 src={stu.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(stu.name)}&backgroundColor=0284c7`}
                                 alt={stu.name}
@@ -1165,7 +1192,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                               />
                             </div>
                             <div>
-                              <div className="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                              <div className="font-bold text-slate-900 group-hover:text-emerald-700 flex items-center gap-1.5 flex-wrap transition">
                                 <span>{stu.name}</span>
                                 {stu.isAlumni ? (
                                   <span className="px-1.5 py-0.2 bg-purple-100 text-purple-800 rounded text-[9px] font-black border border-purple-200">
@@ -2138,6 +2165,17 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleRefreshTickets}
+                disabled={isRefreshingTickets}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl transition shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
+                title="Muat ulang tiket pengaduan masuk"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isRefreshingTickets ? 'animate-spin' : ''}`} />
+                <span>{isRefreshingTickets ? 'Memperbarui...' : 'Segarkan Pengaduan'}</span>
+              </button>
+
               <select
                 value={ticketFilterStatus}
                 onChange={(e) => setTicketFilterStatus(e.target.value)}

@@ -546,15 +546,11 @@ export const offlineStore = {
 
   deletePost(postId: string) {
     const db = loadDB();
-    const user = this.getCurrentUser();
-    if (!user) throw new Error('Login diperlukan');
-
-    db.posts = (db.posts || []).filter((p) => {
-      if (p.id !== postId) return true;
-      if (p.authorId === user.id || user.role === 'admin') return false;
-      return true;
-    });
-
+    db.posts = (db.posts || []).filter((p) => p.id !== postId);
+    (db as any).deletedPostIds = (db as any).deletedPostIds || [];
+    if (!(db as any).deletedPostIds.includes(postId)) {
+      (db as any).deletedPostIds.push(postId);
+    }
     saveDB(db);
     return { message: 'Postingan berhasil dihapus' };
   },
@@ -1185,11 +1181,49 @@ export const offlineStore = {
 
   deleteStudent(id: string) {
     const db = loadDB();
-    const idx = db.users.findIndex((u) => u.id === id && u.role === 'siswa');
+    const idx = db.users.findIndex((u) => u.id === id);
     if (idx !== -1) {
+      const removedUser = db.users[idx];
       db.users.splice(idx, 1);
+      (db as any).deletedUserIds = (db as any).deletedUserIds || [];
+      if (!(db as any).deletedUserIds.includes(id)) {
+        (db as any).deletedUserIds.push(id);
+      }
+      if (removedUser.username && !(db as any).deletedUserIds.includes(removedUser.username.toLowerCase())) {
+        (db as any).deletedUserIds.push(removedUser.username.toLowerCase());
+      }
       saveDB(db);
     }
+  },
+
+  getDeletedUserIds(): string[] {
+    const db = loadDB();
+    return (db as any).deletedUserIds || [];
+  },
+
+  getDeletedPostIds(): string[] {
+    const db = loadDB();
+    return (db as any).deletedPostIds || [];
+  },
+
+  getPasswordResetRequests(): PasswordResetRequest[] {
+    const db = loadDB();
+    return (db.passwordResetRequests || []).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  },
+
+  saveTicketDirect(req: PasswordResetRequest) {
+    if (!req || !req.id) return;
+    const db = loadDB();
+    if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
+    const idx = db.passwordResetRequests.findIndex((r) => r.id === req.id || r.ticketNumber === req.ticketNumber);
+    if (idx >= 0) {
+      db.passwordResetRequests[idx] = { ...db.passwordResetRequests[idx], ...req };
+    } else {
+      db.passwordResetRequests.unshift(req);
+    }
+    saveDB(db);
   },
 
   updateStudent(id: string, data: Partial<User>) {

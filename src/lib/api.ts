@@ -235,21 +235,33 @@ export const api = {
 
   updateProfile: async (data: { avatarUrl?: string; bio?: string; phone?: string; email?: string }) => {
     try {
-      return await tryServerRequest<{ message: string; user: User }>('/api/users/profile', {
+      offlineStore.updateProfile(data);
+    } catch (_) {}
+
+    try {
+      const res = await tryServerRequest<{ message: string; user: User }>('/api/users/profile', {
         method: 'PUT',
         body: JSON.stringify(data),
       });
+      if (res && res.user) {
+        offlineStore.syncUserFromServer(res.user);
+      }
+      return res;
     } catch (_) {
-      return offlineStore.updateProfile(data);
+      return { message: 'Profil berhasil diperbarui', user: offlineStore.getCurrentUser()! };
     }
   },
 
   requestPasswordReset: async (data: { newPassword: string; confirmPassword?: string; reason?: string }) => {
     try {
-      return await tryServerRequest<{ message: string; request: PasswordResetRequest }>('/api/auth/password-reset-request', {
+      const res = await tryServerRequest<{ message: string; request: PasswordResetRequest }>('/api/auth/password-reset-request', {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      if (res && res.request) {
+        offlineStore.saveTicketDirect(res.request);
+      }
+      return res;
     } catch (_) {
       const user = offlineStore.getCurrentUser();
       const req = offlineStore.createPasswordResetRequest({
@@ -275,11 +287,26 @@ export const api = {
 
   // Admin
   getPasswordResetRequests: async () => {
+    const localRequests = offlineStore.getPasswordResetRequests();
+    let serverRequests: PasswordResetRequest[] = [];
     try {
-      return await tryServerRequest<PasswordResetRequest[]>('/api/admin/password-reset-requests');
+      serverRequests = await tryServerRequest<PasswordResetRequest[]>('/api/admin/password-reset-requests');
     } catch (_) {
-      return [];
+      serverRequests = [];
     }
+
+    const map = new Map<string, PasswordResetRequest>();
+    localRequests.forEach((r) => map.set(r.id, r));
+    if (Array.isArray(serverRequests) && serverRequests.length > 0) {
+      serverRequests.forEach((r) => {
+        map.set(r.id, r);
+        offlineStore.saveTicketDirect(r);
+      });
+    }
+
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   },
 
   processPasswordResetRequest: async (id: string, status: 'approved' | 'rejected', adminNote?: string) => {
@@ -307,14 +334,19 @@ export const api = {
 
     const localStudents = offlineStore.getStudents();
     const studentMap = new Map<string, User>();
+    const deletedIds = offlineStore.getDeletedUserIds();
 
     if (Array.isArray(serverStudents) && serverStudents.length > 0) {
       serverStudents.forEach((s) => {
-        studentMap.set(s.id, s);
-        offlineStore.syncStudentEntity(s);
+        const cleanU = (s.username || '').toLowerCase().replace(/^@+/, '');
+        if (!deletedIds.includes(s.id) && !deletedIds.includes(cleanU)) {
+          studentMap.set(s.id, s);
+          offlineStore.syncStudentEntity(s);
+        }
       });
       localStudents.forEach((ls) => {
         const cleanU = (ls.username || '').toLowerCase().replace(/^@+/, '');
+        if (deletedIds.includes(ls.id) || deletedIds.includes(cleanU)) return;
         const existsInServer = serverStudents.some(
           (ss) => ss.id === ls.id || (ss.username || '').toLowerCase().replace(/^@+/, '') === cleanU
         );
@@ -323,7 +355,12 @@ export const api = {
         }
       });
     } else {
-      localStudents.forEach((s) => studentMap.set(s.id, s));
+      localStudents.forEach((s) => {
+        const cleanU = (s.username || '').toLowerCase().replace(/^@+/, '');
+        if (!deletedIds.includes(s.id) && !deletedIds.includes(cleanU)) {
+          studentMap.set(s.id, s);
+        }
+      });
     }
 
     return Array.from(studentMap.values());
@@ -679,7 +716,8 @@ export const api = {
   },
 
   // Student Feed Posts
-    getPosts: async () => {
+  getPosts: async () => {
+    const deletedPostIds = offlineStore.getDeletedPostIds();
     const localPosts = offlineStore.getPosts();
     let serverPosts: StudentPost[] = [];
     try {
@@ -689,16 +727,20 @@ export const api = {
     }
 
     const postMap = new Map<string, StudentPost>();
-    // Pertahankan semua postingan lokal terlebih dahulu agar tidak hilang saat server kosong
-    localPosts.forEach((p) => postMap.set(p.id, p));
+    localPosts.forEach((p) => {
+      if (!deletedPostIds.includes(p.id)) {
+        postMap.set(p.id, p);
+      }
+    });
 
-    // Gabungkan dengan postingan dari server
     if (Array.isArray(serverPosts) && serverPosts.length > 0) {
       serverPosts.forEach((p) => {
-        if (postMap.has(p.id)) {
-          postMap.set(p.id, { ...postMap.get(p.id)!, ...p });
-        } else {
-          postMap.set(p.id, p);
+        if (!deletedPostIds.includes(p.id)) {
+          if (postMap.has(p.id)) {
+            postMap.set(p.id, { ...postMap.get(p.id)!, ...p });
+          } else {
+            postMap.set(p.id, p);
+          }
         }
       });
     }
@@ -759,12 +801,13 @@ export const api = {
   },
 
   deletePost: async (postId: string) => {
+    offlineStore.deletePost(postId);
     try {
       return await tryServerRequest<{ message: string }>(`/api/posts/${postId}`, {
         method: 'DELETE',
       });
     } catch (_) {
-      return offlineStore.deletePost(postId);
+      return { message: 'Postingan berhasil dihapus' };
     }
   },
 

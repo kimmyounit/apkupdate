@@ -49,6 +49,8 @@ export interface DatabaseSchema {
   tuitionTransactions: TuitionTransaction[];
   tuDocuments: TuDocument[];
   tuChatMessages: TuChatMessage[];
+  deletedUserIds?: string[];
+  deletedPostIds?: string[];
 }
 
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
@@ -346,6 +348,8 @@ export function getInitialData(): DatabaseSchema {
     tuitionTransactions: [],
     tuDocuments: [],
     tuChatMessages: [],
+    deletedUserIds: [],
+    deletedPostIds: [],
   };
 }
 
@@ -394,6 +398,10 @@ class DatabaseManager {
       if (Array.isArray(parsed.users)) {
         parsed.users.forEach((ghUser: any) => {
           const cleanGh = (ghUser.username || '').toLowerCase().replace(/^@+/, '');
+          const isDeleted = (this.data.deletedUserIds || []).some(
+            (did) => did === ghUser.id || did.toLowerCase() === cleanGh || did.toLowerCase() === (ghUser.username || '').toLowerCase()
+          );
+          if (isDeleted) return; // Akun terhapus permanen
           const existing = this.data.users.find(
             (u) => u.id === ghUser.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanGh
           );
@@ -405,7 +413,10 @@ class DatabaseManager {
       if (Array.isArray(parsed.posts) && parsed.posts.length > 0) {
         const postMap = new Map<string, any>();
         this.data.posts.forEach((p) => postMap.set(p.id, p));
-        parsed.posts.forEach((p: any) => postMap.set(p.id, p));
+        parsed.posts.forEach((p: any) => {
+          if ((this.data.deletedPostIds || []).includes(p.id)) return; // Postingan terhapus permanen
+          postMap.set(p.id, p);
+        });
         this.data.posts = Array.from(postMap.values()).sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
@@ -1433,6 +1444,10 @@ class DatabaseManager {
     }
 
     this.data.posts.splice(postIdx, 1);
+    this.data.deletedPostIds = this.data.deletedPostIds || [];
+    if (!this.data.deletedPostIds.includes(id)) {
+      this.data.deletedPostIds.push(id);
+    }
     this.save();
     return true;
   }
@@ -2161,9 +2176,17 @@ class DatabaseManager {
   }
 
   deleteStudentAccount(id: string): boolean {
-    const idx = this.data.users.findIndex((u) => u.id === id && u.role === 'siswa');
+    const idx = this.data.users.findIndex((u) => u.id === id);
     if (idx === -1) return false;
+    const removedUser = this.data.users[idx];
     this.data.users.splice(idx, 1);
+    this.data.deletedUserIds = this.data.deletedUserIds || [];
+    if (!this.data.deletedUserIds.includes(id)) {
+      this.data.deletedUserIds.push(id);
+    }
+    if (removedUser.username && !this.data.deletedUserIds.includes(removedUser.username.toLowerCase())) {
+      this.data.deletedUserIds.push(removedUser.username.toLowerCase());
+    }
     this.save();
     return true;
   }

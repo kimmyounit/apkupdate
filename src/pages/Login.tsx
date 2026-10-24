@@ -8,8 +8,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
+  Smartphone,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
+import { IosInstallModal } from '../components/IosInstallModal.tsx';
 
 export const Login: React.FC = () => {
   const { login, loginNotice, setLoginNotice } = useAuth();
@@ -20,6 +23,7 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showIosModal, setShowIosModal] = useState(false);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,6 +178,44 @@ export const Login: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Mobile App Access Banner (Android APK & iOS iPhone PWA) */}
+        <div className="mt-4 bg-slate-900/90 backdrop-blur-md p-4 rounded-3xl border border-slate-800 text-white shadow-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+              <Smartphone className="w-3.5 h-3.5 text-emerald-400" /> Akses Aplikasi di HP
+            </span>
+            <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+              Versi Mobile
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <a
+              href="/TAMVESTA.apk"
+              download="TAMVESTA.apk"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-[0.98]"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Android (APK)</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={() => setShowIosModal(true)}
+              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 rounded-xl text-xs font-bold transition shadow-sm active:scale-[0.98]"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-sky-400" />
+              <span>iPhone (iOS)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Panduan iOS */}
+        <IosInstallModal
+          isOpen={showIosModal}
+          onClose={() => setShowIosModal(false)}
+        />
 
         {/* Footer info */}
         <div className="mt-6 text-center text-xs text-slate-500 space-y-1">
