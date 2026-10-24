@@ -118,7 +118,7 @@ app.post('/api/auth/login', (req, res) => {
   }
 
   const token = createSessionToken(user.id);
-  const mustChange = user.role === 'admin' ? false : !!user.mustChangePassword;
+  const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword !== false) : !!user.mustChangePassword);
   return res.json({
     token,
     user: sanitizeUser(user),
@@ -128,7 +128,7 @@ app.post('/api/auth/login', (req, res) => {
 
 // GET /api/auth/me
 app.get('/api/auth/me', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const mustChange = req.user?.role === 'admin' ? false : !!req.user?.mustChangePassword;
+  const mustChange = req.user?.role === 'admin' ? false : (req.user?.role === 'siswa' ? (req.user?.mustChangePassword !== false) : !!req.user?.mustChangePassword);
   return res.json({
     user: sanitizeUser(req.user),
     mustChangePassword: mustChange,

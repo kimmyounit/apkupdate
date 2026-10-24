@@ -318,7 +318,7 @@ export function getInitialData(): DatabaseSchema {
       password: student.initialPassword,
       passwordHash: pass.hash,
       salt: pass.salt,
-      mustChangePassword: false,
+      mustChangePassword: true,
       isActive: true,
       qrToken: generateQrToken(id, student.username),
       createdAt: now,
@@ -725,7 +725,7 @@ class DatabaseManager {
       password: userData.password,
       passwordHash: pass.hash,
       salt: pass.salt,
-      mustChangePassword: false, // Langsung aktif tanpa wajib ganti password
+      mustChangePassword: true, // Siswa wajib mengganti kata sandi awal agar aman
       isActive: true,
       qrToken,
       avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=0284c7`,
@@ -795,7 +795,7 @@ class DatabaseManager {
     if (user.role === 'admin' || user.username === 'TAMANSISWA') {
       return { success: false, error: 'Password Administrator berstatus tetap dan tidak dapat diubah.' };
     }
-    if (!verifyPassword(oldPassword, user.passwordHash, user.salt)) {
+    if (!verifyPassword(oldPassword, user.passwordHash, user.salt, user.initialPassword)) {
       return { success: false, error: 'Password lama tidak sesuai.' };
     }
     if (newPassword.length < 6) {

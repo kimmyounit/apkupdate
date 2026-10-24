@@ -278,7 +278,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa7A001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_001:9e354f2f25d3717f",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -292,7 +292,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa7A002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -306,7 +306,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa7A003",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_003:a8b1bf53ef854371",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -320,7 +320,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa7B001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7b_001:7c216e93f287a1bb",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -334,7 +334,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa7B002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7b_002:2457918d2abf2cb9",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -348,7 +348,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa8A001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_001:966df39795446bcf",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -362,7 +362,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa8A002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_002:5d5a0c75dfc6eeb4",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -376,7 +376,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa8A003",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_003:d788251d1283e2fb",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -390,7 +390,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa8B001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8b_001:cda0a40be6d66724",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -404,7 +404,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa8B002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8b_002:f9d6c04a69c27b5d",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -418,7 +418,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa9A001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_001:86e5c0c96dcb84e0",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -432,7 +432,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa9A002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_002:372888ff50d80ec5",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -446,7 +446,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa9A003",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_003:603d6ac4d8c9b9c0",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -460,7 +460,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa9B001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9b_001:e0ea9879ea551c2d",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -474,7 +474,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa9B002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9b_002:4fc87e276cfb7953",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -488,7 +488,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa1A001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd1a_001:7cc93e2358bdb31b",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -502,7 +502,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa1A002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd1a_002:5892a39733f6eb6f",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -516,7 +516,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa2A001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd2a_001:8ea5f1306268a6be",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -530,7 +530,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa2A002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd2a_002:891e2c141386e350",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -544,7 +544,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa3A001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd3a_001:2c0301dcc53eae1e",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -558,7 +558,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa3A002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd3a_002:5960a14aca5268d6",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -572,7 +572,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa4A001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd4a_001:6aeb9b32d1bf55eb",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -586,7 +586,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa4A002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd4a_002:a283bc69a415a513",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -600,7 +600,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa5A001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd5a_001:4e8c898ff4dfe3dc",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -614,7 +614,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa5A002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd5a_002:fc9fbc93082b55fa",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -628,7 +628,7 @@
       "gender": "Perempuan",
       "initialPassword": "Siswa6A001",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd6a_001:7e0fcd4061dde883",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"
@@ -642,7 +642,7 @@
       "gender": "Laki-laki",
       "initialPassword": "Siswa6A002",
       "isActive": true,
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd6a_002:43a3e7f44cf5224d",
       "createdAt": "2026-10-23T00:00:00.000Z",
       "updatedAt": "2026-10-23T00:00:00.000Z"

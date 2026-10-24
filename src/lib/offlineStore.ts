@@ -232,7 +232,8 @@ export const offlineStore = {
 
     this.setCurrentUserId(user.id);
     const token = 'offline_token_' + user.id;
-    return { token, user, mustChangePassword: !!user.mustChangePassword };
+    const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword !== false) : !!user.mustChangePassword);
+    return { token, user, mustChangePassword: mustChange };
   },
 
   getMe() {
@@ -240,7 +241,8 @@ export const offlineStore = {
     if (!user) {
       throw new Error('Sesi berakhir, silakan login kembali');
     }
-    return { user, mustChangePassword: !!user.mustChangePassword };
+    const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword !== false) : !!user.mustChangePassword);
+    return { user, mustChangePassword: mustChange };
   },
 
   updateProfile(data: { avatarUrl?: string; bio?: string; phone?: string; email?: string }) {
@@ -311,7 +313,7 @@ export const offlineStore = {
     if (!user) throw new Error('Pengguna tidak ditemukan');
 
     const passwords = getStoredPasswords();
-    const currentPass = passwords[user.username] || (user.role === 'admin' ? 'TAMVESTA123' : user.role === 'guru' ? 'GuruTamvesta123' : 'SiswaTamvesta123');
+    const currentPass = passwords[user.username] || passwords[user.username.toLowerCase()] || user.initialPassword || (user as any).password || (user.role === 'admin' ? 'TAMVESTA123' : user.role === 'guru' ? 'GuruTamvesta123' : 'Siswa7A001');
 
     if (oldPass !== currentPass) {
       throw new Error('Kata sandi saat ini salah');
