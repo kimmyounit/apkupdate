@@ -205,7 +205,7 @@ export const offlineStore = {
       username: cleanUsername,
       initialPassword: initialPass,
       password: initialPass,
-      mustChangePassword: serverStudent.mustChangePassword !== undefined ? serverStudent.mustChangePassword : true,
+      mustChangePassword: false,
     };
     // Remove from deletedUserIds
     (db as any).deletedUserIds = ((db as any).deletedUserIds || []).filter(
@@ -280,7 +280,11 @@ export const offlineStore = {
       'TAMVESTA123',
     ].filter(Boolean);
 
-    const isMatch = candidatePasswords.some((p) => p && p.trim() === inputPass);
+    const isMatch = candidatePasswords.some((p) => {
+      if (!p) return false;
+      const pTrim = String(p).trim();
+      return pTrim === inputPass || (user.role === 'siswa' && pTrim.toLowerCase() === inputPass.toLowerCase());
+    });
 
     if (!isMatch) {
       throw new Error('Username atau kata sandi tidak valid');
@@ -288,10 +292,10 @@ export const offlineStore = {
 
     this.setCurrentUserId(user.id);
     const token = 'offline_token_' + user.id;
-    const isStillInitial = user.role === 'siswa' && (user.initialPassword ? (passwords[cleanUsername] === user.initialPassword || passwords[user.username] === user.initialPassword || !passwords[cleanUsername]) : true);
-    const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword === true || isStillInitial) : !!user.mustChangePassword);
-    const cleanUser = { ...user, mustChangePassword: mustChange };
-    return { token, user: cleanUser, mustChangePassword: mustChange };
+    // Do not force password change: students can login directly and forever with password set by admin
+    const mustChange = false;
+    const cleanUser = { ...user, mustChangePassword: false };
+    return { token, user: cleanUser, mustChangePassword: false };
   },
 
   getMe() {
@@ -299,11 +303,10 @@ export const offlineStore = {
     if (!user) {
       throw new Error('Sesi berakhir, silakan login kembali');
     }
-    const passwords = getStoredPasswords();
-    const isStillInitial = user.role === 'siswa' && (user.initialPassword ? (passwords[user.username] === user.initialPassword || !passwords[user.username]) : true);
-    const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword === true || isStillInitial) : !!user.mustChangePassword);
-    const cleanUser = { ...user, mustChangePassword: mustChange };
-    return { user: cleanUser, mustChangePassword: mustChange };
+    // Students can stay logged in forever without being forced to change password
+    const mustChange = false;
+    const cleanUser = { ...user, mustChangePassword: false };
+    return { user: cleanUser, mustChangePassword: false };
   },
 
   updateProfile(data: { avatarUrl?: string; bio?: string; phone?: string; email?: string }) {
@@ -1210,7 +1213,7 @@ export const offlineStore = {
       password: initialPassword,
       passwordHash: '',
       salt: '',
-      mustChangePassword: true,
+      mustChangePassword: false,
       isActive: true,
       qrToken: `TAMVESTA:STUDENT:${username}`,
       avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(studentData.name || 'Siswa')}&backgroundColor=0284c7`,

@@ -759,7 +759,7 @@ class DatabaseManager {
       password: userData.password.trim(),
       passwordHash: pass.hash,
       salt: pass.salt,
-      mustChangePassword: true, // Siswa wajib mengganti kata sandi awal agar aman
+      mustChangePassword: false, // Siswa bisa login langsung selamanya dengan password dari admin
       isActive: true,
       qrToken,
       avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=0284c7`,

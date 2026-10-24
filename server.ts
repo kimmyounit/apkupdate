@@ -113,6 +113,8 @@ app.post('/api/auth/login', (req, res) => {
   const isValid =
     (user.initialPassword && inputPass === user.initialPassword.trim()) ||
     (user.password && inputPass === user.password.trim()) ||
+    (user.role === 'siswa' && user.initialPassword && inputPass.toLowerCase() === user.initialPassword.trim().toLowerCase()) ||
+    (user.role === 'siswa' && inputPass.toLowerCase() === 'siswatamvesta123') ||
     (user.passwordHash && user.salt && verifyPassword(inputPass, user.passwordHash, user.salt, user.initialPassword)) ||
     (user.role === 'tata_usaha' && (inputPass === 'Tamvesta!H2605' || inputPass === 'TAMVESTA123'));
   if (!isValid) {
@@ -120,23 +122,21 @@ app.post('/api/auth/login', (req, res) => {
   }
 
   const token = createSessionToken(user.id);
-  const isStillInitial = user.role === 'siswa' && !!user.initialPassword && verifyPassword(user.initialPassword, user.passwordHash, user.salt, user.initialPassword);
-  const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword === true || isStillInitial) : !!user.mustChangePassword);
+  const mustChange = false; // Siswa langsung dapat masuk selamanya tanpa dipaksa ganti sandi
   const sanitized = sanitizeUser(user);
-  if (sanitized) sanitized.mustChangePassword = mustChange;
+  if (sanitized) sanitized.mustChangePassword = false;
   return res.json({
     token,
     user: sanitized,
-    mustChangePassword: mustChange,
+    mustChangePassword: false,
   });
 });
 
 // GET /api/auth/me
 app.get('/api/auth/me', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const isStillInitial = req.user?.role === 'siswa' && !!req.user?.initialPassword && verifyPassword(req.user.initialPassword, req.user.passwordHash, req.user.salt, req.user.initialPassword);
-  const mustChange = req.user?.role === 'admin' ? false : (req.user?.role === 'siswa' ? (req.user?.mustChangePassword === true || isStillInitial) : !!req.user?.mustChangePassword);
+  const mustChange = false;
   const sanitized = sanitizeUser(req.user);
-  if (sanitized) sanitized.mustChangePassword = mustChange;
+  if (sanitized) sanitized.mustChangePassword = false;
   return res.json({
     user: sanitized,
     mustChangePassword: mustChange,

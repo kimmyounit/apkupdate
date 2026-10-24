@@ -384,9 +384,15 @@ export const api = {
   },
 
   createStudent: async (studentData: Partial<User> & { password?: string }) => {
-    const rawPass = studentData.password || 'SiswaTamvesta123';
+    const rawPass = (studentData.password || 'SiswaTamvesta123').trim();
+    const studentPayload = {
+      ...studentData,
+      password: rawPass,
+      initialPassword: rawPass,
+      mustChangePassword: false,
+    };
     // Always persist to local storage first so it is immediately visible & never lost
-    const localStudent = offlineStore.createStudent(studentData);
+    const localStudent = offlineStore.createStudent(studentPayload);
 
     try {
       const res = await tryServerRequest<{ message: string; student: User }>('/api/admin/students', {
