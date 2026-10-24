@@ -166,6 +166,8 @@ export const api = {
       username: credentials.username.trim().toLowerCase().replace(/^@+/, ''),
       password: credentials.password,
     };
+
+    // Coba login via server terlebih dahulu
     try {
       const res = await tryServerRequest<{ token: string; user: User; mustChangePassword: boolean }>('/api/auth/login', {
         method: 'POST',
@@ -173,26 +175,39 @@ export const api = {
       });
       setStoredToken(res.token);
       offlineStore.setCurrentUserId(res.user.id);
-      offlineStore.syncUserFromServer(res.user);
-      return res;
+      // Simpan user + password ke localStorage agar bisa login offline selamanya
+      offlineStore.saveStudentFromServer(res.user, credentials.password);
+      return { ...res, mustChangePassword: false };
     } catch (err: any) {
       serverError = err;
-      // Khusus jika akun dinonaktifkan secara eksplisit oleh server
-      if (err.status === 403) {
-        throw err;
-      }
+      // Akun dinonaktifkan secara eksplisit
+      if (err.status === 403) throw err;
     }
 
-    // Cek di penyimpanan lokal jika server tidak menemukan atau offline
+    // Coba login di penyimpanan lokal
     try {
       const res = offlineStore.login(cleanCredentials);
       setStoredToken(res.token);
       return res;
-    } catch (offlineErr) {
-      if (serverError && serverError.status === 401) {
-        throw serverError;
-      }
-      throw offlineErr;
+    } catch (_offlineErr) {
+      // User tidak ditemukan di lokal dan server — coba ambil semua users dari server
+      // lalu merge ke localStorage dan coba login ulang (untuk HP baru / fresh install)
+      try {
+        const syncRes = await tryServerRequest<{ users: User[] }>('/api/users/public-sync');
+        if (Array.isArray(syncRes?.users) && syncRes.users.length > 0) {
+          offlineStore.mergeUsersFromServer(syncRes.users);
+          // Coba login lagi setelah merge
+          try {
+            const res2 = offlineStore.login(cleanCredentials);
+            setStoredToken(res2.token);
+            return res2;
+          } catch (_) {}
+        }
+      } catch (_syncErr) {}
+
+      // Lempar error server jika 401 (salah password), atau error lokal
+      if (serverError && serverError.status === 401) throw serverError;
+      throw new Error('Username atau kata sandi tidak valid. Pastikan akun sudah terdaftar oleh Admin.');
     }
   },
 

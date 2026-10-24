@@ -52,6 +52,24 @@ app.get('/api/health', (_req, res) => {
 });
 
 // -------------------------------------------------------------
+// Public user sync — APK baru download semua akun aktif (tanpa hash/salt)
+// Digunakan HP siswa yang baru install untuk dapat akun yang sudah dibuat admin
+app.get('/api/users/public-sync', (_req, res) => {
+  try {
+    const allUsers = db.getAllUsers();
+    const safeUsers = allUsers
+      .filter((u: any) => u.isActive !== false)
+      .map((u: any) => {
+        const { passwordHash, salt, ...safe } = u;
+        return safe;
+      });
+    return res.json({ users: safeUsers, count: safeUsers.length });
+  } catch (err) {
+    return res.status(500).json({ error: 'Gagal mengambil data users' });
+  }
+});
+
+// -------------------------------------------------------------
 // Endpoint Unduh Langsung APK Android
 app.get('/TAMVESTA.apk', (req, res) => {
   const apkPath = path.resolve(__dirname, 'TAMVESTA.apk');

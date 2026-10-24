@@ -240,6 +240,48 @@ export const offlineStore = {
     saveDB(db);
   },
 
+  /**
+   * Merge seluruh user dari server ke localStorage.
+   * Dipanggil saat login gagal di lokal (HP baru / user belum ada di localStorage).
+   * Password dari initialPassword / password field disimpan agar bisa login offline.
+   */
+  mergeUsersFromServer(serverUsers: User[]) {
+    if (!Array.isArray(serverUsers) || serverUsers.length === 0) return;
+    const db = loadDB();
+    if (!Array.isArray(db.users)) db.users = [];
+    const deletedIds: string[] = (db as any).deletedUserIds || [];
+    serverUsers.forEach((su) => {
+      if (!su || !su.id) return;
+      const cleanUn = (su.username || '').toLowerCase().replace(/^@+/, '');
+      const isDeleted = deletedIds.some(
+        (d) => d === su.id || d.toLowerCase() === cleanUn
+      );
+      if (isDeleted) return;
+      const idx = db.users.findIndex(
+        (u) => u.id === su.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanUn
+      );
+      const initialPass = su.initialPassword || (su as any).password;
+      const merged = {
+        ...su,
+        mustChangePassword: false,
+        initialPassword: initialPass || su.initialPassword,
+        password: initialPass || (su as any).password,
+        isActive: su.isActive !== false,
+      };
+      if (idx >= 0) {
+        // Hanya update jika belum punya password lokal
+        db.users[idx] = { ...merged, ...db.users[idx], mustChangePassword: false };
+      } else {
+        db.users.push(merged);
+      }
+      if (initialPass) {
+        savePassword(cleanUn, initialPass);
+        savePassword(su.username, initialPass);
+      }
+    });
+    saveDB(db);
+  },
+
   getCurrentUser(): User | null {
     const db = loadDB();
     const id = this.getCurrentUserId();
