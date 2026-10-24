@@ -271,23 +271,6 @@
       "password": "Siswa1A002"
     },
     {
-      "id": "user_siswa_siswa_sd2a_002",
-      "username": "siswa.sd2a.002",
-      "name": "Siti Aminah",
-      "role": "siswa",
-      "kelas": "II-A SD",
-      "gender": "Perempuan",
-      "initialPassword": "Siswa2A002",
-      "passwordHash": "739f34aa79ef838e57176fb37830337fd3b20081b3e224e0a09b194e83ebc7d5a6c700bd32342d6935a7c4b725f37246393eeb3c121918c68c3378de4667a0b6",
-      "salt": "6af73c595ecf4543f1b3a3f53edcf6d2",
-      "mustChangePassword": false,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd2a_002:891e2c141386e350",
-      "createdAt": "2026-10-24T08:22:46.669Z",
-      "updatedAt": "2026-10-24T17:08:18.451Z",
-      "password": "Siswa2A002"
-    },
-    {
       "id": "user_siswa_siswa_sd3a_001",
       "username": "siswa.sd3a.001",
       "name": "Taufik Hidayat",
@@ -796,6 +779,8 @@
     "user_siswa_siswa_smp9b_001",
     "siswa.smp9b.001",
     "user_siswa_siswa_sd2a_001",
-    "siswa.sd2a.001"
+    "siswa.sd2a.001",
+    "user_siswa_siswa_sd2a_002",
+    "siswa.sd2a.002"
   ]
 }
