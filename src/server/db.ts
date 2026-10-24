@@ -453,7 +453,7 @@ class DatabaseManager {
               initialPassword: student.initialPassword,
               passwordHash: pass.hash,
               salt: pass.salt,
-              mustChangePassword: false,
+              mustChangePassword: true,
               isActive: true,
               qrToken: generateQrToken(id, student.username),
               createdAt: new Date().toISOString(),
@@ -468,6 +468,11 @@ class DatabaseManager {
               const pass = hashPassword(student.initialPassword);
               existing.passwordHash = pass.hash;
               existing.salt = pass.salt;
+            }
+            // Siswa wajib mengganti kata sandi awal jika masih menggunakan sandi bawaan
+            const isStillDefaultPass = verifyPassword(student.initialPassword, existing.passwordHash, existing.salt, existing.initialPassword);
+            if (isStillDefaultPass) {
+              existing.mustChangePassword = true;
             }
           }
         });

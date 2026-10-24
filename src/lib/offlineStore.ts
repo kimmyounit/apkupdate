@@ -232,8 +232,10 @@ export const offlineStore = {
 
     this.setCurrentUserId(user.id);
     const token = 'offline_token_' + user.id;
-    const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword !== false) : !!user.mustChangePassword);
-    return { token, user, mustChangePassword: mustChange };
+    const isStillInitial = user.role === 'siswa' && (user.initialPassword ? (passwords[user.username] === user.initialPassword || !passwords[user.username]) : true);
+    const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword === true || isStillInitial) : !!user.mustChangePassword);
+    const cleanUser = { ...user, mustChangePassword: mustChange };
+    return { token, user: cleanUser, mustChangePassword: mustChange };
   },
 
   getMe() {
@@ -241,8 +243,11 @@ export const offlineStore = {
     if (!user) {
       throw new Error('Sesi berakhir, silakan login kembali');
     }
-    const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword !== false) : !!user.mustChangePassword);
-    return { user, mustChangePassword: mustChange };
+    const passwords = getStoredPasswords();
+    const isStillInitial = user.role === 'siswa' && (user.initialPassword ? (passwords[user.username] === user.initialPassword || !passwords[user.username]) : true);
+    const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword === true || isStillInitial) : !!user.mustChangePassword);
+    const cleanUser = { ...user, mustChangePassword: mustChange };
+    return { user: cleanUser, mustChangePassword: mustChange };
   },
 
   updateProfile(data: { avatarUrl?: string; bio?: string; phone?: string; email?: string }) {

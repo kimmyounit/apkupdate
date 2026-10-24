@@ -118,19 +118,25 @@ app.post('/api/auth/login', (req, res) => {
   }
 
   const token = createSessionToken(user.id);
-  const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword !== false) : !!user.mustChangePassword);
+  const isStillInitial = user.role === 'siswa' && !!user.initialPassword && verifyPassword(user.initialPassword, user.passwordHash, user.salt, user.initialPassword);
+  const mustChange = user.role === 'admin' ? false : (user.role === 'siswa' ? (user.mustChangePassword === true || isStillInitial) : !!user.mustChangePassword);
+  const sanitized = sanitizeUser(user);
+  if (sanitized) sanitized.mustChangePassword = mustChange;
   return res.json({
     token,
-    user: sanitizeUser(user),
+    user: sanitized,
     mustChangePassword: mustChange,
   });
 });
 
 // GET /api/auth/me
 app.get('/api/auth/me', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const mustChange = req.user?.role === 'admin' ? false : (req.user?.role === 'siswa' ? (req.user?.mustChangePassword !== false) : !!req.user?.mustChangePassword);
+  const isStillInitial = req.user?.role === 'siswa' && !!req.user?.initialPassword && verifyPassword(req.user.initialPassword, req.user.passwordHash, req.user.salt, req.user.initialPassword);
+  const mustChange = req.user?.role === 'admin' ? false : (req.user?.role === 'siswa' ? (req.user?.mustChangePassword === true || isStillInitial) : !!req.user?.mustChangePassword);
+  const sanitized = sanitizeUser(req.user);
+  if (sanitized) sanitized.mustChangePassword = mustChange;
   return res.json({
-    user: sanitizeUser(req.user),
+    user: sanitized,
     mustChangePassword: mustChange,
   });
 });
