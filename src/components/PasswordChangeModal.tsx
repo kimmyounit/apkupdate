@@ -51,28 +51,18 @@ export const PasswordChangeModal: React.FC<Props> = ({ isOpen, isMandatory = fal
     try {
       const res = await api.changePassword({ oldPassword, newPassword });
       setMustChangePassword(false);
+      setSuccess('Password baru berhasil disimpan! Menyiapkan aplikasi...');
 
-      if (isMandatory) {
-        // Redirect balik lagi untuk login!
-        setSuccess('Password baru berhasil disimpan! Mengalihkan kembali ke halaman Login...');
-        setTimeout(() => {
-          setLoginNotice(
-            `Password baru untuk akun @${user?.username || ''} berhasil disimpan! Silakan masuk kembali menggunakan password baru Anda.`
-          );
-          logout();
-          if (onClose) onClose();
-        }, 1500);
-      } else {
-        setSuccess(res.message || 'Password berhasil diperbarui!');
-        await refreshUser();
-        setTimeout(() => {
-          setSuccess(null);
-          setOldPassword('');
-          setNewPassword('');
-          setConfirmPassword('');
-          if (onClose) onClose();
-        }, 1500);
-      }
+      // Tetap bisa langsung masuk tanpa diminta login ulang
+      await refreshUser();
+
+      setTimeout(() => {
+        setSuccess(null);
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        if (onClose) onClose();
+      }, 1000);
     } catch (err: any) {
       setError(err.message || 'Gagal mengganti password.');
     } finally {
@@ -95,7 +85,7 @@ export const PasswordChangeModal: React.FC<Props> = ({ isOpen, isMandatory = fal
               </h3>
               <p className="text-xs text-emerald-100">
                 {isMandatory
-                  ? 'Ganti password bawaan sebelum melanjutkan ke sistem'
+                  ? 'Ganti password bawaan untuk langsung masuk ke aplikasi'
                   : 'Perbarui password untuk menjaga keamanan data'}
               </p>
             </div>
@@ -108,7 +98,7 @@ export const PasswordChangeModal: React.FC<Props> = ({ isOpen, isMandatory = fal
             <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl text-xs leading-relaxed">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <span>
-                <strong>Perhatian:</strong> Akun Anda sedang menggunakan password awal dari Administrator. Anda wajib mengganti password ini, kemudian Anda akan diarahkan <strong>balik lagi untuk login</strong> dengan password baru.
+                <strong>Perhatian:</strong> Akun Anda sedang menggunakan password awal dari sekolah. Demi keamanan, silakan buat password baru Anda untuk langsung masuk ke aplikasi.
               </span>
             </div>
           )}
@@ -201,7 +191,7 @@ export const PasswordChangeModal: React.FC<Props> = ({ isOpen, isMandatory = fal
                 className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition flex items-center justify-center gap-1.5"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Balik ke Login</span>
+                <span>Batal & Keluar</span>
               </button>
             ) : (
               onClose && (
@@ -220,7 +210,7 @@ export const PasswordChangeModal: React.FC<Props> = ({ isOpen, isMandatory = fal
               disabled={loading}
               className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center gap-2"
             >
-              {loading ? 'Menyimpan...' : isMandatory ? 'Simpan & Balik ke Login' : 'Simpan Password Baru'}
+              {loading ? 'Menyimpan...' : 'Simpan & Langsung Masuk'}
             </button>
           </div>
         </form>
