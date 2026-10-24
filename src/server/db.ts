@@ -2217,8 +2217,6 @@ class DatabaseManager {
     this.save();
     return { isAlumni: student.isAlumni };
   }
-}
-
 
   getTuMonthlyReports(): any[] {
     if (!Array.isArray(this.data.tuMonthlyReports)) this.data.tuMonthlyReports = [];
@@ -2255,5 +2253,6 @@ class DatabaseManager {
     this.save();
     return newReport;
   }
+}
 
 export const db = new DatabaseManager();

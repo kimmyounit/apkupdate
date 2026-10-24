@@ -323,6 +323,22 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
 
     try {
       const res = await api.createTeacherAccount(newTeacherForm);
+      const createdTeacher = (res as any)?.teacher;
+      if (createdTeacher) {
+        setStaffList((prev) => [
+          createdTeacher,
+          ...prev.filter(
+            (s) =>
+              s.id !== createdTeacher.id &&
+              (s.username || '').toLowerCase() !== (createdTeacher.username || '').toLowerCase()
+          ),
+        ]);
+      }
+
+      // Reset search and role filter so the new teacher is visible immediately!
+      setStaffSearch('');
+      setStaffRoleFilter('all');
+
       setStaffActionSuccess(res.message || 'Akun guru baru berhasil ditambahkan.');
       setShowAddTeacherModal(false);
       setNewTeacherForm({
@@ -333,8 +349,22 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         email: '',
         phone: '',
       });
+
       const updatedStaff = await api.getStaff();
-      setStaffList(updatedStaff);
+      if (Array.isArray(updatedStaff) && updatedStaff.length > 0) {
+        if (
+          createdTeacher &&
+          !updatedStaff.some(
+            (s) =>
+              s.id === createdTeacher.id ||
+              (s.username || '').toLowerCase() === (createdTeacher.username || '').toLowerCase()
+          )
+        ) {
+          setStaffList([createdTeacher, ...updatedStaff]);
+        } else {
+          setStaffList(updatedStaff);
+        }
+      }
       notifyMultiDeviceSync();
       setTimeout(() => setStaffActionSuccess(null), 4000);
     } catch (err: any) {
@@ -805,10 +835,43 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         kelas: newStudentKelas.trim() || 'Kelas 7',
       });
 
+      // Instantly prepend created student to state so it appears immediately!
+      const createdStudent = (res as any)?.student || (res as any)?.user;
+      if (createdStudent) {
+        setStudents((prev) => [
+          createdStudent,
+          ...prev.filter(
+            (s) =>
+              s.id !== createdStudent.id &&
+              (s.username || '').toLowerCase() !== (createdStudent.username || '').toLowerCase()
+          ),
+        ]);
+      }
+
+      // Reset search and filters so the new account is never hidden!
+      setStudentSearch('');
+      setStudentCategoryFilter('all');
+      setStudentKelasFilter('all');
+      setStudentStatusFilter('all');
+
       setStudentFormSuccess(res.message || 'Akun siswa berhasil didaftarkan ke database.');
       handleResetStudentForm();
+
       const updated = await api.getStudents();
-      setStudents(updated);
+      if (Array.isArray(updated) && updated.length > 0) {
+        if (
+          createdStudent &&
+          !updated.some(
+            (s) =>
+              s.id === createdStudent.id ||
+              (s.username || '').toLowerCase() === (createdStudent.username || '').toLowerCase()
+          )
+        ) {
+          setStudents([createdStudent, ...updated]);
+        } else {
+          setStudents(updated);
+        }
+      }
       notifyMultiDeviceSync();
     } catch (err: any) {
       setStudentFormError(err.message || 'Gagal mendaftarkan akun siswa.');

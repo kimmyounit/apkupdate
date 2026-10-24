@@ -336,29 +336,23 @@ export const api = {
     const studentMap = new Map<string, User>();
     const deletedIds = offlineStore.getDeletedUserIds();
 
+    // 1. Put all local students first so newly created accounts are ALWAYS included immediately
+    localStudents.forEach((ls) => {
+      const cleanU = (ls.username || '').toLowerCase().replace(/^@+/, '');
+      if (!deletedIds.includes(ls.id) && !deletedIds.includes(cleanU)) {
+        studentMap.set(cleanU, ls);
+      }
+    });
+
+    // 2. Merge server students
     if (Array.isArray(serverStudents) && serverStudents.length > 0) {
-      serverStudents.forEach((s) => {
-        const cleanU = (s.username || '').toLowerCase().replace(/^@+/, '');
-        if (!deletedIds.includes(s.id) && !deletedIds.includes(cleanU)) {
-          studentMap.set(s.id, s);
-          offlineStore.syncStudentEntity(s);
-        }
-      });
-      localStudents.forEach((ls) => {
-        const cleanU = (ls.username || '').toLowerCase().replace(/^@+/, '');
-        if (deletedIds.includes(ls.id) || deletedIds.includes(cleanU)) return;
-        const existsInServer = serverStudents.some(
-          (ss) => ss.id === ls.id || (ss.username || '').toLowerCase().replace(/^@+/, '') === cleanU
-        );
-        if (!existsInServer) {
-          studentMap.set(ls.id, ls);
-        }
-      });
-    } else {
-      localStudents.forEach((s) => {
-        const cleanU = (s.username || '').toLowerCase().replace(/^@+/, '');
-        if (!deletedIds.includes(s.id) && !deletedIds.includes(cleanU)) {
-          studentMap.set(s.id, s);
+      serverStudents.forEach((ss) => {
+        const cleanU = (ss.username || '').toLowerCase().replace(/^@+/, '');
+        if (!deletedIds.includes(ss.id) && !deletedIds.includes(cleanU)) {
+          if (!studentMap.has(cleanU)) {
+            studentMap.set(cleanU, ss);
+            offlineStore.syncStudentEntity(ss);
+          }
         }
       });
     }
@@ -391,6 +385,9 @@ export const api = {
 
   createStudent: async (studentData: Partial<User> & { password?: string }) => {
     const rawPass = studentData.password || 'SiswaTamvesta123';
+    // Always persist to local storage first so it is immediately visible & never lost
+    const localStudent = offlineStore.createStudent(studentData);
+
     try {
       const res = await tryServerRequest<{ message: string; student: User }>('/api/admin/students', {
         method: 'POST',
@@ -398,11 +395,11 @@ export const api = {
       });
       if (res && res.student) {
         offlineStore.saveStudentFromServer(res.student, rawPass);
+        return { message: res.message || 'Akun siswa berhasil didaftarkan!', student: res.student };
       }
-      return res;
+      return { message: 'Akun siswa berhasil didaftarkan!', student: localStudent };
     } catch (_) {
-      const localStudent = offlineStore.createStudent(studentData);
-      return { message: 'Akun siswa berhasil didaftarkan (mode offline).', student: localStudent };
+      return { message: 'Akun siswa berhasil didaftarkan!', student: localStudent };
     }
   },
 
@@ -431,11 +428,39 @@ export const api = {
   },
 
   getStaff: async () => {
+    let serverStaff: User[] = [];
     try {
-      return await tryServerRequest<User[]>('/api/admin/staff');
+      serverStaff = await tryServerRequest<User[]>('/api/admin/staff');
     } catch (_) {
-      return offlineStore.getStaff();
+      serverStaff = [];
     }
+
+    const localStaff = offlineStore.getStaff();
+    const staffMap = new Map<string, User>();
+    const deletedIds = offlineStore.getDeletedUserIds();
+
+    // 1. Put all local staff first so newly created accounts are ALWAYS included immediately
+    localStaff.forEach((ls) => {
+      const cleanU = (ls.username || '').toLowerCase().replace(/^@+/, '');
+      if (!deletedIds.includes(ls.id) && !deletedIds.includes(cleanU)) {
+        staffMap.set(cleanU, ls);
+      }
+    });
+
+    // 2. Merge server staff
+    if (Array.isArray(serverStaff) && serverStaff.length > 0) {
+      serverStaff.forEach((ss) => {
+        const cleanU = (ss.username || '').toLowerCase().replace(/^@+/, '');
+        if (!deletedIds.includes(ss.id) && !deletedIds.includes(cleanU)) {
+          if (!staffMap.has(cleanU)) {
+            staffMap.set(cleanU, ss);
+            offlineStore.syncUserFromServer(ss);
+          }
+        }
+      });
+    }
+
+    return Array.from(staffMap.values());
   },
 
   resetStaffInitialPassword: async (staffId: string) => {
@@ -1177,13 +1202,18 @@ export const api = {
   // MANAJEMEN GURU, CENTANG BIRU & ALUMNI
   // -------------------------------------------------------------
   createTeacher: async (data: any) => {
+    // Always persist to local storage first so it is immediately visible & never lost
     const t = offlineStore.createTeacherAccount(data);
     try {
       const res = await tryServerRequest<{ message: string; teacher: any }>('/api/admin/teachers', {
         method: 'POST',
         body: JSON.stringify(data),
       });
-      return res;
+      if (res && res.teacher) {
+        offlineStore.syncUserFromServer(res.teacher);
+        return { message: res.message || 'Akun guru berhasil dibuat', teacher: res.teacher };
+      }
+      return { message: 'Akun guru berhasil dibuat', teacher: t };
     } catch (_) {
       return { message: 'Akun guru berhasil dibuat', teacher: t };
     }

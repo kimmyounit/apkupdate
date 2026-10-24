@@ -207,6 +207,11 @@ export const offlineStore = {
       password: initialPass,
       mustChangePassword: serverStudent.mustChangePassword !== undefined ? serverStudent.mustChangePassword : true,
     };
+    // Remove from deletedUserIds
+    (db as any).deletedUserIds = ((db as any).deletedUserIds || []).filter(
+      (dId: string) => dId !== serverStudent.id && dId !== cleanUsername && dId !== `@${cleanUsername}`
+    );
+
     if (idx >= 0) {
       db.users[idx] = { ...db.users[idx], ...studentToSave };
     } else {
@@ -1215,7 +1220,14 @@ export const offlineStore = {
 
     savePassword(user.username, initialPassword);
     savePassword(username, initialPassword);
-    db.users.unshift(user);
+
+    // Remove from deletedUserIds so it is never suppressed or hidden
+    (db as any).deletedUserIds = ((db as any).deletedUserIds || []).filter(
+      (dId: string) => dId !== user.id && dId !== username && dId !== `@${username}`
+    );
+
+    // Ensure user is at the top of db.users without duplicates
+    db.users = [user, ...(db.users || []).filter((u) => u.id !== user.id && (u.username || '').toLowerCase() !== username)];
     saveDB(db);
     return user;
   },
@@ -1364,7 +1376,13 @@ export const offlineStore = {
     };
 
     savePassword(newTeacher.username, initialPassword);
-    db.users.unshift(newTeacher);
+
+    // Remove from deletedUserIds
+    (db as any).deletedUserIds = ((db as any).deletedUserIds || []).filter(
+      (dId: string) => dId !== newTeacher.id && dId !== newTeacher.username && dId !== `@${newTeacher.username}`
+    );
+
+    db.users = [newTeacher, ...(db.users || []).filter((u) => u.id !== newTeacher.id && (u.username || '').toLowerCase() !== newTeacher.username)];
     saveDB(db);
     return newTeacher;
   },
