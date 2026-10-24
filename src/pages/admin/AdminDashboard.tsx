@@ -471,6 +471,11 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
 
   const loadAllData = async () => {
     try {
+      // Sync any local student accounts to cloud server so they are visible across all devices
+      try {
+        await api.syncLocalUsersToServer();
+      } catch (_) {}
+
       const [stu, subs, bks, anns, qzs, atts, evs, staff, reqs] = await Promise.all([
         api.getStudents(),
         api.getSubjects(),

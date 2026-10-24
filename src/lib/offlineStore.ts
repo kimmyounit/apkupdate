@@ -294,10 +294,24 @@ export const offlineStore = {
     const inputUser = credentials.username.trim().toLowerCase().replace(/^@+/, '');
     const inputPass = credentials.password.trim();
 
+    const alphaNumericUser = inputUser.replace(/[^a-z0-9]/g, '');
+    const rawInput = credentials.username.trim();
+
     const user = db.users.find((u) => {
       if (u.isActive === false) return false;
       const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
       if (uName === inputUser) return true;
+      if (alphaNumericUser && uName.replace(/[^a-z0-9]/g, '') === alphaNumericUser) return true;
+
+      // Match by Name if student entered their full name
+      const fullName = (u.name || '').trim().toLowerCase();
+      if (fullName && (fullName === inputUser || (alphaNumericUser && fullName.replace(/[^a-z0-9]/g, '') === alphaNumericUser))) {
+        return true;
+      }
+
+      // Match by NISN
+      if ((u as any).nisn && String((u as any).nisn).trim() === rawInput) return true;
+
       if (['haliza.tu', 'haliza.admin', 'haliza', 'tata.usaha', 'tatausaha'].includes(inputUser)) {
         return uName === 'haliza.tu' || uName === 'haliza.admin' || (u.role === 'tata_usaha' && u.name.toLowerCase().includes('haliza'));
       }

@@ -147,6 +147,20 @@ async function tryServerRequest<T>(endpoint: string, options: RequestInit = {}):
 }
 
 export const api = {
+  // Bulk sync local users to cloud server
+  syncLocalUsersToServer: async () => {
+    try {
+      const localUsers = offlineStore.getStudents();
+      if (Array.isArray(localUsers) && localUsers.length > 0) {
+        return await tryServerRequest<{ success: boolean; added: number; updated: number }>('/api/admin/sync-local-users', {
+          method: 'POST',
+          body: JSON.stringify({ users: localUsers }),
+        });
+      }
+    } catch (_) {}
+    return null;
+  },
+
   // Auth
   registerStudent: async (data: { name: string; username: string; password: string; confirmPassword?: string; gender: 'Laki-laki' | 'Perempuan'; kelas: string }) => {
     try {
@@ -412,7 +426,10 @@ export const api = {
     try {
       const res = await tryServerRequest<{ message: string; student: User }>('/api/admin/students', {
         method: 'POST',
-        body: JSON.stringify(studentData),
+        body: JSON.stringify({
+          ...studentPayload,
+          password: rawPass,
+        }),
       });
       if (res && res.student) {
         offlineStore.saveStudentFromServer(res.student, rawPass);

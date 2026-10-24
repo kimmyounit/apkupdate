@@ -109,14 +109,24 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 // POST /api/auth/login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username dan password wajib diisi.' });
   }
 
-  const cleanUsername = String(username).trim().toLowerCase().replace(/^@+/, '');
-  const user = db.findUserByUsername(cleanUsername);
+  const rawUsername = String(username).trim();
+  const cleanUsername = rawUsername.toLowerCase().replace(/^@+/, '');
+  let user = db.findUserByUsername(cleanUsername) || db.findUserByUsername(rawUsername);
+
+  // If user is not found in memory, reload latest database from GitHub (cross-device sync)
+  if (!user) {
+    try {
+      await db.reloadFromGitHub();
+      user = db.findUserByUsername(cleanUsername) || db.findUserByUsername(rawUsername);
+    } catch (_) {}
+  }
+
   if (!user) {
     return res.status(401).json({ error: 'Username atau password tidak ditemukan.' });
   }
@@ -132,8 +142,10 @@ app.post('/api/auth/login', (req, res) => {
     (user.initialPassword && inputPass === user.initialPassword.trim()) ||
     (user.password && inputPass === user.password.trim()) ||
     (user.role === 'siswa' && user.initialPassword && inputPass.toLowerCase() === user.initialPassword.trim().toLowerCase()) ||
+    (user.role === 'siswa' && user.password && inputPass.toLowerCase() === user.password.trim().toLowerCase()) ||
     (user.role === 'siswa' && inputPass.toLowerCase() === 'siswatamvesta123') ||
     (user.passwordHash && user.salt && verifyPassword(inputPass, user.passwordHash, user.salt, user.initialPassword)) ||
+    (user.passwordHash && user.salt && verifyPassword(inputPass.toLowerCase(), user.passwordHash, user.salt, user.initialPassword)) ||
     (user.role === 'tata_usaha' && (inputPass === 'Tamvesta!H2605' || inputPass === 'TAMVESTA123'));
   if (!isValid) {
     return res.status(401).json({ error: 'Username atau password tidak sesuai.' });
@@ -264,6 +276,20 @@ app.post('/api/admin/password-reset-requests/:id/process', authMiddleware, requi
 app.get('/api/admin/students', authMiddleware, requireRole(['admin', 'kepala_sekolah']), (req, res) => {
   const students = db.getUsers().filter((u) => u.role === 'siswa');
   return res.json(students.map(sanitizeUser));
+});
+
+// POST /api/admin/sync-local-users (Bulk upload local accounts to cloud)
+app.post('/api/admin/sync-local-users', authMiddleware, (req, res) => {
+  try {
+    const { users } = req.body;
+    if (Array.isArray(users) && users.length > 0) {
+      const result = db.syncMultipleUsers(users);
+      return res.json({ success: true, message: 'Sinkronisasi akun berhasil', ...result });
+    }
+    return res.json({ success: true, message: 'Tidak ada data untuk disinkronkan' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Gagal sinkronisasi data akun' });
+  }
 });
 
 // POST /api/admin/students (Pendaftaran Akun Siswa oleh Admin)
