@@ -829,41 +829,7 @@ export const offlineStore = {
   // -------------------------------------------------------------
   getArticles(category?: string, onlyPublished?: boolean) {
     const db = loadDB();
-    if (!Array.isArray((db as any).articles)) {
-      (db as any).articles = [
-        {
-          id: 'art_1',
-          authorId: 'user_staff_guru_matematika',
-          authorName: 'Budi Santoso, S.Pd.',
-          authorSubject: 'Matematika Peminatan',
-          title: 'Strategi Efektif Menyelesaikan Soal Penalaran Matematika',
-          summary: 'Metode berpikir terstruktur untuk menaklukkan soal-soal matematika tingkat lanjut dengan cepat dan tepat.',
-          content: 'Matematika bukan sekadar menghafal rumus, melainkan melatih logika berpikir sistematis.\n\n1. Pahami Konsep Dasar.\n2. Identifikasi Pola Soal.\n3. Buat Sketsa/Diagram.\n4. Latihan Teratur 30 menit sehari.',
-          category: 'Artikel Guru',
-          isPublished: true,
-          likesCount: 14,
-          readsCount: 128,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: 'art_2',
-          authorId: 'user_staff_guru_bahasa',
-          authorName: 'Dra. Siti Rahmawati, M.Pd.',
-          authorSubject: 'Bahasa Indonesia',
-          title: 'Metode Pembelajaran Active Recall & Spaced Repetition',
-          summary: 'Teknik belajar berbasis sains otak modern untuk mengingat materi pelajaran jangka panjang tanpa mudah lupa.',
-          content: 'Sering merasa sudah belajar semalaman tapi lupa saat ujian? Itu adalah efek kurva lupa.\n\n1. Active Recall: Tutup buku dan tulis kembali intinya.\n2. Spaced Repetition: Ulangi di hari ke-1, 3, 7, dan 21.\n3. Jelaskan ke Teman dengan bahasa sederhana.',
-          category: 'Metode Pembelajaran',
-          isPublished: true,
-          likesCount: 22,
-          readsCount: 210,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
-      saveDB(db);
-    }
+    if (!Array.isArray((db as any).articles)) { (db as any).articles = []; saveDB(db); }
     let list = [...(db as any).articles];
     if (category) list = list.filter((a: any) => a.category === category);
     if (onlyPublished) list = list.filter((a: any) => a.isPublished);
@@ -959,39 +925,7 @@ export const offlineStore = {
   // -------------------------------------------------------------
   getTuitionBills(studentId?: string, kelas?: string, status?: string) {
     const db = loadDB();
-    if (!Array.isArray((db as any).tuitionBills)) {
-      (db as any).tuitionBills = [
-        {
-          id: 'bill_1',
-          studentId: 'user_siswa_bintang',
-          studentName: 'Bintang Pratama',
-          studentUsername: 'bintang.siswa',
-          studentKelas: 'X TKJ 1',
-          title: 'SPP Bulan Oktober 2026',
-          category: 'SPP',
-          amount: 350000,
-          dueDate: '2026-10-31',
-          status: 'belum_lunas',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'bill_2',
-          studentId: 'user_siswa_bintang',
-          studentName: 'Bintang Pratama',
-          studentUsername: 'bintang.siswa',
-          studentKelas: 'X TKJ 1',
-          title: 'Iuran Praktik Kejuruan',
-          category: 'Lainnya',
-          amount: 150000,
-          dueDate: '2026-11-15',
-          status: 'lunas',
-          paidAt: '2026-10-15T09:30:00.000Z',
-          notes: 'Lunas via Kasir TU Tamansiswa Batam',
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      saveDB(db);
-    }
+    if (!Array.isArray((db as any).tuitionBills)) { (db as any).tuitionBills = []; saveDB(db); }
     let list = [...(db as any).tuitionBills];
     if (studentId) list = list.filter((b: any) => b.studentId === studentId);
     if (kelas) list = list.filter((b: any) => b.studentKelas.toLowerCase() === kelas.toLowerCase());
@@ -1041,26 +975,7 @@ export const offlineStore = {
 
   getTuitionTransactions(type?: string) {
     const db = loadDB();
-    if (!Array.isArray((db as any).tuitionTransactions)) {
-      (db as any).tuitionTransactions = [
-        {
-          id: 'trx_1',
-          billId: 'bill_2',
-          studentId: 'user_siswa_bintang',
-          studentName: 'Bintang Pratama',
-          studentKelas: 'X TKJ 1',
-          amount: 150000,
-          type: 'pemasukan',
-          category: 'Iuran Praktik Kejuruan',
-          paymentMethod: 'Tunai / Kasir TU',
-          verifiedBy: 'Staf Tata Usaha',
-          verifiedAt: '2026-10-15T09:30:00.000Z',
-          receiptNumber: 'KW-2026-1001',
-          description: 'Pembayaran Iuran Praktik Kejuruan Semester Ganjil',
-        },
-      ];
-      saveDB(db);
-    }
+    if (!Array.isArray((db as any).tuitionTransactions)) { (db as any).tuitionTransactions = []; saveDB(db); }
     let list = [...(db as any).tuitionTransactions];
     if (type && type !== 'semua') list = list.filter((t: any) => t.type === type);
     return list.sort((a: any, b: any) => new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime());
@@ -1092,22 +1007,7 @@ export const offlineStore = {
 
   getTuDocuments(category?: string) {
     const db = loadDB();
-    if (!Array.isArray((db as any).tuDocuments)) {
-      (db as any).tuDocuments = [
-        {
-          id: 'doc_1',
-          title: 'Surat Keterangan Siswa Aktif - Bintang Pratama',
-          docNumber: '421.3/TS-BTM/TU/X/2026',
-          category: 'Surat Keterangan Siswa',
-          date: '2026-10-18',
-          recipientOrSender: 'Bintang Pratama (X TKJ 1)',
-          status: 'Selesai',
-          notes: 'Keperluan beasiswa prestasi',
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      saveDB(db);
-    }
+    if (!Array.isArray((db as any).tuDocuments)) { (db as any).tuDocuments = []; saveDB(db); }
     let list = [...(db as any).tuDocuments];
     if (category && category !== 'semua') list = list.filter((d: any) => d.category === category);
     return list.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -1143,23 +1043,7 @@ export const offlineStore = {
 
   getTuChatMessages(studentId?: string) {
     const db = loadDB();
-    if (!Array.isArray((db as any).tuChatMessages)) {
-      (db as any).tuChatMessages = [
-        {
-          id: 'msg_1',
-          studentId: 'user_siswa_bintang',
-          studentName: 'Bintang Pratama',
-          studentKelas: 'X TKJ 1',
-          senderRole: 'tata_usaha',
-          senderName: 'Layanan Tata Usaha TAMVESTA',
-          message: 'Halo Bintang Pratama! Tagihan SPP bulan Oktober 2026 sebesar Rp 350.000 telah diterbitkan.',
-          createdAt: '2026-10-10T08:00:00.000Z',
-          isReadByStudent: true,
-          isReadByTu: true,
-        },
-      ];
-      saveDB(db);
-    }
+    if (!Array.isArray((db as any).tuChatMessages)) { (db as any).tuChatMessages = []; saveDB(db); }
     let list = [...(db as any).tuChatMessages];
     if (studentId) list = list.filter((m: any) => m.studentId === studentId);
     return list.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -1174,7 +1058,7 @@ export const offlineStore = {
     const msg = {
       id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       studentId: isStudent ? (user ? user.id : 'user_siswa_bintang') : (data.studentId || ''),
-      studentName: isStudent ? (user ? user.name : 'Bintang Pratama') : (data.studentName || 'Siswa'),
+      studentName: isStudent ? (user ? user.name : 'Siswa') : (data.studentName || 'Siswa'),
       studentKelas: isStudent ? (user?.kelas || user?.classGrade || 'X TKJ 1') : data.studentKelas,
       senderRole: isStudent ? 'siswa' : 'tata_usaha',
       senderName: user ? user.name : 'Pengguna',

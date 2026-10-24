@@ -735,46 +735,7 @@
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
-  "tuitionTransactions": [
-    {
-      "id": "trx_1",
-      "billId": "bill_2",
-      "studentId": "user_siswa_bintang",
-      "studentName": "Bintang Pratama",
-      "studentKelas": "X TKJ 1",
-      "amount": 150000,
-      "type": "pemasukan",
-      "category": "Iuran Praktik Kejuruan",
-      "paymentMethod": "Tunai / Kasir TU",
-      "verifiedBy": "Staf Tata Usaha",
-      "verifiedAt": "2026-10-15T09:30:00.000Z",
-      "receiptNumber": "KW-2026-1001",
-      "description": "Pembayaran Iuran Praktik Kejuruan Semester Ganjil"
-    }
-  ],
-  "tuDocuments": [
-    {
-      "id": "doc_1",
-      "title": "Surat Keterangan Siswa Aktif - Bintang Pratama",
-      "docNumber": "421.3/TS-BTM/TU/X/2026",
-      "category": "Surat Keterangan Siswa",
-      "date": "2026-10-18",
-      "recipientOrSender": "Bintang Pratama (X TKJ 1)",
-      "status": "Selesai",
-      "notes": "Keperluan pengajuan beasiswa prestasi",
-      "createdAt": "2026-10-23T09:20:57.975Z"
-    },
-    {
-      "id": "doc_2",
-      "title": "Surat Undangan Rapat Komite Sekolah & Orang Tua",
-      "docNumber": "005/TS-BTM/KOMITE/X/2026",
-      "category": "Surat Keluar",
-      "date": "2026-10-25",
-      "recipientOrSender": "Seluruh Orang Tua / Wali Siswa",
-      "status": "Arsip",
-      "notes": "Rapat semester ganjil tahun ajaran 2026/2027",
-      "createdAt": "2026-10-23T09:20:57.976Z"
-    }
-  ],
+  "tuitionTransactions": [],
+  "tuDocuments": [],
   "tuChatMessages": []
 }

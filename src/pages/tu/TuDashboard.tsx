@@ -48,10 +48,10 @@ export const TuDashboard: React.FC = () => {
   const [billSearch, setBillSearch] = useState<string>('');
   const [showCreateBillModal, setShowCreateBillModal] = useState(false);
   const [newBillForm, setNewBillForm] = useState({
-    studentId: 'user_siswa_bintang',
-    studentName: 'Bintang Pratama',
-    studentUsername: 'bintang.siswa',
-    studentKelas: 'X TKJ 1',
+    studentId: '',
+    studentName: '',
+    studentUsername: '',
+    studentKelas: '',
     title: '',
     category: 'SPP' as const,
     amount: 350000,
@@ -64,7 +64,7 @@ export const TuDashboard: React.FC = () => {
   const [showAddTrxModal, setShowAddTrxModal] = useState(false);
   const [newTrxForm, setNewTrxForm] = useState({
     studentName: '',
-    studentKelas: 'X TKJ 1',
+    studentKelas: '',
     amount: 350000,
     type: 'pemasukan' as 'pemasukan' | 'pengeluaran',
     category: 'SPP',
@@ -125,10 +125,10 @@ export const TuDashboard: React.FC = () => {
       await api.createTuitionBill(newBillForm);
       setShowCreateBillModal(false);
       setNewBillForm({
-        studentId: 'user_siswa_bintang',
-        studentName: 'Bintang Pratama',
-        studentUsername: 'bintang.siswa',
-        studentKelas: 'X TKJ 1',
+        studentId: '',
+        studentName: '',
+        studentUsername: '',
+        studentKelas: '',
         title: '',
         category: 'SPP',
         amount: 350000,
@@ -189,7 +189,7 @@ export const TuDashboard: React.FC = () => {
       setShowAddTrxModal(false);
       setNewTrxForm({
         studentName: '',
-        studentKelas: 'X TKJ 1',
+        studentKelas: '',
         amount: 350000,
         type: 'pemasukan',
         category: 'SPP',
@@ -242,7 +242,7 @@ export const TuDashboard: React.FC = () => {
     if (!chatInput.trim()) return;
     const targetStudent = allStudents.find((s) => s.id === selectedChatStudentId) || {
       id: selectedChatStudentId,
-      name: 'Bintang Pratama',
+      name: 'Pilih Siswa',
       kelas: 'X TKJ 1',
     };
 
@@ -757,7 +757,7 @@ export const TuDashboard: React.FC = () => {
             <div className="p-3.5 bg-white border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h4 className="font-bold text-xs sm:text-sm text-slate-800">
-                  {allStudents.find((s) => s.id === selectedChatStudentId)?.name || 'Bintang Pratama'}
+                  {allStudents.find((s) => s.id === selectedChatStudentId)?.name || 'Pilih Siswa'}
                 </h4>
                 <p className="text-[10px] text-emerald-600 font-semibold">
                   Siswa Tamansiswa Batam • Ruang Konsultasi Tagihan & SPP
@@ -996,7 +996,7 @@ export const TuDashboard: React.FC = () => {
                   <label className="font-bold text-slate-700 block mb-1">Nama Siswa / Pembayar (Opsional)</label>
                   <input
                     type="text"
-                    placeholder="Bintang Pratama"
+                    placeholder="Nama Siswa"
                     value={newTrxForm.studentName}
                     onChange={(e) => setNewTrxForm({ ...newTrxForm, studentName: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
