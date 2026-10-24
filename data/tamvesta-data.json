@@ -7,8 +7,8 @@
       "role": "admin",
       "jabatan": "Administrator Utama TAMVESTA",
       "initialPassword": "TAMVESTA123",
-      "passwordHash": "6c53a3fe8139d4b0ebc5e2853613fe99660d376c044bcdaff0b55fffa079ff2bf4bd6cb27553a69b4c446293d278f0567297fb46f493ad20d2c1476bfd3937bc",
-      "salt": "49caa7663c859dcf80ee95cd01363418",
+      "passwordHash": "03c43a6989999f34bbbd4bdddb37813ad155c347d32f00911e3fc701b809f7c0bae4793b542a296180bf360804bf42d899106ec0afbb8f5b1f783697e69057e7",
+      "salt": "bc4cf7eede583b955c53bb0aef975774",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_admin_tamansiswa:785efa956b468c8f",
@@ -29,8 +29,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_001:9e354f2f25d3717f",
       "createdAt": "2026-10-24T08:22:46.332Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7A001"
+      "updatedAt": "2026-10-24T08:22:47.186Z"
     },
     {
       "id": "user_siswa_siswa_smp7a_002",
@@ -46,8 +45,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
       "createdAt": "2026-10-24T08:22:46.353Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7A002"
+      "updatedAt": "2026-10-24T08:22:46.353Z"
     },
     {
       "id": "user_siswa_siswa_smp7a_003",
@@ -63,8 +61,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_003:a8b1bf53ef854371",
       "createdAt": "2026-10-24T08:22:46.372Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7A003"
+      "updatedAt": "2026-10-24T08:22:46.372Z"
     },
     {
       "id": "user_siswa_siswa_smp7b_001",
@@ -80,8 +77,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7b_001:7c216e93f287a1bb",
       "createdAt": "2026-10-24T08:22:46.391Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7B001"
+      "updatedAt": "2026-10-24T08:22:46.391Z"
     },
     {
       "id": "user_siswa_siswa_smp7b_002",
@@ -97,8 +93,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7b_002:2457918d2abf2cb9",
       "createdAt": "2026-10-24T08:22:46.404Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7B002"
+      "updatedAt": "2026-10-24T08:22:46.404Z"
     },
     {
       "id": "user_siswa_siswa_smp8a_001",
@@ -114,8 +109,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_001:966df39795446bcf",
       "createdAt": "2026-10-24T08:22:46.424Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8A001"
+      "updatedAt": "2026-10-24T08:22:46.424Z"
     },
     {
       "id": "user_siswa_siswa_smp8a_002",
@@ -131,8 +125,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_002:5d5a0c75dfc6eeb4",
       "createdAt": "2026-10-24T08:22:46.442Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8A002"
+      "updatedAt": "2026-10-24T08:22:46.442Z"
     },
     {
       "id": "user_siswa_siswa_smp8a_003",
@@ -148,8 +141,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_003:d788251d1283e2fb",
       "createdAt": "2026-10-24T08:22:46.472Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8A003"
+      "updatedAt": "2026-10-24T08:22:46.472Z"
     },
     {
       "id": "user_siswa_siswa_smp8b_001",
@@ -165,8 +157,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8b_001:cda0a40be6d66724",
       "createdAt": "2026-10-24T08:22:46.490Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8B001"
+      "updatedAt": "2026-10-24T08:22:46.490Z"
     },
     {
       "id": "user_siswa_siswa_smp8b_002",
@@ -182,8 +173,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8b_002:f9d6c04a69c27b5d",
       "createdAt": "2026-10-24T08:22:46.509Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8B002"
+      "updatedAt": "2026-10-24T08:22:46.509Z"
     },
     {
       "id": "user_siswa_siswa_smp9a_001",
@@ -199,8 +189,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_001:86e5c0c96dcb84e0",
       "createdAt": "2026-10-24T08:22:46.527Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9A001"
+      "updatedAt": "2026-10-24T08:22:46.527Z"
     },
     {
       "id": "user_siswa_siswa_smp9a_002",
@@ -216,8 +205,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_002:372888ff50d80ec5",
       "createdAt": "2026-10-24T08:22:46.548Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9A002"
+      "updatedAt": "2026-10-24T08:22:46.548Z"
     },
     {
       "id": "user_siswa_siswa_smp9a_003",
@@ -233,8 +221,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_003:603d6ac4d8c9b9c0",
       "createdAt": "2026-10-24T08:22:46.567Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9A003"
+      "updatedAt": "2026-10-24T08:22:46.567Z"
     },
     {
       "id": "user_siswa_siswa_smp9b_001",
@@ -250,8 +237,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9b_001:e0ea9879ea551c2d",
       "createdAt": "2026-10-24T08:22:46.578Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9B001"
+      "updatedAt": "2026-10-24T08:22:46.578Z"
     },
     {
       "id": "user_siswa_siswa_smp9b_002",
@@ -267,8 +253,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9b_002:4fc87e276cfb7953",
       "createdAt": "2026-10-24T08:22:46.595Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9B002"
+      "updatedAt": "2026-10-24T08:22:46.595Z"
     },
     {
       "id": "user_siswa_siswa_sd1a_001",
@@ -284,8 +269,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd1a_001:7cc93e2358bdb31b",
       "createdAt": "2026-10-24T08:22:46.614Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa1A001"
+      "updatedAt": "2026-10-24T08:22:46.614Z"
     },
     {
       "id": "user_siswa_siswa_sd1a_002",
@@ -301,8 +285,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd1a_002:5892a39733f6eb6f",
       "createdAt": "2026-10-24T08:22:46.630Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa1A002"
+      "updatedAt": "2026-10-24T08:22:46.630Z"
     },
     {
       "id": "user_siswa_siswa_sd2a_001",
@@ -318,8 +301,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd2a_001:8ea5f1306268a6be",
       "createdAt": "2026-10-24T08:22:46.652Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa2A001"
+      "updatedAt": "2026-10-24T08:22:46.652Z"
     },
     {
       "id": "user_siswa_siswa_sd2a_002",
@@ -335,8 +317,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd2a_002:891e2c141386e350",
       "createdAt": "2026-10-24T08:22:46.669Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa2A002"
+      "updatedAt": "2026-10-24T08:22:46.669Z"
     },
     {
       "id": "user_siswa_siswa_sd3a_001",
@@ -352,8 +333,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd3a_001:2c0301dcc53eae1e",
       "createdAt": "2026-10-24T08:22:46.679Z",
-      "updatedAt": "2026-10-24T15:23:31.816Z",
-      "password": "Siswa3A001"
+      "updatedAt": "2026-10-24T08:22:46.679Z"
     },
     {
       "id": "user_siswa_siswa_sd3a_002",
@@ -369,8 +349,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd3a_002:5960a14aca5268d6",
       "createdAt": "2026-10-24T08:22:46.713Z",
-      "updatedAt": "2026-10-24T15:23:31.816Z",
-      "password": "Siswa3A002"
+      "updatedAt": "2026-10-24T08:22:46.713Z"
     },
     {
       "id": "user_siswa_siswa_sd4a_001",
@@ -386,8 +365,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd4a_001:6aeb9b32d1bf55eb",
       "createdAt": "2026-10-24T08:22:46.724Z",
-      "updatedAt": "2026-10-24T15:23:31.816Z",
-      "password": "Siswa4A001"
+      "updatedAt": "2026-10-24T08:22:46.724Z"
     },
     {
       "id": "user_siswa_siswa_sd4a_002",
@@ -403,8 +381,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd4a_002:a283bc69a415a513",
       "createdAt": "2026-10-24T08:22:46.740Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa4A002"
+      "updatedAt": "2026-10-24T08:22:46.740Z"
     },
     {
       "id": "user_siswa_siswa_sd5a_001",
@@ -420,8 +397,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd5a_001:4e8c898ff4dfe3dc",
       "createdAt": "2026-10-24T08:22:46.760Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa5A001"
+      "updatedAt": "2026-10-24T08:22:46.760Z"
     },
     {
       "id": "user_siswa_siswa_sd5a_002",
@@ -437,8 +413,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd5a_002:fc9fbc93082b55fa",
       "createdAt": "2026-10-24T08:22:46.776Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa5A002"
+      "updatedAt": "2026-10-24T08:22:46.776Z"
     },
     {
       "id": "user_siswa_siswa_sd6a_001",
@@ -454,8 +429,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd6a_001:7e0fcd4061dde883",
       "createdAt": "2026-10-24T08:22:46.792Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa6A001"
+      "updatedAt": "2026-10-24T08:22:46.792Z"
     },
     {
       "id": "user_siswa_siswa_sd6a_002",
@@ -471,8 +445,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd6a_002:43a3e7f44cf5224d",
       "createdAt": "2026-10-24T08:22:46.804Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa6A002"
+      "updatedAt": "2026-10-24T08:22:46.804Z"
     },
     {
       "id": "user_staff_bambang_kepsek",
@@ -481,8 +454,8 @@
       "role": "kepala_sekolah",
       "jabatan": "Kepala Sekolah",
       "initialPassword": "Tamvesta!B2601",
-      "passwordHash": "84cca3e66690472e2fe4c33b6d04956789d699a5e6463b0580a1768ac8dcdcc00d4cdc484d2d1b7bf2518a18d3dfd69429dda2fd1ed6e38b8bcabbee86d47146",
-      "salt": "19c58fbfe6cd4b61173bf78682d52701",
+      "passwordHash": "c085b6453be86eff338a04892c494512e26a9a0c14ae99ab4149e2c7a017d5865765dd4604a1c26b7373fdc387ef9c298d85a28278051312048f8665cfd94012",
+      "salt": "dec5e183589bc348f4481061102f5a31",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_kepsek:d592cc82bedb9886",
@@ -496,8 +469,8 @@
       "role": "kepala_sekolah",
       "jabatan": "Pemimpin Perguruan Tamansiswa Batam",
       "initialPassword": "Tamvesta!T2602",
-      "passwordHash": "d6983acc671c36957a8d55e38854cca2edbd7d6bc0a9ca5ed40f5c60867b968c0a7490ea5d14cee5ef1d90a49f59704045c7d2a19448deaf498fc8e3481a0461",
-      "salt": "951a2b95153e289623b4512c7c9d5712",
+      "passwordHash": "792fb8732a39913b407886667b9a27ef9575acf945b2fb2111c47673752e48feec685214bb593658e714db96c8ae89f92cbb1ac18fc7525762502bc5b06c5556",
+      "salt": "854c31a4ebfe29e805de6208a689ce23",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_titus_yayasan:6cbaf18c0cf01ff8",
@@ -511,8 +484,8 @@
       "role": "guru",
       "jabatan": "Kepala Sekolah SD & Guru",
       "initialPassword": "Tamvesta!M2603",
-      "passwordHash": "5812c0e48eda7f0e61ea92d53a715da017ce17a0cf3ec77b728ab8a1033268ac6ed713bd2704d465b4e649910479f7bf0a16a087c6f21df76ee37f54fc563bc0",
-      "salt": "77aa14904bad434df5c193e687c19ff1",
+      "passwordHash": "b2c54d2b7110747035e6cf9430751d45d77bed1238be937078a5db968e05a8fb74982c689ce74f7bb78dc714665e59f22936e94a0eca310173222fa73fd5d883",
+      "salt": "0d63d64c4b99f85c9aef75fba46699f3",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_margaretha_h:a28a934b97b88142",
@@ -526,8 +499,8 @@
       "role": "admin",
       "jabatan": "Operator Dapodik Sekolah",
       "initialPassword": "Tamvesta!B2604",
-      "passwordHash": "6c53a3fe8139d4b0ebc5e2853613fe99660d376c044bcdaff0b55fffa079ff2bf4bd6cb27553a69b4c446293d278f0567297fb46f493ad20d2c1476bfd3937bc",
-      "salt": "49caa7663c859dcf80ee95cd01363418",
+      "passwordHash": "03c43a6989999f34bbbd4bdddb37813ad155c347d32f00911e3fc701b809f7c0bae4793b542a296180bf360804bf42d899106ec0afbb8f5b1f783697e69057e7",
+      "salt": "bc4cf7eede583b955c53bb0aef975774",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
@@ -541,8 +514,8 @@
       "role": "tata_usaha",
       "jabatan": "Tata Usaha",
       "initialPassword": "Tamvesta!H2605",
-      "passwordHash": "894143133d667d9e91438a668382a834b7ce875816c3dac0435db4058b651127ac552ae5a175ac4da16cd4095b537a051b189afa77c909f6476e60f3411c6f31",
-      "salt": "6f16dd901613f62319f68dcd832a623b",
+      "passwordHash": "c971905e1844600f4a048fb50ed9b6ba6d5508bb5ceadec310fe8d36d39d0fbaf76f7893a1a9fa9c14411d9e5d766ae7ec5df98b9107d13e97e5b20a27b37065",
+      "salt": "7fd324fb9599607d2f0f0ca83e11a61b",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_haliza_tu:d381f9125fc3ff05",
@@ -556,8 +529,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!M2606",
-      "passwordHash": "b367eed7bd8295a9b6eb587d4f053901b2d9e57e355853b8fda67ce38e732b56bcde9f10744caefcc6eeead0d49cae13b67556c76ca80de563db8729d68213b4",
-      "salt": "b89625c47b6a5600edb4167f3d0b4d69",
+      "passwordHash": "6a794e2a3c8cf7200196151c80aacbdf4ecf01dcc744cf8db800c8f5f05ec2c6989e0356c7c9c4e40654b26d2b752bd7a27835968ad2805cd8bd31be90c6face",
+      "salt": "ae3b40bb32691855e8d83f200ca07db4",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_maidarlis:57a4b0da25c987d8",
@@ -571,8 +544,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!F2607",
-      "passwordHash": "5e838f53dea5ad406a3fd4c87db2bb580d62422a3628c99608783e2442d006cf9dd5906bc4e52139f15597094cd917c4956509dbad3e952028937bf346e7383c",
-      "salt": "17f30d1043fa88b498db92b259b83da8",
+      "passwordHash": "544c73579053cbb378c87449561ab7eeb89b6bdf7c3e1fa0f793f92fb4cdc59b973d9c70fa295c0ca34e6490d81cde7305e958a01895b597b2dc22f5b190fcb4",
+      "salt": "45951fb5e5f31e2d883962ee5f3c3273",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_fatimah:a44c1084a898be20",
@@ -586,8 +559,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!E2608",
-      "passwordHash": "5256bab3ba02f9274aae63bd47d0c6d0b2ade468c7b73b680596df90d72a6e734b81a7b1f826fba6e1320344c8b892e529b584595991191340fe45952dc299c1",
-      "salt": "42d1a4703c65f09aa4ef646453f1eaee",
+      "passwordHash": "0b8d9fbef1b1cc8ae07a281f7b0fe34b31e17424cdb15482c4dbbc34dbf2b76aebe7fc5b7c3052f96f8d6611171c010199a7214854b6d005faa4e7fe345d1dd2",
+      "salt": "a309733e26c6681548f0fc8bc9b58025",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_endang_daryanti:2aba397c7a60e609",
@@ -601,8 +574,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!K2609",
-      "passwordHash": "c449e45fc0fe78cdb8e3a485883732f81865495d6901d808e4d471d656b35d0a72f3db45ed932a5b9de07d0606ada6215fad8c57143d8fb1df3e1afaf635b8dc",
-      "salt": "0a738c00cb7d5e42cd4d3b8b1a6e0476",
+      "passwordHash": "5a0994eaa78e2d2bfdb2e3ac9ae5e6bf226d2611f9a8b81fee3bf27d64cb258124351fea8736b2d4247843ebe0ec7563a3c624dd34a6888f6373403dd9a44022",
+      "salt": "8cb69bde4f0d0cd25bb89fb235866f1c",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_kristina_manurung:a278187e110481c8",
@@ -616,8 +589,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!N2610",
-      "passwordHash": "dbd8edd930baba5ccfcf36e10d4c4a591764ad4eaf598ec2c479e3db671b5d0b422697dc97ab5b34884ec85e23847ff91e9939c7bf8c6d803990f22aebe20bc6",
-      "salt": "fde48b0151a01b3989c95ac0b81805c0",
+      "passwordHash": "687fa1e0b6beeccf6011e5cdf9c2d555903d0c435e06240faa036284760e3d4e5b594ed33bad24d2eb0babdb5eae84248b8d424a797fbbc6b2772f43584902ef",
+      "salt": "af42eac61f4812301ad5c3ed68d61432",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_nia_damayanti:1239e21c7e314907",
@@ -631,8 +604,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!N2611",
-      "passwordHash": "f8f71dbbc52c341254315cc5592b36463b20ccdbc9269a00e0e3eb53174abc2f186b3e08f595685f541490fd2e32c2f18af3306b7f2d98069e5911f4e7927f31",
-      "salt": "508f9c390da47f556aeaf74117f7d9e5",
+      "passwordHash": "eb8b32712a1d241199576b30c47038a5f900071d480528912b0c1fffd2242bcff46266935d59ff256eaef742feeabfc33ccbaefc9ca798c21f993e3d324627a1",
+      "salt": "48afbdfac58e112e16815d24b51b3c83",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_nelly_silitonga:ad6264c94f0e721a",
@@ -646,8 +619,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!D2612",
-      "passwordHash": "eb2decf9f9d7bb36f552808bd5fec696fab868dffb366a484d5c40d6d260debc7c8db295e676cf6bf05a075efae9a128fc750c27ce288d40048acdc25bfd061b",
-      "salt": "4a05fbf76cfb7de87d36f1999c8ab030",
+      "passwordHash": "5e679cc91a956f732ee49b104adc2d57694170a5901de0a95dbb463871a0eb4e39ed16740e5cf890bf3493a9267a106d1762c619c842981fbe7583a96ea4173e",
+      "salt": "1ea4edc102c5f3f5a06fee2d1aa4fcf0",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_dina_nurziana:e96cd902d953f1e1",
@@ -661,8 +634,8 @@
       "role": "guru",
       "jabatan": "Kepala Sekolah TK, Wakil Kepala Sekolah SD & Guru",
       "initialPassword": "Tamvesta!N2613",
-      "passwordHash": "5bce09f522d992f3e6a36cbb84009d59480f96c091834c7131285a661fe8a8f7879e459cab43bd15834b440e418d64eb858219bf87307ca4430c43a3eab2cd99",
-      "salt": "4a6f7a4a4d16923798d5f9e36df2e851",
+      "passwordHash": "5b52f88cb078504520df371b4fe9d42cbe095537b8f1ea1ffc6a8e2f0308fed4d507c0abe6f03d77ecdf4e34de848ecb2ff34cb3e67991767c834b5303b5bc0d",
+      "salt": "645f14986b61b4a520456450a695e73f",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_nur_aini:d806c34a2027d6f0",
@@ -676,8 +649,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!S2614",
-      "passwordHash": "dec5820771ef798f756a1497cfa60626ba21492ce316ad4b1fa6575bc81e28e3ca6f1754ee18ee61937f56eb5711f70b74c290e1900ef44bedc6805f4f4de867",
-      "salt": "03f36624a3788ac6d6c3163f4ada3a04",
+      "passwordHash": "e480c3d0c48b8a511f367c6ebdccfea2786ae5f6e3cc9beb5a2e82548449efce8dbf09dd261f4d31413c67abc51cd0873794621bb8daa65662a3e836c968c247",
+      "salt": "888dd01fddf43f56544dc3610f0fb85d",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_siska_permatasari:8f72f422d97c94af",
@@ -691,8 +664,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!R2615",
-      "passwordHash": "91116d205203b3266063b667370502cadec64fe2d6944d40652bace27b1c3b1e9406fd3a36f29ae1db18e30429219ce0e70a3a609a41c3cf1a2859c683f315ae",
-      "salt": "66fd00ef2ff46b8673c393f690abbedf",
+      "passwordHash": "0b7753741defc1c6155a7d574fe5e9d7031decafc024f57440dad9bcf6ed348e0d55e8d08488625b46c66868b5a2f6a13fea985b2daf244b00e9275fbf82084b",
+      "salt": "de65b6922ea25e003240199b0763f28a",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_risky:b4a2896eb088772e",
@@ -706,8 +679,8 @@
       "role": "guru",
       "jabatan": "Guru",
       "initialPassword": "Tamvesta!M2616",
-      "passwordHash": "cf21840a476f166c0fbf8e8c96944284c1a908ec9fac3281ae38a4184b1b00bfebcdc6af45e0208a236ce23e62c037007ef290faa39f8e159b25777d3c18b5c7",
-      "salt": "65ca6c6fab8a3bb8b419a44047f26770",
+      "passwordHash": "1aad8765be938907e24d318d3731a11db5046e4bcc66b8e4a441dcbdf044da7baedc6d27a7a383d3734bdf932f99f05c0bd94bdf6bd465f0f58cd63739448776",
+      "salt": "9b61b6dc82d8b79754cb75f9866bf757",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_masni:5c6b1af87cca3d50",
@@ -721,8 +694,8 @@
       "role": "panitia",
       "jabatan": "Satpam",
       "initialPassword": "Tamvesta!A2617",
-      "passwordHash": "a52f2fc0894d81b72de7c27d8846e839940d161bc1fddf58b1621c753446618fcb50ca595915fb0e48022bbe64d77fdc4e5fab615cfe06d6e50e34728cb02566",
-      "salt": "626087b51238815f3ca4d9e439c25672",
+      "passwordHash": "0431fcf2efd177d3f681a6501a47800580ee2d0abf84a17791bc99b61f49267481574dc1c6ae8acca360a483dc1550cc76c5a94add3009ff322a82cb5e91cec5",
+      "salt": "41a93463ea999a9799920f1159b071c9",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_angga_satpam:b970654ecf6fa094",
