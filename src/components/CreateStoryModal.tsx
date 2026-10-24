@@ -1,3 +1,4 @@
+import { compressImage } from '../lib/imageCompressor.ts';
 import React, { useState } from 'react';
 import { X, Image, Video, Sparkles, Send, Camera } from 'lucide-react';
 import { api } from '../lib/api.ts';
@@ -33,11 +34,19 @@ export const CreateStoryModal: React.FC<CreateStoryModalProps> = ({
     const isVideo = file.type.startsWith('video/');
     setMediaType(isVideo ? 'video' : 'photo');
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setMediaUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (file.type.startsWith('image/')) {
+      compressImage(file).then((compressed) => {
+        setMediaUrl(compressed);
+      }).catch(() => {
+        const reader = new FileReader();
+        reader.onload = () => setMediaUrl(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => setMediaUrl(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

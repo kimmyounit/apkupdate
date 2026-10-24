@@ -85,8 +85,14 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
         api.getStories().catch(() => []),
         api.getNotifications().catch(() => []),
       ]);
-      setPosts(fetchedPosts);
-      setStories(fetchedStories);
+      setPosts((prev) => {
+        if (fetchedPosts.length === 0 && prev.length > 0) return prev;
+        return fetchedPosts;
+      });
+      setStories((prev) => {
+        if (fetchedStories.length === 0 && prev.length > 0) return prev;
+        return fetchedStories;
+      });
       setUnreadNotifCount(notifs.filter((n: { isRead: boolean }) => !n.isRead).length);
     } catch (err) {
       console.error('Failed to load feed data:', err);

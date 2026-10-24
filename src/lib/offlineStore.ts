@@ -102,8 +102,26 @@ function loadDB(): StandaloneDB {
 function saveDB(data: StandaloneDB) {
   try {
     localStorage.setItem(DB_KEY, JSON.stringify(data));
-  } catch (e) {
+  } catch (e: any) {
     console.error('[OfflineDB] Failed to save DB to localStorage:', e);
+    // Quota fallback: if localStorage quota is exceeded, strip big media from older posts/stories
+    try {
+      const cloned = { ...data };
+      if (Array.isArray(cloned.posts)) {
+        cloned.posts = cloned.posts.slice(0, 30).map((p, idx) => {
+          if (idx > 5 && p.mediaUrl && p.mediaUrl.length > 30000) {
+            return { ...p, mediaUrl: undefined };
+          }
+          return p;
+        });
+      }
+      if (Array.isArray(cloned.stories)) {
+        cloned.stories = cloned.stories.slice(0, 15);
+      }
+      localStorage.setItem(DB_KEY, JSON.stringify(cloned));
+    } catch (err2) {
+      console.warn('[OfflineDB] Secondary quota fallback failed:', err2);
+    }
   }
 }
 

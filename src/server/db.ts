@@ -217,6 +217,48 @@ export const OFFICIAL_STAFF_LIST: StaffPreset[] = [
   },
 ];
 
+
+export interface StudentPreset {
+  username: string;
+  initialPassword: string;
+  name: string;
+  kelas: string;
+  gender: 'Laki-laki' | 'Perempuan';
+}
+
+export const OFFICIAL_STUDENT_LIST: StudentPreset[] = [
+  // SMP (15 Siswa)
+  { username: 'siswa.smp7a.001', initialPassword: 'Siswa7A001', name: 'Ahmad Fauzi', kelas: 'VII-A SMP', gender: 'Laki-laki' },
+  { username: 'siswa.smp7a.002', initialPassword: 'Siswa7A002', name: 'Bunga Pertiwi', kelas: 'VII-A SMP', gender: 'Perempuan' },
+  { username: 'siswa.smp7a.003', initialPassword: 'Siswa7A003', name: 'Cahya Ramadhan', kelas: 'VII-A SMP', gender: 'Laki-laki' },
+  { username: 'siswa.smp7b.001', initialPassword: 'Siswa7B001', name: 'Dinda Aulia', kelas: 'VII-B SMP', gender: 'Perempuan' },
+  { username: 'siswa.smp7b.002', initialPassword: 'Siswa7B002', name: 'Eka Prasetyo', kelas: 'VII-B SMP', gender: 'Laki-laki' },
+  { username: 'siswa.smp8a.001', initialPassword: 'Siswa8A001', name: 'Fajar Nugroho', kelas: 'VIII-A SMP', gender: 'Laki-laki' },
+  { username: 'siswa.smp8a.002', initialPassword: 'Siswa8A002', name: 'Gita Kusuma', kelas: 'VIII-A SMP', gender: 'Perempuan' },
+  { username: 'siswa.smp8a.003', initialPassword: 'Siswa8A003', name: 'Hendra Wijaya', kelas: 'VIII-A SMP', gender: 'Laki-laki' },
+  { username: 'siswa.smp8b.001', initialPassword: 'Siswa8B001', name: 'Indah Lestari', kelas: 'VIII-B SMP', gender: 'Perempuan' },
+  { username: 'siswa.smp8b.002', initialPassword: 'Siswa8B002', name: 'Joko Susilo', kelas: 'VIII-B SMP', gender: 'Laki-laki' },
+  { username: 'siswa.smp9a.001', initialPassword: 'Siswa9A001', name: 'Kartika Dewi', kelas: 'IX-A SMP', gender: 'Perempuan' },
+  { username: 'siswa.smp9a.002', initialPassword: 'Siswa9A002', name: 'Lukman Hakim', kelas: 'IX-A SMP', gender: 'Laki-laki' },
+  { username: 'siswa.smp9a.003', initialPassword: 'Siswa9A003', name: 'Melati Sari', kelas: 'IX-A SMP', gender: 'Perempuan' },
+  { username: 'siswa.smp9b.001', initialPassword: 'Siswa9B001', name: 'Nanda Putra', kelas: 'IX-B SMP', gender: 'Laki-laki' },
+  { username: 'siswa.smp9b.002', initialPassword: 'Siswa9B002', name: 'Olivia Putri', kelas: 'IX-B SMP', gender: 'Perempuan' },
+
+  // SD (12 Siswa)
+  { username: 'siswa.sd1a.001', initialPassword: 'Siswa1A001', name: 'Putri Rahayu', kelas: 'I-A SD', gender: 'Perempuan' },
+  { username: 'siswa.sd1a.002', initialPassword: 'Siswa1A002', name: 'Qori Ananda', kelas: 'I-A SD', gender: 'Perempuan' },
+  { username: 'siswa.sd2a.001', initialPassword: 'Siswa2A001', name: 'Rizky Maulana', kelas: 'II-A SD', gender: 'Laki-laki' },
+  { username: 'siswa.sd2a.002', initialPassword: 'Siswa2A002', name: 'Siti Aminah', kelas: 'II-A SD', gender: 'Perempuan' },
+  { username: 'siswa.sd3a.001', initialPassword: 'Siswa3A001', name: 'Taufik Hidayat', kelas: 'III-A SD', gender: 'Laki-laki' },
+  { username: 'siswa.sd3a.002', initialPassword: 'Siswa3A002', name: 'Umi Kalsum', kelas: 'III-A SD', gender: 'Perempuan' },
+  { username: 'siswa.sd4a.001', initialPassword: 'Siswa4A001', name: 'Vino Pratama', kelas: 'IV-A SD', gender: 'Laki-laki' },
+  { username: 'siswa.sd4a.002', initialPassword: 'Siswa4A002', name: 'Wulan Sari', kelas: 'IV-A SD', gender: 'Perempuan' },
+  { username: 'siswa.sd5a.001', initialPassword: 'Siswa5A001', name: 'Xena Maharani', kelas: 'V-A SD', gender: 'Perempuan' },
+  { username: 'siswa.sd5a.002', initialPassword: 'Siswa5A002', name: 'Yoga Santoso', kelas: 'V-A SD', gender: 'Laki-laki' },
+  { username: 'siswa.sd6a.001', initialPassword: 'Siswa6A001', name: 'Zahra Aulia', kelas: 'VI-A SD', gender: 'Perempuan' },
+  { username: 'siswa.sd6a.002', initialPassword: 'Siswa6A002', name: 'Aldi Firmansyah', kelas: 'VI-A SD', gender: 'Laki-laki' },
+];
+
 export function getInitialData(): DatabaseSchema {
   const now = new Date().toISOString();
 
@@ -260,8 +302,32 @@ export function getInitialData(): DatabaseSchema {
     };
   });
 
+  
+  // 3. Akun Siswa Resmi SD & SMP Tamansiswa Batam
+  const studentUsers: User[] = OFFICIAL_STUDENT_LIST.map((student) => {
+    const pass = hashPassword(student.initialPassword);
+    const id = `user_siswa_${student.username.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+    return {
+      id,
+      username: student.username,
+      name: student.name,
+      role: 'siswa' as UserRole,
+      kelas: student.kelas,
+      gender: student.gender,
+      initialPassword: student.initialPassword,
+      password: student.initialPassword,
+      passwordHash: pass.hash,
+      salt: pass.salt,
+      mustChangePassword: false,
+      isActive: true,
+      qrToken: generateQrToken(id, student.username),
+      createdAt: now,
+      updatedAt: now,
+    };
+  });
+
   return {
-    users: [adminUser, ...staffUsers],
+    users: [adminUser, ...staffUsers, ...studentUsers],
     subjects: [],
     books: [],
     announcements: [],
@@ -328,6 +394,62 @@ class DatabaseManager {
 
   constructor() {
     this.data = this.loadData();
+    if (process.env.VERCEL) { this.loadFromGitHubAsync().catch(() => {}); }
+  }
+
+  
+  /** Muat data terbaru dari GitHub (untuk Vercel cold start persistence) */
+  private async loadFromGitHubAsync(): Promise<void> {
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (!token) return;
+    try {
+      const url = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json';
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'User-Agent': 'TAMVESTA-Cloud-Sync',
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+      if (!res.ok) return;
+      const json: any = await res.json();
+      if (!json.content) return;
+      const decoded = Buffer.from(json.content, 'base64').toString('utf-8');
+      const parsed = JSON.parse(decoded);
+      if (!parsed || !Array.isArray(parsed.users)) return;
+
+      if (Array.isArray(parsed.users)) {
+        parsed.users.forEach((ghUser: any) => {
+          const existing = this.data.users.find(
+            (u) => u.id === ghUser.id || u.username.toLowerCase() === ghUser.username.toLowerCase()
+          );
+          if (!existing) {
+            this.data.users.push(ghUser);
+          }
+        });
+      }
+      if (Array.isArray(parsed.posts) && parsed.posts.length > 0) {
+        const postMap = new Map<string, any>();
+        this.data.posts.forEach((p) => postMap.set(p.id, p));
+        parsed.posts.forEach((p: any) => postMap.set(p.id, p));
+        this.data.posts = Array.from(postMap.values()).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+      if (Array.isArray(parsed.stories) && parsed.stories.length > this.data.stories.length) {
+        this.data.stories = parsed.stories;
+      }
+      if (Array.isArray(parsed.passwordResetRequests)) {
+        parsed.passwordResetRequests.forEach((req: any) => {
+          if (!this.data.passwordResetRequests.find((r) => r.id === req.id)) {
+            this.data.passwordResetRequests.push(req);
+          }
+        });
+      }
+      this.saveDataDirect(this.data);
+    } catch (err) {
+      console.warn('[DB] loadFromGitHub error:', err);
+    }
   }
 
   private loadData(): DatabaseSchema {
@@ -353,6 +475,42 @@ class DatabaseManager {
 
         // Ensure all 17 official staff/teacher accounts exist and can log in with their credentials
         if (!parsed.users) parsed.users = [];
+        
+        // Ensure all 27 official students exist and can log in with their credentials
+        OFFICIAL_STUDENT_LIST.forEach((student) => {
+          const existing = parsed.users.find((u: User) => u.username.toLowerCase() === student.username.toLowerCase());
+          if (!existing) {
+            const pass = hashPassword(student.initialPassword);
+            const id = `user_siswa_${student.username.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+            parsed.users.push({
+              id,
+              username: student.username,
+              name: student.name,
+              role: 'siswa',
+              kelas: student.kelas,
+              gender: student.gender,
+              initialPassword: student.initialPassword,
+              passwordHash: pass.hash,
+              salt: pass.salt,
+              mustChangePassword: false,
+              isActive: true,
+              qrToken: generateQrToken(id, student.username),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+          } else {
+            existing.kelas = student.kelas;
+            existing.name = student.name;
+            existing.gender = student.gender;
+            existing.initialPassword = student.initialPassword;
+            if (!existing.passwordHash || !existing.salt) {
+              const pass = hashPassword(student.initialPassword);
+              existing.passwordHash = pass.hash;
+              existing.salt = pass.salt;
+            }
+          }
+        });
+
         OFFICIAL_STAFF_LIST.forEach((staff) => {
           const existing = parsed.users.find((u: User) => u.username.toLowerCase() === staff.username.toLowerCase());
           if (!existing) {

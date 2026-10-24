@@ -293,12 +293,23 @@ export const api = {
     }
   },
 
-  getStudents: async () => {
+    getStudents: async () => {
+    const localStudents = offlineStore.getStudents();
+    let serverStudents: User[] = [];
     try {
-      return await tryServerRequest<User[]>('/api/admin/students');
+      serverStudents = await tryServerRequest<User[]>('/api/admin/students');
     } catch (_) {
-      return offlineStore.getStudents();
+      serverStudents = [];
     }
+    const studentMap = new Map<string, User>();
+    // Pertahankan akun siswa lokal terlebih dahulu
+    localStudents.forEach((s) => studentMap.set(s.id, s));
+    if (Array.isArray(serverStudents) && serverStudents.length > 0) {
+      serverStudents.forEach((s) => {
+        studentMap.set(s.id, s);
+      });
+    }
+    return Array.from(studentMap.values());
   },
 
   updateStudent: async (id: string, data: Partial<User>) => {
@@ -647,21 +658,37 @@ export const api = {
   },
 
   // Student Feed Posts
-  getPosts: async () => {
+    getPosts: async () => {
+    const localPosts = offlineStore.getPosts();
     let serverPosts: StudentPost[] = [];
     try {
       serverPosts = await tryServerRequest<StudentPost[]>('/api/posts');
     } catch (_) {
       serverPosts = [];
     }
-    const localPosts = offlineStore.getPosts();
+
     const postMap = new Map<string, StudentPost>();
+    // Pertahankan semua postingan lokal terlebih dahulu agar tidak hilang saat server kosong
     localPosts.forEach((p) => postMap.set(p.id, p));
-    serverPosts.forEach((p) => postMap.set(p.id, p));
+
+    // Gabungkan dengan postingan dari server
+    if (Array.isArray(serverPosts) && serverPosts.length > 0) {
+      serverPosts.forEach((p) => {
+        if (postMap.has(p.id)) {
+          postMap.set(p.id, { ...postMap.get(p.id)!, ...p });
+        } else {
+          postMap.set(p.id, p);
+        }
+      });
+    }
+
     const merged = Array.from(postMap.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-    offlineStore.setPostsList(merged);
+
+    if (merged.length > 0) {
+      offlineStore.setPostsList(merged);
+    }
     return merged;
   },
 
@@ -747,7 +774,7 @@ export const api = {
   },
 
   // Stories (24h)
-  getStories: async () => {
+    getStories: async () => {
     let serverStories: Story[] = [];
     try {
       serverStories = await tryServerRequest<Story[]>('/api/stories');
@@ -760,13 +787,23 @@ export const api = {
     localStories.forEach((s) => {
       if (new Date(s.expiresAt).getTime() > now) storyMap.set(s.id, s);
     });
-    serverStories.forEach((s) => {
-      if (new Date(s.expiresAt).getTime() > now) storyMap.set(s.id, s);
-    });
+    if (Array.isArray(serverStories) && serverStories.length > 0) {
+      serverStories.forEach((s) => {
+        if (new Date(s.expiresAt).getTime() > now) {
+          if (storyMap.has(s.id)) {
+            storyMap.set(s.id, { ...storyMap.get(s.id)!, ...s });
+          } else {
+            storyMap.set(s.id, s);
+          }
+        }
+      });
+    }
     const merged = Array.from(storyMap.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-    offlineStore.setStoriesList(merged);
+    if (merged.length > 0) {
+      offlineStore.setStoriesList(merged);
+    }
     return merged;
   },
 

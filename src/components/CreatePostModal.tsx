@@ -1,3 +1,4 @@
+import { compressImage } from '../lib/imageCompressor.ts';
 import React, { useState, useRef } from 'react';
 import {
   X,
@@ -66,13 +67,19 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
+    compressImage(file).then((compressed) => {
       setMediaType('photo');
-      setMediaUrl(reader.result as string);
+      setMediaUrl(compressed);
       setMediaName(file.name);
-    };
-    reader.readAsDataURL(file);
+    }).catch(() => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setMediaType('photo');
+        setMediaUrl(reader.result as string);
+        setMediaName(file.name);
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
