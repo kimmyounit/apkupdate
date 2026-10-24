@@ -12,9 +12,11 @@ import {
   School,
   Lock,
   CheckCircle2,
+  ZoomIn,
 } from 'lucide-react';
 import { api } from '../lib/api.ts';
 import type { StudentPost, User } from '../types/index.ts';
+import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -38,6 +40,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [isSelf, setIsSelf] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -112,7 +115,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               {/* Profile Bio Card */}
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
                 {/* Large Profile Picture */}
-                <div className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-emerald-500/30 shadow-md shrink-0 bg-slate-100">
+                <div
+                  className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-emerald-500/30 shadow-md shrink-0 bg-slate-100 cursor-zoom-in relative group"
+                  onClick={() =>
+                    setLightboxImage(
+                      profileUser.avatarUrl ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                          profileUser.name || 'User'
+                        )}&backgroundColor=0284c7`
+                    )
+                  }
+                  title="Klik untuk memperbesar foto profil"
+                >
                   <img
                     src={
                       profileUser.avatarUrl ||
@@ -121,8 +135,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       )}&backgroundColor=0284c7`
                     }
                     alt={profileUser.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-105 transition"
                   />
+                  <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    <ZoomIn className="w-5 h-5 text-white" />
+                  </div>
                 </div>
 
                 <div className="flex-1 text-center sm:text-left space-y-2">
@@ -274,6 +291,13 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Pembesar Foto Profil */}
+      <ImageLightboxModal
+        imageUrl={lightboxImage}
+        title={profileUser?.name ? `Foto Profil • ${profileUser.name}` : 'Foto Profil'}
+        onClose={() => setLightboxImage(null)}
+      />
     </div>
   );
 };

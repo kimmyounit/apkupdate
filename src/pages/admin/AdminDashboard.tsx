@@ -34,6 +34,9 @@ import {
   Copy,
   Check,
   FileSpreadsheet,
+  FileDown,
+  FileText,
+  Maximize2,
   Filter,
   RefreshCw,
   X,
@@ -50,12 +53,16 @@ import type {
   PasswordResetRequest,
 } from '../../types/index.ts';
 import { StudentProfileModal } from '../../components/StudentProfileModal.tsx';
+import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
 
 type AdminTab = 'students' | 'staff' | 'subjects' | 'library' | 'announcements' | 'quizzes' | 'events' | 'tickets';
 
 export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpenScanner }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('students');
   const [resetRequests, setResetRequests] = useState<PasswordResetRequest[]>([]);
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
+  const [isSyncingMultiDevice, setIsSyncingMultiDevice] = useState<boolean>(false);
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
 
   // --- Student Management State ---
   const [students, setStudents] = useState<User[]>([]);
@@ -110,7 +117,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     teacherName: '',
     description: '',
     grade: 'Kelas X',
-    schedule: 'Senin, 08:00 - 09:30 WIB',
+    schedule: '',
     imageUrl: '',
     room: 'Ruang Kelas',
   });
@@ -284,6 +291,14 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     }
   };
 
+  const notifyMultiDeviceSync = () => {
+    try {
+      const channel = new BroadcastChannel('tamvesta_admin_sync');
+      channel.postMessage({ type: 'REFRESH_ALL', timestamp: Date.now() });
+      channel.close();
+    } catch (_) {}
+  };
+
   const handleToggleVerified = async (userId: string) => {
     try {
       const res = await api.toggleVerifiedBadge(userId);
@@ -319,6 +334,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       });
       const updatedStaff = await api.getStaff();
       setStaffList(updatedStaff);
+      notifyMultiDeviceSync();
       setTimeout(() => setStaffActionSuccess(null), 4000);
     } catch (err: any) {
       setStaffActionError(err.message || 'Gagal menambahkan akun guru.');
@@ -337,6 +353,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setEditingTeacher(null);
       const updatedStaff = await api.getStaff();
       setStaffList(updatedStaff);
+      notifyMultiDeviceSync();
       setTimeout(() => setStaffActionSuccess(null), 4000);
     } catch (err: any) {
       setStaffActionError(err.message || 'Gagal memperbarui data guru.');
@@ -351,6 +368,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       const res = await api.deleteTeacher(id);
       setStaffActionSuccess(res.message || `Akun ${name} berhasil dihapus.`);
       setStaffList((prev) => prev.filter((s) => s.id !== id));
+      notifyMultiDeviceSync();
       setTimeout(() => setStaffActionSuccess(null), 4000);
     } catch (err: any) {
       setStaffActionError(err.message || 'Gagal menghapus akun.');
@@ -460,6 +478,266 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     }
   };
 
+  const syncDataSilently = async () => {
+    try {
+      setIsSyncingMultiDevice(true);
+      const [stu, subs, bks, anns, qzs, atts, evs, staff, reqs] = await Promise.all([
+        api.getStudents(),
+        api.getSubjects(),
+        api.getBooks(),
+        api.getAnnouncements(),
+        api.getQuizzes(),
+        api.getQuizAttempts(),
+        api.getAttendanceEvents(),
+        api.getStaff(),
+        api.getPasswordResetRequests(),
+      ]);
+
+      if (Array.isArray(stu)) setStudents(stu);
+      if (Array.isArray(subs)) setSubjects(subs);
+      if (Array.isArray(bks)) setBooks(bks);
+      if (Array.isArray(anns)) setAnnouncements(anns);
+      if (Array.isArray(qzs)) setQuizzes(qzs);
+      if (Array.isArray(atts)) setQuizAttempts(atts);
+      if (Array.isArray(evs)) setEvents(evs);
+      if (Array.isArray(staff)) setStaffList(staff);
+      if (Array.isArray(reqs)) setResetRequests(reqs);
+
+      setLastSyncTime(new Date());
+    } catch (err) {
+      console.debug('Background multi-device auto-sync skipped:', err);
+    } finally {
+      setIsSyncingMultiDevice(false);
+    }
+  };
+
+  const handleDownloadWordStaff = () => {
+    const currentDate = new Date().toLocaleDateString('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    const currentTime = new Date().toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const staffRowsHtml = staffList
+      .map((staff, idx) => {
+        const displayPass =
+          staff.initialPassword ||
+          (staff.username === 'TAMANSISWA' ? 'TAMVESTA123' : 'Tamvesta!1234');
+        const roleName =
+          staff.role === 'admin'
+            ? 'Administrator Sistem'
+            : staff.role === 'kepala_sekolah'
+            ? 'Kepala Sekolah / Yayasan'
+            : staff.role === 'panitia'
+            ? 'Staf / Tenaga Kependidikan'
+            : 'Dewan Guru Pengampu';
+        const statusText = staff.isVerified
+          ? 'Terverifikasi (Centang Biru)'
+          : 'Akun Aktif (Siap Login)';
+
+        return `
+          <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+            <td style="border: 1px solid #cbd5e1; padding: 10px 8px; text-align: center; font-weight: bold; color: #475569; font-size: 10pt;">${idx + 1}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 10px 12px; font-weight: bold; color: #0f172a; font-size: 10.5pt;">${staff.name}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 10px 12px; color: #334155; font-size: 10pt;">${staff.jabatan || roleName}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 10px 12px; color: #1e293b; font-size: 10pt;">${roleName}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 10px 12px; font-family: 'Consolas', 'Courier New', monospace; font-weight: bold; color: #065f46; background-color: #ecfdf5; text-align: center; font-size: 10.5pt;">${staff.username}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 10px 12px; font-family: 'Consolas', 'Courier New', monospace; font-weight: bold; color: #1e3a8a; background-color: #eff6ff; text-align: center; font-size: 10.5pt;">${displayPass}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 10px 8px; text-align: center; color: #047857; font-weight: bold; font-size: 9.5pt;">${statusText}</td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    const wordHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>DAFTAR KREDENSIAL RESMI AKUN GURU & TENAGA KEPENDIDIKAN TAMVESTA</title>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <style>
+          @page {
+            size: 21.0cm 29.7cm;
+            margin: 2.0cm 2.0cm 2.0cm 2.0cm;
+            mso-page-orientation: portrait;
+          }
+          body {
+            font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+            color: #1e293b;
+            font-size: 11pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+          }
+          .header-kop {
+            text-align: center;
+            border-bottom: 3px double #0f172a;
+            padding-bottom: 14px;
+            margin-bottom: 24px;
+          }
+          .inst-title {
+            font-size: 16pt;
+            font-weight: 800;
+            color: #064e3b;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .inst-sub {
+            font-size: 13pt;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 4px 0 0 0;
+          }
+          .inst-address {
+            font-size: 9pt;
+            color: #64748b;
+            margin: 5px 0 0 0;
+          }
+          .doc-badge {
+            display: inline-block;
+            background-color: #047857;
+            color: #ffffff;
+            padding: 7px 18px;
+            font-size: 11pt;
+            font-weight: bold;
+            border-radius: 4px;
+            margin: 16px 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .info-bar {
+            background-color: #f1f5f9;
+            border-left: 4px solid #059669;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+            font-size: 10pt;
+            line-height: 1.6;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            margin-bottom: 24px;
+          }
+          th {
+            background-color: #064e3b;
+            color: #ffffff;
+            padding: 11px 8px;
+            font-size: 10pt;
+            text-transform: uppercase;
+            border: 1px solid #047857;
+            text-align: center;
+            font-weight: bold;
+          }
+          .footer-notice {
+            margin-top: 25px;
+            padding: 14px 18px;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            font-size: 9.5pt;
+            color: #991b1b;
+            line-height: 1.6;
+          }
+          .sign-area {
+            margin-top: 40px;
+            width: 100%;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header-kop">
+          <h1 class="inst-title">YAYASAN PERSATUAN PERGURUAN TAMANSISWA</h1>
+          <h2 class="inst-sub">CABANG BATAM — KOTA BATAM</h2>
+          <p class="inst-address">Alamat: Jl. Tamansiswa No. 1, Batam, Kepulauan Riau • Telp: (0778) 462155 • Portal: https://apkupdate-indol.vercel.app</p>
+          <div style="margin-top: 10px;">
+            <span class="doc-badge">DAFTAR KREDENSIAL RESMI AKUN GURU & TENAGA KEPENDIDIKAN</span>
+          </div>
+          <p style="font-size: 10pt; color: #475569; margin: 4px 0 0 0;">Dokumen Distribusi Akun Sistem Informasi TAMVESTA</p>
+        </div>
+
+        <div class="info-bar">
+          <strong>Tanggal Cetak:</strong> ${currentDate} pukul ${currentTime} WIB<br/>
+          <strong>Total Akun Terdaftar:</strong> ${staffList.length} Akun Guru & Staf Aktif Siap Login<br/>
+          <strong>Klasifikasi Dokumen:</strong> Dokumen Internal Resmi (Distribusi Langsung)
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 5%;">No</th>
+              <th style="width: 25%;">Nama Lengkap</th>
+              <th style="width: 18%;">Jabatan / Tugas</th>
+              <th style="width: 15%;">Hak Akses (Role)</th>
+              <th style="width: 14%;">Username</th>
+              <th style="width: 13%;">Password Awal</th>
+              <th style="width: 10%;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${staffRowsHtml}
+          </tbody>
+        </table>
+
+        <div class="footer-notice">
+          <strong>PEMBERITAHUAN PENTING & KEBIJAKAN KERAHASIAAN:</strong>
+          <ol style="margin: 6px 0 0 0; padding-left: 20px;">
+            <li>Dokumen ini bersifat <strong>RAHASIA (CONFIDENTIAL)</strong> dan hanya diperuntukkan bagi internal dewan guru serta tenaga kependidikan Perguruan Tamansiswa Batam.</li>
+            <li>Kredensial (Username dan Password) di atas digunakan untuk masuk ke aplikasi TAMVESTA (Web & Android).</li>
+            <li>Akun guru dan tenaga kependidikan tidak diwajibkan mengganti kata sandi secara paksa demi kemudahan operasional sekolah.</li>
+            <li>Dilarang keras menyebarluaskan dokumen ini kepada pihak luar tanpa persetujuan tertulis dari Pimpinan Perguruan Tamansiswa Batam.</li>
+          </ol>
+        </div>
+
+        <table class="sign-area" style="border: none; margin-top: 50px;">
+          <tr style="border: none; background: transparent;">
+            <td style="border: none; width: 60%; text-align: left; vertical-align: top;">
+              <p style="font-size: 10pt; color: #64748b; line-height: 1.6;">
+                Dicetak secara otomatis melalui:<br/>
+                <strong>TAMVESTA Admin Control Panel</strong><br/>
+                Perguruan Tamansiswa Batam
+              </p>
+            </td>
+            <td style="border: none; width: 40%; text-align: center; vertical-align: top;">
+              <p style="font-size: 10pt; margin: 0;">Batam, ${currentDate}</p>
+              <p style="font-size: 10pt; font-weight: bold; margin: 2px 0 0 0;">Mengetahui & Menyetujui,</p>
+              <p style="font-size: 10pt; color: #475569; margin: 0 0 65px 0;">Kepala Perguruan Tamansiswa Batam</p>
+              <p style="font-size: 10pt; font-weight: bold; text-decoration: underline; margin: 0;">( PIMPINAN TAMANSISWA BATAM )</p>
+              <p style="font-size: 9pt; color: #64748b; margin: 2px 0 0 0;">NIP / NBM Resmi Sekolah</p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\ufeff' + wordHtml], {
+      type: 'application/msword;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `KREDENSIAL_GURU_DAN_STAF_TAMANSISWA_BATAM_${Date.now()}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedStaffKey(key);
@@ -470,6 +748,44 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
 
   useEffect(() => {
     loadAllData();
+
+    // Multi-Device Auto-Sync: Poll every 5 seconds so any changes made on other devices
+    // appear automatically without needing manual page reload
+    const intervalId = setInterval(() => {
+      syncDataSilently();
+    }, 5000);
+
+    // Immediate sync when tab becomes visible or gains window focus
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        syncDataSilently();
+      }
+    };
+
+    // BroadcastChannel for instant zero-latency multi-window/multi-tab updates on same device
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('tamvesta_admin_sync');
+      channel.onmessage = (msg) => {
+        if (msg.data?.type === 'REFRESH_ALL') {
+          syncDataSilently();
+        }
+      };
+    } catch (_) {}
+
+    window.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      if (channel) {
+        try {
+          channel.close();
+        } catch (_) {}
+      }
+    };
   }, []);
 
   // --- 1. STUDENT REGISTRATION & ACTIONS ---
@@ -492,6 +808,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       handleResetStudentForm();
       const updated = await api.getStudents();
       setStudents(updated);
+      notifyMultiDeviceSync();
     } catch (err: any) {
       setStudentFormError(err.message || 'Gagal mendaftarkan akun siswa.');
     } finally {
@@ -522,6 +839,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setEditingStudent(null);
       const updated = await api.getStudents();
       setStudents(updated);
+      notifyMultiDeviceSync();
     } catch (err: any) {
       alert(err.message || 'Gagal memperbarui data siswa.');
     } finally {
@@ -536,6 +854,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     try {
       const tickets = await api.getPasswordResetRequests();
       setResetRequests(tickets || []);
+      notifyMultiDeviceSync();
     } catch (err: any) {
       console.warn('Gagal memuat tiket:', err);
     } finally {
@@ -555,6 +874,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setDeletingStudent(null);
       const updated = await api.getStudents();
       setStudents(updated);
+      notifyMultiDeviceSync();
     } catch (err: any) {
       alert(err.message || 'Gagal menghapus akun siswa.');
     } finally {
@@ -574,6 +894,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setResetRequests(updatedReqs || []);
       const updatedStu = await api.getStudents();
       setStudents(updatedStu);
+      notifyMultiDeviceSync();
     } catch (err: any) {
       alert(err.message || 'Gagal memproses tiket.');
     } finally {
@@ -592,6 +913,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setRejectReasonText('');
       const updatedReqs = await api.getPasswordResetRequests();
       setResetRequests(updatedReqs || []);
+      notifyMultiDeviceSync();
     } catch (err: any) {
       alert(err.message || 'Gagal menolak tiket.');
     } finally {
@@ -613,6 +935,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setStudents((prev) =>
         prev.map((s) => (s.id === student.id ? { ...s, isActive: res.isActive } : s))
       );
+      notifyMultiDeviceSync();
     } catch (err: any) {
       alert(err.message || 'Gagal mengubah status akun.');
     }
@@ -650,6 +973,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setEditingSubject(null);
       const updated = await api.getSubjects();
       setSubjects(updated);
+      notifyMultiDeviceSync();
     } catch (err: any) {
       alert(err.message || 'Gagal menyimpan mata pelajaran.');
     }
@@ -660,6 +984,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     try {
       await api.deleteSubject(id);
       setSubjects((prev) => prev.filter((s) => s.id !== id));
+      notifyMultiDeviceSync();
     } catch (err: any) {
       alert(err.message || 'Gagal menghapus mata pelajaran.');
     }
@@ -832,6 +1157,12 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 px-3.5 py-2.5 bg-emerald-950/70 border border-emerald-500/40 rounded-2xl text-[11px] font-bold text-emerald-200 backdrop-blur-sm shadow-inner">
+            <span className={`w-2.5 h-2.5 rounded-full ${isSyncingMultiDevice ? 'bg-amber-400 animate-spin' : 'bg-emerald-400 animate-pulse'}`} />
+            <span className="hidden sm:inline">Sinkronisasi Multi-Device:</span>
+            <span className="text-emerald-300 font-mono">Aktif ({lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })})</span>
+          </div>
+
           <button
             onClick={() => setShowBackupModal(true)}
             className="flex items-center gap-2 px-4 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-black text-xs shadow-lg shadow-teal-600/30 transition active:scale-95"
@@ -1184,7 +1515,17 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                             onClick={() => setPreviewQrStudent(stu)}
                             title="Klik untuk melihat profil lengkap & QR siswa"
                           >
-                            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0 group-hover:ring-2 ring-emerald-500 transition">
+                            <div
+                              className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0 group-hover:ring-2 ring-emerald-500 transition relative cursor-zoom-in"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setLightboxImage({
+                                  url: stu.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(stu.name)}&backgroundColor=0284c7`,
+                                  title: `Foto Profil • ${stu.name}`,
+                                });
+                              }}
+                              title="Klik foto untuk memperbesar"
+                            >
                               <img
                                 src={stu.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(stu.name)}&backgroundColor=0284c7`}
                                 alt={stu.name}
@@ -1454,6 +1795,16 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   <span>Tambah Akun Guru</span>
                 </button>
 
+                <button
+                  type="button"
+                  onClick={handleDownloadWordStaff}
+                  className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95"
+                  title="Unduh Kredensial Resmi Guru & Tenaga Kependidikan ke Microsoft Word (.doc)"
+                >
+                  <FileDown className="w-4 h-4 text-blue-200" />
+                  <span>Unduh Dokumen Word</span>
+                </button>
+
                 <div className="relative w-full sm:w-60">
                   <input
                     type="text"
@@ -1720,7 +2071,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   teacherName: '',
                   description: '',
                   grade: 'Kelas XII',
-                  schedule: 'Senin, 08:00 - 09:30 WIB',
+                  schedule: '',
                   imageUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80',
                   room: 'Lab Sains',
                 });
@@ -1740,11 +2091,21 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                 className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between"
               >
                 <div>
-                  <div className="h-40 relative bg-slate-100">
-                    <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
+                  <div
+                    className="h-40 relative bg-slate-100 cursor-zoom-in group overflow-hidden"
+                    onClick={() => setLightboxImage({ url: sub.imageUrl, title: `Foto Mapel • ${sub.name}` })}
+                    title="Klik foto untuk memperbesar"
+                  >
+                    <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900/80 text-white">
                       {sub.code}
                     </span>
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                      <span className="px-2.5 py-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold rounded-lg flex items-center gap-1 shadow">
+                        <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Perbesar Foto</span>
+                      </span>
+                    </div>
                   </div>
                   <div className="p-4 space-y-2">
                     <h3 className="font-bold text-base text-slate-900">{sub.name}</h3>
@@ -1765,7 +2126,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                         teacherName: sub.teacherName,
                         description: sub.description,
                         grade: sub.grade,
-                        schedule: sub.schedule,
+                        schedule: '',
                         imageUrl: sub.imageUrl,
                         room: sub.room || 'Ruang Kelas',
                       });
@@ -2636,10 +2997,20 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   </label>
                 </div>
                 {subjectForm.imageUrl && (
-                  <div className="h-28 w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative mb-1">
-                    <img src={subjectForm.imageUrl} alt="Pratinjau Mapel" className="w-full h-full object-cover" />
-                    <span className="absolute bottom-1 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
-                      Pratinjau Foto
+                  <div
+                    className="h-28 w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative mb-1 cursor-zoom-in group"
+                    onClick={() =>
+                      setLightboxImage({
+                        url: subjectForm.imageUrl,
+                        title: subjectForm.name || 'Pratinjau Foto Mapel',
+                      })
+                    }
+                    title="Klik untuk memperbesar pratinjau"
+                  >
+                    <img src={subjectForm.imageUrl} alt="Pratinjau Mapel" className="w-full h-full object-cover group-hover:scale-105 transition" />
+                    <span className="absolute bottom-1 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 shadow">
+                      <Maximize2 className="w-3 h-3 text-emerald-400" />
+                      <span>Klik untuk perbesar</span>
                     </span>
                   </div>
                 )}
@@ -3467,6 +3838,13 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
           </div>
         </div>
       )}
+
+      {/* Pembesar Foto (Image Lightbox Modal) */}
+      <ImageLightboxModal
+        imageUrl={lightboxImage ? lightboxImage.url : null}
+        title={lightboxImage ? lightboxImage.title : undefined}
+        onClose={() => setLightboxImage(null)}
+      />
     </div>
   );
 };

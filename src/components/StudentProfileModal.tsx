@@ -24,6 +24,7 @@ import {
 import type { User } from '../types/index.ts';
 import { api, setStoredToken } from '../lib/api.ts';
 import { useAuth } from '../context/AuthContext.tsx';
+import { ImageLightboxModal } from './ImageLightboxModal.tsx';
 
 interface Props {
   user: User;
@@ -35,6 +36,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
   const { refreshUser } = useAuth();
   const [currentUser, setCurrentUser] = useState<User>(initialUser);
   const [activeTab, setActiveTab] = useState<'qr' | 'settings'>('qr');
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   // QR States
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -252,18 +254,30 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
 
               {/* Student Info & Photo */}
               <div className="flex flex-col sm:flex-row items-center gap-4 mb-4 text-left">
-                <div className="relative shrink-0">
+                <div
+                  className="relative shrink-0 cursor-zoom-in group"
+                  onClick={() =>
+                    setLightboxImage(
+                      currentUser.avatarUrl ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=0284c7`
+                    )
+                  }
+                  title="Klik untuk memperbesar foto profil"
+                >
                   <img
                     src={
                       currentUser.avatarUrl ||
                       `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=0284c7`
                     }
                     alt={currentUser.name}
-                    className="w-18 h-18 rounded-2xl object-cover border-2 border-emerald-500 shadow-md bg-slate-100"
+                    className="w-18 h-18 rounded-2xl object-cover border-2 border-emerald-500 shadow-md bg-slate-100 group-hover:scale-105 transition"
                   />
                   <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center">
                     <Shield className="w-3 h-3 text-white" />
                   </span>
+                  <div className="absolute inset-0 bg-black/20 rounded-2xl opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    <ZoomIn className="w-4 h-4 text-white" />
+                  </div>
                 </div>
                 <div className="flex-1 space-y-1 w-full text-center sm:text-left">
                   <h3 className="font-black text-slate-900 text-base leading-tight flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
@@ -523,6 +537,13 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
           </div>
         )}
       </div>
+
+      {/* Pembesar Foto Profil */}
+      <ImageLightboxModal
+        imageUrl={lightboxImage}
+        title={`Foto Profil • ${currentUser.name}`}
+        onClose={() => setLightboxImage(null)}
+      />
     </div>
   );
 };

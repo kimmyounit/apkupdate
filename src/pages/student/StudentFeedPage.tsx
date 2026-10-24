@@ -25,6 +25,7 @@ import {
   Camera,
   CheckCircle2,
   GraduationCap,
+  Maximize2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -34,6 +35,7 @@ import { UserProfileModal } from '../../components/UserProfileModal.tsx';
 import { CreateStoryModal } from '../../components/CreateStoryModal.tsx';
 import { StoryViewerModal } from '../../components/StoryViewerModal.tsx';
 import { NotificationsModal } from '../../components/NotificationsModal.tsx';
+import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
 
 interface StudentFeedPageProps {
   onOpenAnnouncements?: () => void;
@@ -78,6 +80,9 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
+
+  // Lightbox Zoom Image state
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
 
   const loadFeedData = async (silent = false) => {
     if (!silent && posts.length === 0) setLoading(true);
@@ -650,11 +655,21 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                     {post.mediaType === 'video' ? (
                       <video src={post.mediaUrl} controls className="w-full max-h-[480px] object-contain" />
                     ) : (
-                      <img
-                        src={post.mediaUrl}
-                        alt="Post media"
-                        className="w-full max-h-[480px] object-cover sm:object-contain"
-                      />
+                      <div
+                        onClick={() => setLightboxImage({ url: post.mediaUrl!, title: `Foto oleh ${post.authorName}` })}
+                        className="relative group cursor-zoom-in w-full flex items-center justify-center"
+                        title="Klik untuk memperbesar foto"
+                      >
+                        <img
+                          src={post.mediaUrl}
+                          alt="Post media"
+                          className="w-full max-h-[480px] object-cover sm:object-contain group-hover:brightness-95 transition"
+                        />
+                        <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-black/70 hover:bg-black/90 text-white rounded-xl text-[10px] font-bold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition shadow-lg backdrop-blur-xs">
+                          <Maximize2 className="w-3.5 h-3.5" />
+                          <span>Perbesar Foto</span>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
@@ -814,6 +829,13 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
         onNavigateToSubjects={onOpenSubjects}
         onNavigateToQuiz={onOpenQuiz}
         onRefreshUnreadCount={loadFeedData}
+      />
+
+      {/* 6. Lightbox Zoom Image Modal */}
+      <ImageLightboxModal
+        imageUrl={lightboxImage ? lightboxImage.url : null}
+        title={lightboxImage ? lightboxImage.title : undefined}
+        onClose={() => setLightboxImage(null)}
       />
     </div>
   );

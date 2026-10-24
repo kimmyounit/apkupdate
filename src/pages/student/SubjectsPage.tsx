@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Clock, User as UserIcon, MapPin, Search, Calendar, ChevronRight, X, School, ArrowLeft, AlertCircle } from 'lucide-react';
+import { BookOpen, User as UserIcon, MapPin, Search, Calendar, ChevronRight, X, School, ArrowLeft, AlertCircle, Maximize2 } from 'lucide-react';
 import { api } from '../../lib/api.ts';
 import type { Subject } from '../../types/index.ts';
+import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
 
 interface SubjectsPageProps {
   onBack?: () => void;
@@ -12,6 +13,7 @@ export const SubjectsPage: React.FC<SubjectsPageProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   useEffect(() => {
     loadSubjects();
@@ -125,7 +127,19 @@ export const SubjectsPage: React.FC<SubjectsPageProps> = ({ onBack }) => {
                 <span className="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-600 text-white shadow-xs">
                   {sub.grade}
                 </span>
-                <div className="absolute bottom-3 left-3 right-3 text-white">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxImage(sub.imageUrl || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80');
+                  }}
+                  className="absolute bottom-3 right-3 p-1.5 rounded-xl bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm transition z-10 flex items-center gap-1 text-[10px] font-bold shadow-md hover:scale-105"
+                  title="Perbesar Foto Mata Pelajaran"
+                >
+                  <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Perbesar</span>
+                </button>
+                <div className="absolute bottom-3 left-3 right-20 text-white">
                   <h3 className="font-black text-lg line-clamp-1 group-hover:text-emerald-300 transition">
                     {sub.name}
                   </h3>
@@ -142,10 +156,6 @@ export const SubjectsPage: React.FC<SubjectsPageProps> = ({ onBack }) => {
                   <div className="flex items-center gap-2">
                     <UserIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span className="font-semibold text-slate-800 truncate">{sub.teacherName}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{sub.schedule}</span>
                   </div>
                   {sub.room && (
                     <div className="flex items-center gap-2 text-slate-500">
@@ -169,20 +179,32 @@ export const SubjectsPage: React.FC<SubjectsPageProps> = ({ onBack }) => {
       {selectedSubject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="relative h-56 bg-slate-900">
+            <div
+              className="relative h-56 bg-slate-900 group cursor-zoom-in"
+              onClick={() => setLightboxImage(selectedSubject.imageUrl || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80')}
+              title="Klik untuk memperbesar foto mapel"
+            >
               <img
                 src={selectedSubject.imageUrl || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80'}
                 alt={selectedSubject.name}
-                className="w-full h-full object-cover opacity-80"
+                className="w-full h-full object-cover opacity-80 group-hover:opacity-95 transition"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+              <div className="absolute top-4 left-4 px-2.5 py-1 bg-black/60 backdrop-blur-xs text-white rounded-lg text-[10px] font-bold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition shadow">
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Perbesar Foto</span>
+              </div>
               <button
-                onClick={() => setSelectedSubject(null)}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedSubject(null);
+                }}
                 className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition"
               >
                 <X className="w-5 h-5" />
               </button>
-              <div className="absolute bottom-4 left-6 right-6 text-white">
+              <div className="absolute bottom-4 left-6 right-6 text-white pointer-events-none">
                 <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white uppercase tracking-wider">
                   {selectedSubject.code} • {selectedSubject.grade}
                 </span>
@@ -202,10 +224,6 @@ export const SubjectsPage: React.FC<SubjectsPageProps> = ({ onBack }) => {
                 <div>
                   <span className="text-slate-400 font-semibold block text-[11px]">Guru Pengampu:</span>
                   <strong className="text-slate-800">{selectedSubject.teacherName}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 font-semibold block text-[11px]">Jadwal Pelajaran:</span>
-                  <strong className="text-slate-800">{selectedSubject.schedule}</strong>
                 </div>
                 {selectedSubject.room && (
                   <div>
@@ -231,6 +249,13 @@ export const SubjectsPage: React.FC<SubjectsPageProps> = ({ onBack }) => {
           </div>
         </div>
       )}
+
+      {/* Pembesar Foto (Image Lightbox) */}
+      <ImageLightboxModal
+        imageUrl={lightboxImage}
+        title={selectedSubject?.name || 'Foto Mata Pelajaran'}
+        onClose={() => setLightboxImage(null)}
+      />
     </div>
   );
 };
