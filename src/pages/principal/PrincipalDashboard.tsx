@@ -170,7 +170,7 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
                   Pusat Kepemimpinan & Pengawasan Perguruan Tamansiswa Batam
                 </h1>
                 <p className="text-xs sm:text-sm text-purple-200/90 max-w-2xl leading-relaxed">
-                  Selamat datang, <strong>Bpk. Titus Wahyu Diatmiko</strong> (Pemimpin Perguruan Tamansiswa Batam). Tinjau laporan berkala Tata Usaha, pembukuan kas & tagihan SPP, dewan guru & staf, serta performa seluruh unit pendidikan Tamansiswa Batam.
+                  Selamat datang, <strong>Bpk. Titus Wahyu Diatmiko</strong> (Pemimpin Perguruan Tamansiswa Batam • +62 813-7289-4523). Tinjau laporan berkala Tata Usaha, pembukuan kas & tagihan SPP, dewan guru & staf, serta performa seluruh unit pendidikan Tamansiswa Batam.
                 </p>
               </>
             ) : (

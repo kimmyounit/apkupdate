@@ -299,6 +299,516 @@ export const TuDashboard: React.FC = () => {
   const saldoKas = totalPemasukan - totalPengeluaran;
 
   // Filtered Chat Messages
+
+  const formatMonthName = (yearMonthStr: string) => {
+    try {
+      const [y, m] = yearMonthStr.split('-');
+      const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+      return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    } catch (_) {
+      return yearMonthStr;
+    }
+  };
+
+  // Filter data by selected month
+  const filteredTrxByMonth = transactions.filter((t) => {
+    const d = t.date || (t.createdAt ? t.createdAt.split('T')[0] : '');
+    return d.startsWith(selectedMonth);
+  });
+
+  const filteredBillsByMonth = bills.filter((b) => {
+    const d = b.dueDate || (b.createdAt ? b.createdAt.split('T')[0] : '');
+    return d.startsWith(selectedMonth);
+  });
+
+  const filteredDocsByMonth = documents.filter((d) => {
+    const dStr = d.date || (d.createdAt ? d.createdAt.split('T')[0] : '');
+    return dStr.startsWith(selectedMonth);
+  });
+
+  const monthIncome = filteredTrxByMonth
+    .filter((t) => t.type === 'pemasukan')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const monthExpense = filteredTrxByMonth
+    .filter((t) => t.type === 'pengeluaran')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const monthNet = monthIncome - monthExpense;
+
+  const monthPaidBills = filteredBillsByMonth.filter((b) => b.status === 'lunas').length;
+  const monthUnpaidBills = filteredBillsByMonth.filter((b) => b.status !== 'lunas').length;
+  const monthBillsTotal = filteredBillsByMonth.reduce((sum, b) => sum + (b.amount || 0), 0);
+  const monthPaidAmount = filteredBillsByMonth
+    .filter((b) => b.status === 'lunas')
+    .reduce((sum, b) => sum + (b.amount || 0), 0);
+
+  // Kirim Laporan Otomatis ke Pemimpin & Kepala Sekolah
+  const handleSendReportToLeadership = async () => {
+    if (isSendingReport) return;
+    setIsSendingReport(true);
+    try {
+      const monthLabel = formatMonthName(selectedMonth);
+      await api.createTuMonthlyReport({
+        month: selectedMonth,
+        monthName: monthLabel,
+        sentBy: user?.name || 'Tata Usaha Haliza',
+        sentByUsername: user?.username || 'haliza.tu',
+        summary: {
+          totalRevenue: monthIncome,
+          totalExpense: monthExpense,
+          saldoKas: monthNet,
+          paidBillsCount: monthPaidBills,
+          unpaidBillsCount: monthUnpaidBills,
+          totalStudents: allStudents.length,
+          documentsCount: filteredDocsByMonth.length,
+          billsTotalAmount: monthBillsTotal,
+        },
+        notes: reportNotes.trim() || 'Laporan bulanan tata usaha telah diverifikasi dan siap ditinjau pimpinan.',
+      });
+      setReportSuccessMsg(`Laporan rekapitulasi ${monthLabel} berhasil dikirimkan ke Pemimpin Perguruan (Bpk. Titus Wahyu Diatmiko) & Kepala Sekolah (Bpk. ST Bambang Sapto Nugroho S.Pd)!`);
+      setReportNotes('');
+      const updatedReports = await api.getTuMonthlyReports();
+      setMonthlyReports(updatedReports);
+      setTimeout(() => setReportSuccessMsg(null), 6000);
+    } catch (err: any) {
+      alert(err.message || 'Gagal mengirimkan laporan bulanan.');
+    } finally {
+      setIsSendingReport(false);
+    }
+  };
+
+  // Unduh Backup Excel (.xlsx) Multi-Sheet
+  const handleExportBackupExcel = () => {
+    try {
+      const monthLabel = formatMonthName(selectedMonth);
+      const wb = XLSX.utils.book_new();
+
+      // Sheet 1: Ringkasan Eksekutif
+      const summaryRows = [
+        { 'Parameter': 'Laporan', 'Nilai': 'REKAPITULASI & BACKUP BULANAN TATA USAHA' },
+        { 'Parameter': 'Lembaga', 'Nilai': 'Perguruan Tamansiswa Batam (TAMVESTA)' },
+        { 'Parameter': 'Periode Bulan', 'Nilai': monthLabel },
+        { 'Parameter': 'Kode Periode', 'Nilai': selectedMonth },
+        { 'Parameter': 'Waktu Export', 'Nilai': new Date().toLocaleString('id-ID') },
+        { 'Parameter': 'Petugas Tata Usaha', 'Nilai': user?.name || 'Tata Usaha' },
+        { 'Parameter': 'Total Pemasukan Kas', 'Nilai': `Rp ${monthIncome.toLocaleString('id-ID')}` },
+        { 'Parameter': 'Total Pengeluaran Kas', 'Nilai': `Rp ${monthExpense.toLocaleString('id-ID')}` },
+        { 'Parameter': 'Surplus / Saldo Bersih', 'Nilai': `Rp ${monthNet.toLocaleString('id-ID')}` },
+        { 'Parameter': 'Total Tagihan SPP Diterbitkan', 'Nilai': `Rp ${monthBillsTotal.toLocaleString('id-ID')}` },
+        { 'Parameter': 'Total Tagihan SPP Terbayar', 'Nilai': `Rp ${monthPaidAmount.toLocaleString('id-ID')}` },
+        { 'Parameter': 'Jumlah Siswa Tagihan Lunas', 'Nilai': `${monthPaidBills} siswa` },
+        { 'Parameter': 'Jumlah Siswa Tagihan Belum Lunas', 'Nilai': `${monthUnpaidBills} siswa` },
+        { 'Parameter': 'Jumlah Arsip Surat / Dokumen', 'Nilai': `${filteredDocsByMonth.length} berkas` },
+        { 'Parameter': 'Pemimpin Perguruan Tamansiswa Batam', 'Nilai': 'Titus Wahyu Diatmiko (+62 813-7289-4523)' },
+        { 'Parameter': 'Kepala Sekolah', 'Nilai': 'ST Bambang Sapto Nugroho S.Pd' },
+        { 'Parameter': 'Catatan Pengantar', 'Nilai': reportNotes || 'Data telah divalidasi dan tersimpan di database TAMVESTA.' },
+      ];
+      const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Ringkasan Eksekutif');
+
+      // Sheet 2: Transaksi Kas
+      const targetTrx = filteredTrxByMonth.length > 0 ? filteredTrxByMonth : transactions;
+      const trxRows = targetTrx.map((t, idx) => ({
+        'No': idx + 1,
+        'Tanggal': t.date || (t.createdAt ? t.createdAt.split('T')[0] : '-'),
+        'Jenis Kas': t.type.toUpperCase(),
+        'Kategori': t.category,
+        'Keterangan': t.description,
+        'Nominal (Rp)': t.amount,
+        'Metode Pembayaran': t.paymentMethod,
+        'Nama Siswa': t.studentName || '-',
+        'Kelas': t.studentKelas || '-',
+      }));
+      const wsTrx = XLSX.utils.json_to_sheet(trxRows);
+      XLSX.utils.book_append_sheet(wb, wsTrx, 'Transaksi Kas');
+
+      // Sheet 3: Tagihan SPP
+      const targetBills = filteredBillsByMonth.length > 0 ? filteredBillsByMonth : bills;
+      const billsRows = targetBills.map((b, idx) => ({
+        'No': idx + 1,
+        'Nama Siswa': b.studentName,
+        'Kelas': b.studentKelas,
+        'Judul Tagihan': b.title,
+        'Kategori': b.category,
+        'Nominal (Rp)': b.amount,
+        'Jatuh Tempo': b.dueDate,
+        'Status': b.status === 'lunas' ? 'LUNAS' : b.status === 'menunggu_verifikasi' ? 'MENUNGGU VERIFIKASI' : 'BELUM LUNAS',
+        'Tanggal Pelunasan': b.paidAt ? b.paidAt.split('T')[0] : '-',
+      }));
+      const wsBills = XLSX.utils.json_to_sheet(billsRows);
+      XLSX.utils.book_append_sheet(wb, wsBills, 'Tagihan SPP');
+
+      // Sheet 4: Dokumen & Administrasi
+      const targetDocs = filteredDocsByMonth.length > 0 ? filteredDocsByMonth : documents;
+      const docRows = targetDocs.map((d, idx) => ({
+        'No': idx + 1,
+        'Nomor Surat': d.docNumber || '-',
+        'Perihal / Judul': d.title,
+        'Kategori': d.category,
+        'Penerima / Pengirim': d.recipientOrSender,
+        'Tanggal': d.date || (d.createdAt ? d.createdAt.split('T')[0] : '-'),
+        'Status Arsip': d.status,
+      }));
+      const wsDocs = XLSX.utils.json_to_sheet(docRows);
+      XLSX.utils.book_append_sheet(wb, wsDocs, 'Arsip Surat');
+
+      const filename = `Backup_Tata_Usaha_Tamansiswa_${selectedMonth}.xlsx`;
+      XLSX.writeFile(wb, filename);
+    } catch (err: any) {
+      alert('Gagal mengekspor file Excel: ' + err.message);
+    }
+  };
+
+  // Unduh Laporan Resmi Word (.doc)
+  const handleExportBackupWord = () => {
+    try {
+      const monthLabel = formatMonthName(selectedMonth);
+      const printDate = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+
+      const targetTrx = filteredTrxByMonth.length > 0 ? filteredTrxByMonth : transactions;
+      const trxRowsHtml = targetTrx
+        .map(
+          (t, idx) => `
+          <tr>
+            <td style="text-align:center;">${idx + 1}</td>
+            <td>${t.date || (t.createdAt ? t.createdAt.split('T')[0] : '-')}</td>
+            <td style="font-weight:bold; color: ${t.type === 'pemasukan' ? '#047857' : '#b91c1c'};">${t.type.toUpperCase()}</td>
+            <td>${t.category}</td>
+            <td>${t.description}</td>
+            <td style="text-align:right; font-weight:bold;">Rp ${t.amount.toLocaleString('id-ID')}</td>
+            <td>${t.paymentMethod}</td>
+          </tr>
+        `
+        )
+        .join('');
+
+      const targetBills = filteredBillsByMonth.length > 0 ? filteredBillsByMonth : bills;
+      const billRowsHtml = targetBills
+        .map(
+          (b, idx) => `
+          <tr>
+            <td style="text-align:center;">${idx + 1}</td>
+            <td><strong>${b.studentName}</strong></td>
+            <td>${b.studentKelas || '-'}</td>
+            <td>${b.title}</td>
+            <td style="text-align:right;">Rp ${b.amount.toLocaleString('id-ID')}</td>
+            <td>${b.dueDate}</td>
+            <td style="font-weight:bold; color: ${b.status === 'lunas' ? '#047857' : '#b91c1c'};">${b.status === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}</td>
+          </tr>
+        `
+        )
+        .join('');
+
+      const wordHtml = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <title>Laporan Rekapitulasi Tata Usaha - ${monthLabel}</title>
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 20mm 15mm 20mm 15mm;
+            }
+            body {
+              font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+              color: #1e293b;
+              font-size: 10.5pt;
+              line-height: 1.45;
+            }
+            .kop {
+              border-bottom: 3px double #047857;
+              padding-bottom: 12px;
+              margin-bottom: 20px;
+              text-align: center;
+            }
+            .kop h2 {
+              margin: 0;
+              font-size: 17pt;
+              font-weight: bold;
+              color: #047857;
+              letter-spacing: 0.5px;
+            }
+            .kop h3 {
+              margin: 3px 0;
+              font-size: 13pt;
+              font-weight: 700;
+              color: #334155;
+            }
+            .kop p {
+              margin: 2px 0 0 0;
+              font-size: 8.5pt;
+              color: #64748b;
+            }
+            .title-box {
+              text-align: center;
+              margin-bottom: 22px;
+            }
+            .title-box h1 {
+              font-size: 13.5pt;
+              font-weight: bold;
+              text-transform: uppercase;
+              color: #0f172a;
+              margin: 0 0 4px 0;
+              text-decoration: underline;
+            }
+            .title-box p {
+              font-size: 10.5pt;
+              font-weight: 600;
+              color: #475569;
+              margin: 0;
+            }
+            .stat-grid {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            .stat-grid td {
+              border: 1px solid #cbd5e1;
+              padding: 8px 10px;
+              background-color: #f8fafc;
+            }
+            .stat-grid td strong {
+              color: #0f172a;
+            }
+            .section-title {
+              font-size: 11pt;
+              font-weight: bold;
+              color: #047857;
+              margin: 18px 0 8px 0;
+              border-bottom: 1.5px solid #047857;
+              padding-bottom: 3px;
+            }
+            table.data-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 15px;
+              font-size: 9.5pt;
+            }
+            table.data-table th {
+              background-color: #047857;
+              color: #ffffff;
+              padding: 6px 8px;
+              border: 1px solid #047857;
+              font-weight: bold;
+              text-align: left;
+            }
+            table.data-table td {
+              padding: 6px 8px;
+              border: 1px solid #e2e8f0;
+            }
+            table.data-table tr:nth-child(even) td {
+              background-color: #f8fafc;
+            }
+            .notes-box {
+              background-color: #ecfdf5;
+              border: 1px solid #a7f3d0;
+              border-left: 4px solid #059669;
+              padding: 10px 14px;
+              margin: 15px 0 25px 0;
+              font-size: 9.5pt;
+            }
+            .sign-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 35px;
+              page-break-inside: avoid;
+            }
+            .sign-table td {
+              border: none;
+              text-align: center;
+              vertical-align: top;
+              padding: 0 10px;
+              width: 33.33%;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="kop">
+            <h2>YAYASAN PERGURUAN TAMANSISWA BATAM</h2>
+            <h3>BAGIAN ADMINISTRASI & TATA USAHA (TAMVESTA)</h3>
+            <p>Jalan Tamansiswa, Batam, Kepulauan Riau | Telepon: (0778) 462153 | Email: tu@tamansiswabatam.sch.id</p>
+          </div>
+
+          <div class="title-box">
+            <h1>LAPORAN REKAPITULASI & DOKUMEN BACKUP BULANAN</h1>
+            <p>PERIODE: ${monthLabel.toUpperCase()}</p>
+          </div>
+
+          <table class="stat-grid">
+            <tr>
+              <td><strong>Periode Pelaporan:</strong> ${monthLabel}</td>
+              <td><strong>Tanggal Cetak:</strong> ${printDate}</td>
+            </tr>
+            <tr>
+              <td><strong>Total Pemasukan Kas:</strong> Rp ${monthIncome.toLocaleString('id-ID')}</td>
+              <td><strong>Total Pengeluaran Kas:</strong> Rp ${monthExpense.toLocaleString('id-ID')}</td>
+            </tr>
+            <tr>
+              <td><strong>Saldo Bersih / Surplus:</strong> Rp ${monthNet.toLocaleString('id-ID')}</td>
+              <td><strong>Tagihan SPP Diterbitkan:</strong> Rp ${monthBillsTotal.toLocaleString('id-ID')}</td>
+            </tr>
+            <tr>
+              <td><strong>Siswa Tagihan Lunas:</strong> ${monthPaidBills} siswa</td>
+              <td><strong>Siswa Menunggak / Belum Lunas:</strong> ${monthUnpaidBills} siswa</td>
+            </tr>
+            <tr>
+              <td><strong>Arsip Dokumen / Surat:</strong> ${filteredDocsByMonth.length} berkas</td>
+              <td><strong>Disusun Oleh:</strong> ${user?.name || 'Kepala Tata Usaha'}</td>
+            </tr>
+          </table>
+
+          <div class="notes-box">
+            <strong>CATATAN PENGANTAR RESMI TATA USAHA:</strong><br/>
+            ${reportNotes || 'Laporan rekapitulasi operasional dan keuangan Tata Usaha bulan ini telah diverifikasi sesuai pembukuan kas dan tagihan sistem TAMVESTA.'}
+          </div>
+
+          <div class="section-title">I. REKAPITULASI TRANSAKSI KAS BULAN ${monthLabel.toUpperCase()}</div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 30px; text-align: center;">No</th>
+                <th style="width: 80px;">Tanggal</th>
+                <th style="width: 70px;">Jenis</th>
+                <th style="width: 100px;">Kategori</th>
+                <th>Keterangan</th>
+                <th style="width: 110px; text-align: right;">Nominal</th>
+                <th style="width: 90px;">Metode</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${trxRowsHtml || '<tr><td colspan="7" style="text-align:center;">Tidak ada transaksi kas pada periode bulan ini.</td></tr>'}
+            </tbody>
+          </table>
+
+          <div class="section-title">II. STATUS TAGIHAN & SPP SISWA BULAN ${monthLabel.toUpperCase()}</div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 30px; text-align: center;">No</th>
+                <th>Nama Siswa</th>
+                <th style="width: 80px;">Kelas</th>
+                <th>Judul Tagihan</th>
+                <th style="width: 100px; text-align: right;">Nominal</th>
+                <th style="width: 85px;">Jatuh Tempo</th>
+                <th style="width: 95px;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${billRowsHtml || '<tr><td colspan="7" style="text-align:center;">Tidak ada tagihan yang diterbitkan pada periode bulan ini.</td></tr>'}
+            </tbody>
+          </table>
+
+          <table class="sign-table">
+            <tr>
+              <td>
+                <p style="font-size: 9.5pt; margin: 0;">Mengetahui,</p>
+                <p style="font-size: 10pt; font-weight: bold; margin: 2px 0 0 0;">Kepala Sekolah</p>
+                <div style="height: 60px;"></div>
+                <p style="font-size: 10pt; font-weight: bold; text-decoration: underline; margin: 0;">( ST Bambang Sapto Nugroho S.Pd )</p>
+                <p style="font-size: 8.5pt; color: #64748b; margin: 2px 0 0 0;">Kepala Sekolah SMK Tamansiswa</p>
+              </td>
+              <td>
+                <p style="font-size: 9.5pt; margin: 0;">Batam, ${printDate}</p>
+                <p style="font-size: 10pt; font-weight: bold; margin: 2px 0 0 0;">Kepala Tata Usaha</p>
+                <div style="height: 60px;"></div>
+                <p style="font-size: 10pt; font-weight: bold; text-decoration: underline; margin: 0;">( ${user?.name || 'Haliza'} )</p>
+                <p style="font-size: 8.5pt; color: #64748b; margin: 2px 0 0 0;">Petugas Administrasi & Keuangan</p>
+              </td>
+              <td>
+                <p style="font-size: 9.5pt; margin: 0;">Menyetujui & Mengesahkan,</p>
+                <p style="font-size: 10pt; font-weight: bold; margin: 2px 0 0 0;">Pemimpin Perguruan Tamansiswa</p>
+                <div style="height: 60px;"></div>
+                <p style="font-size: 10pt; font-weight: bold; text-decoration: underline; margin: 0;">( Titus Wahyu Diatmiko )</p>
+                <p style="font-size: 8.5pt; color: #64748b; margin: 2px 0 0 0;">Pemimpin Perguruan Tamansiswa Batam</p>
+                <p style="font-size: 8pt; color: #64748b; margin: 2px 0 0 0;">+62 813-7289-4523</p>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\ufeff' + wordHtml], {
+        type: 'application/msword;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Laporan_Bulanan_TU_Tamansiswa_${selectedMonth}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert('Gagal mengekspor file Word: ' + err.message);
+    }
+  };
+
+  // Kirim WhatsApp langsung ke Pemimpin Tamansiswa: Titus Wahyu Diatmiko (+62 813-7289-4523)
+  const handleShareWhatsAppLeader = () => {
+    const monthLabel = formatMonthName(selectedMonth);
+    const msg = `*LAPORAN REKAPITULASI TATA USAHA TAMANSISWA BATAM*
+Kepada Yth.
+*Bpk. Titus Wahyu Diatmiko*
+Pemimpin Perguruan Tamansiswa Batam
+HP: +62 813-7289-4523
+
+Berikut ringkasan rekapitulasi keuangan & administrasi:
+📅 Periode: ${monthLabel}
+👤 Disusun Oleh: ${user?.name || 'Tata Usaha Haliza'}
+
+*RINGKASAN EKSEKUTIF:*
+💰 Total Pemasukan: Rp ${monthIncome.toLocaleString('id-ID')}
+💸 Total Pengeluaran: Rp ${monthExpense.toLocaleString('id-ID')}
+📈 Saldo Bersih: Rp ${monthNet.toLocaleString('id-ID')}
+💳 Tagihan SPP Lunas: ${monthPaidBills} siswa
+⚠️ Tagihan SPP Belum Lunas: ${monthUnpaidBills} siswa
+📁 Berkas / Surat Terarsip: ${filteredDocsByMonth.length} berkas
+
+*Catatan Tata Usaha:*
+${reportNotes || 'Laporan telah diunggah dan tersinkronisasi di sistem TAMVESTA. Dokumen lengkap dapat ditinjau melalui dashboard kepemimpinan.'}
+
+Mengetahui:
+*Pemimpin Perguruan Tamansiswa Batam (Titus Wahyu Diatmiko)*
+*Kepala Sekolah (ST Bambang Sapto Nugroho S.Pd)*
+`;
+    const targetPhone = '6281372894523';
+    window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  // Kirim WhatsApp ke Kepala Sekolah (ST Bambang Sapto Nugroho S.Pd)
+  const handleShareWhatsAppPrincipal = () => {
+    const monthLabel = formatMonthName(selectedMonth);
+    const msg = `*LAPORAN BULANAN TATA USAHA - KEPALA SEKOLAH*
+Kepada Yth.
+*Bpk. ST Bambang Sapto Nugroho S.Pd*
+Kepala Sekolah SMK Tamansiswa Batam
+
+Laporan rekapitulasi operasional TU:
+📅 Periode: ${monthLabel}
+👤 Pengirim: ${user?.name || 'Tata Usaha Haliza'}
+
+*RINGKASAN:*
+- Total Pemasukan: Rp ${monthIncome.toLocaleString('id-ID')}
+- Total Pengeluaran: Rp ${monthExpense.toLocaleString('id-ID')}
+- Saldo Kas: Rp ${monthNet.toLocaleString('id-ID')}
+- Tagihan Lunas: ${monthPaidBills} siswa
+- Tagihan Belum Lunas: ${monthUnpaidBills} siswa
+
+*Catatan:*
+${reportNotes || 'Data telah tervalidasi di aplikasi TAMVESTA.'}
+
+Tembusan:
+*Pemimpin Perguruan Tamansiswa Batam (Titus Wahyu Diatmiko • +62 813-7289-4523)*
+`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
   const currentChatMessages = chatMessages.filter((m) => m.studentId === selectedChatStudentId);
 
   return (
@@ -1056,6 +1566,7 @@ export const TuDashboard: React.FC = () => {
                       <div className="min-w-0">
                         <p className="font-bold text-slate-800 truncate">Titus Wahyu Diatmiko</p>
                         <p className="text-[10px] text-purple-700 font-semibold truncate">Pemimpin Perguruan Tamansiswa</p>
+                        <p className="text-[10px] text-slate-500 font-mono truncate">+62 813-7289-4523</p>
                       </div>
                     </div>
 
@@ -1100,7 +1611,7 @@ export const TuDashboard: React.FC = () => {
                     title="Kirim Ringkasan ke WhatsApp Pemimpin Tamansiswa (Bpk. Titus Wahyu Diatmiko)"
                   >
                     <Share2 className="w-4 h-4" />
-                    <span>WA Pemimpin</span>
+                    <span>WA Pemimpin (+62 813-7289-4523)</span>
                   </button>
 
                   <button
