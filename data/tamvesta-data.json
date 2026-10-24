@@ -135,23 +135,6 @@
       "password": "Siswa8B001"
     },
     {
-      "id": "user_siswa_siswa_smp9a_001",
-      "username": "siswa.smp9a.001",
-      "name": "Kartika Dewi",
-      "role": "siswa",
-      "kelas": "IX-A SMP",
-      "gender": "Perempuan",
-      "initialPassword": "Siswa9A001",
-      "passwordHash": "d77440efc4ba6c7b8dba4fbec95716552ed44e50402b5e3ea4339c56942ed5447919a8c31d30b09c2d44468091941b7ca627b7c4f8db2cfd4524722aaef93a5d",
-      "salt": "62a88e720a066d36dfa513a060a33e5a",
-      "mustChangePassword": true,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_001:86e5c0c96dcb84e0",
-      "createdAt": "2026-10-24T08:22:46.527Z",
-      "updatedAt": "2026-10-24T16:59:55.632Z",
-      "password": "Siswa9A001"
-    },
-    {
       "id": "user_siswa_siswa_smp9a_002",
       "username": "siswa.smp9a.002",
       "name": "Lukman Hakim",
@@ -815,6 +798,8 @@
     "user_siswa_siswa_smp8a_001",
     "siswa.smp8a.001",
     "user_siswa_siswa_smp8b_002",
-    "siswa.smp8b.002"
+    "siswa.smp8b.002",
+    "user_siswa_siswa_smp9a_001",
+    "siswa.smp9a.001"
   ]
 }
