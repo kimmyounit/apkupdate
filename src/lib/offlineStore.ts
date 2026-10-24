@@ -388,9 +388,19 @@ export const offlineStore = {
   // Posts (Feed Siswa)
   getPosts(): StudentPost[] {
     const db = loadDB();
-    return (db.posts || []).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const users = db.users || [];
+    return (db.posts || [])
+      .map((p) => {
+        const author = users.find((u) => u.id === p.authorId);
+        return {
+          ...p,
+          authorIsVerified: author ? !!author.isVerified : !!p.authorIsVerified,
+          authorIsAlumni: author ? !!author.isAlumni : !!(p as any).authorIsAlumni,
+        };
+      })
+      .sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
   },
 
   createPost(data: { caption: string; mediaUrl?: string; mediaType?: 'photo' | 'video' }) {
@@ -405,6 +415,8 @@ export const offlineStore = {
       authorUsername: user.username,
       authorAvatar: user.avatarUrl,
       authorKelas: user.kelas || '',
+      authorIsVerified: !!user.isVerified,
+      authorIsAlumni: !!user.isAlumni,
       caption: data.caption,
       mediaUrl: data.mediaUrl,
       mediaType: data.mediaType ?? 'none',

@@ -23,6 +23,8 @@ import {
   BookOpen,
   Library,
   Camera,
+  CheckCircle2,
+  GraduationCap,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -526,18 +528,29 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                       />
                     </button>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <button
                           type="button"
                           onClick={() => setSelectedProfileUsername(post.authorUsername)}
-                          className="font-bold text-xs sm:text-sm text-slate-900 hover:text-emerald-700 transition"
+                          className="font-bold text-xs sm:text-sm text-slate-900 hover:text-emerald-700 transition flex items-center gap-1"
                         >
-                          {post.authorName}
+                          <span>{post.authorName}</span>
+                          {post.authorIsVerified && (
+                            <span className="inline-flex items-center text-blue-500" title="Siswa Terverifikasi">
+                              <CheckCircle2 className="w-3.5 h-3.5 fill-blue-500 text-white shrink-0" />
+                            </span>
+                          )}
                         </button>
-                        {post.authorKelas && (
-                          <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600 font-semibold">
-                            {post.authorKelas}
+                        {(post as any).authorIsAlumni ? (
+                          <span className="px-1.5 py-0.2 rounded text-[10px] bg-purple-50 text-purple-700 font-bold border border-purple-200">
+                            Alumni
                           </span>
+                        ) : (
+                          post.authorKelas && (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600 font-semibold">
+                              {post.authorKelas}
+                            </span>
+                          )
                         )}
                       </div>
                       <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
@@ -704,9 +717,14 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => setSelectedProfileUsername(comment.authorUsername)}
-                                  className="font-bold text-[11px] text-slate-900 hover:text-emerald-700"
+                                  className="font-bold text-[11px] text-slate-900 hover:text-emerald-700 flex items-center gap-1"
                                 >
-                                  {comment.authorName}
+                                  <span>{comment.authorName}</span>
+                                  {(comment as any).authorIsVerified && (
+                                    <span className="inline-flex items-center text-blue-500" title="Siswa Terverifikasi">
+                                      <CheckCircle2 className="w-3 h-3 fill-blue-500 text-white shrink-0" />
+                                    </span>
+                                  )}
                                 </button>
                                 <span className="text-[10px] text-slate-400">
                                   {formatRelativeTime(comment.createdAt)}

@@ -240,7 +240,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                   </div>
                   <div>
                     <h4 className="font-extrabold text-xs text-slate-800 tracking-wide uppercase">
-                      Kartu Absensi Siswa
+                      {currentUser.isAlumni ? 'Kartu Alumni Siswa' : 'Kartu Absensi Siswa'}
                     </h4>
                     <p className="text-[10px] text-slate-500 font-medium">TAMVESTA • Tamansiswa Batam</p>
                   </div>
@@ -266,16 +266,29 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                   </span>
                 </div>
                 <div className="flex-1 space-y-1 w-full text-center sm:text-left">
-                  <h3 className="font-black text-slate-900 text-base leading-tight">
-                    {currentUser.name}
+                  <h3 className="font-black text-slate-900 text-base leading-tight flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
+                    <span>{currentUser.name}</span>
+                    {currentUser.isVerified && (
+                      <span className="inline-flex items-center text-blue-500" title="Siswa Sudah Terverifikasi Resmi">
+                        <CheckCircle2 className="w-4 h-4 fill-blue-500 text-white shrink-0" />
+                      </span>
+                    )}
                   </h3>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-600">
                     <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-[11px] font-bold text-slate-700">
                       @{currentUser.username}
                     </span>
-                    {currentUser.kelas && (
-                      <span className="bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded text-[11px]">
-                        {currentUser.kelas}
+                    <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${
+                      currentUser.isAlumni
+                        ? 'bg-purple-50 text-purple-700 border-purple-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}>
+                      {currentUser.isAlumni ? 'Alumni' : (currentUser.kelas || 'Siswa Aktif')}
+                    </span>
+                    {currentUser.isVerified && (
+                      <span className="bg-blue-50 text-blue-700 border border-blue-200 font-bold px-2 py-0.5 rounded text-[10px] inline-flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 fill-blue-500 text-white" />
+                        <span>Siswa Terverifikasi</span>
                       </span>
                     )}
                   </div>

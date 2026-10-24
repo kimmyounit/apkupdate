@@ -11,6 +11,7 @@ import {
   Sparkles,
   School,
   Lock,
+  CheckCircle2,
 } from 'lucide-react';
 import { api } from '../lib/api.ts';
 import type { StudentPost, User } from '../types/index.ts';
@@ -126,15 +127,30 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
                 <div className="flex-1 text-center sm:text-left space-y-2">
                   <div>
-                    <h2 className="text-lg font-black text-slate-900 leading-snug">
-                      {profileUser.name}
+                    <h2 className="text-lg font-black text-slate-900 leading-snug flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
+                      <span>{profileUser.name}</span>
+                      {profileUser.isVerified && (
+                        <span className="inline-flex items-center text-blue-500" title="Siswa Sudah Terverifikasi Resmi">
+                          <CheckCircle2 className="w-4 h-4 fill-blue-500 text-white shrink-0" />
+                        </span>
+                      )}
                     </h2>
-                    <p className="text-xs text-emerald-700 font-semibold flex items-center justify-center sm:justify-start gap-1.5 mt-0.5">
+                    <p className="text-xs text-emerald-700 font-semibold flex items-center justify-center sm:justify-start gap-1.5 mt-0.5 flex-wrap">
                       <span>@{profileUser.username}</span>
                       <span>•</span>
-                      <span className="px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px]">
-                        {profileUser.kelas || (profileUser.role === 'guru' ? 'Guru' : 'Tamansiswa')}
+                      <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-bold border ${
+                        profileUser.isAlumni
+                          ? 'bg-purple-50 text-purple-700 border-purple-200'
+                          : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      }`}>
+                        {profileUser.isAlumni ? 'Alumni' : (profileUser.kelas || (profileUser.role === 'guru' ? 'Guru' : 'Tamansiswa'))}
                       </span>
+                      {profileUser.isVerified && (
+                        <span className="px-1.5 py-0.2 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 fill-blue-500 text-white" />
+                          <span>Terverifikasi</span>
+                        </span>
+                      )}
                     </p>
                   </div>
 

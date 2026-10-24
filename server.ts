@@ -811,7 +811,15 @@ app.get('/api/attendance/export/:eventId', authMiddleware, requireRole(['admin',
 // GET /api/posts - Ambil daftar postingan siswa
 app.get('/api/posts', authMiddleware, (req, res) => {
   const posts = db.getPosts();
-  return res.json(posts);
+  const enriched = posts.map(p => {
+    const author = db.findUserById(p.authorId);
+    return {
+      ...p,
+      authorIsVerified: author ? !!author.isVerified : !!(p as any).authorIsVerified,
+      authorIsAlumni: author ? !!author.isAlumni : !!(p as any).authorIsAlumni,
+    };
+  });
+  return res.json(enriched);
 });
 
 // POST /api/posts - Terbitkan postingan baru
@@ -836,6 +844,8 @@ app.post('/api/posts', authMiddleware, (req: AuthenticatedRequest, res) => {
     authorUsername: req.user!.username,
     authorKelas: req.user!.kelas || '',
     authorAvatar: req.user!.avatarUrl || '',
+    authorIsVerified: !!req.user!.isVerified,
+    authorIsAlumni: !!req.user!.isAlumni,
     caption: caption || '',
     mediaType: validMediaType,
     mediaUrl: mediaUrl || undefined,
