@@ -254,23 +254,6 @@
       "password": "Siswa9B001"
     },
     {
-      "id": "user_siswa_siswa_sd1a_002",
-      "username": "siswa.sd1a.002",
-      "name": "Qori Ananda",
-      "role": "siswa",
-      "kelas": "I-A SD",
-      "gender": "Perempuan",
-      "initialPassword": "Siswa1A002",
-      "passwordHash": "96a1ac028399ee6ebfed7f2a47c19fa1417b81f9a565e89c57fc4074607a25163a79f65103e4097e61cf5cf8fe0a61135f1a4028aa885c1e360441cab31bffe1",
-      "salt": "9ad13ec70a87352c77c0c6b682c587b7",
-      "mustChangePassword": true,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd1a_002:5892a39733f6eb6f",
-      "createdAt": "2026-10-24T08:22:46.630Z",
-      "updatedAt": "2026-10-24T16:59:55.632Z",
-      "password": "Siswa1A002"
-    },
-    {
       "id": "user_siswa_siswa_sd2a_001",
       "username": "siswa.sd2a.001",
       "name": "Rizky Maulana",
@@ -776,6 +759,8 @@
     "user_siswa_siswa_smp9b_002",
     "siswa.smp9b.002",
     "user_siswa_siswa_sd1a_001",
-    "siswa.sd1a.001"
+    "siswa.sd1a.001",
+    "user_siswa_siswa_sd1a_002",
+    "siswa.sd1a.002"
   ]
 }
