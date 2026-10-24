@@ -192,7 +192,7 @@ export const Login: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-2.5">
             <a
-              href="/TAMVESTA.apk"
+              href="https://github.com/kimmyounit/apkupdate/raw/main/TAMVESTA.apk"
               download="TAMVESTA.apk"
               className="flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-[0.98]"
             >

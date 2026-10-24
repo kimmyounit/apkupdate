@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import {
   DollarSign,
   CreditCard,
@@ -24,6 +25,11 @@ import {
   Check,
   X,
   FileCheck,
+  FolderDown,
+  Archive,
+  Printer,
+  Share2,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { api } from '../../lib/api.ts';
 import type {
@@ -32,10 +38,11 @@ import type {
   TuDocument,
   TuChatMessage,
   User as UserType,
+  TuMonthlyReport,
 } from '../../types/index.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
-type TuTab = 'bills' | 'finance' | 'documents' | 'chat';
+type TuTab = 'bills' | 'finance' | 'documents' | 'chat' | 'backup';
 
 export const TuDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -85,6 +92,13 @@ export const TuDashboard: React.FC = () => {
     notes: '',
   });
 
+  // --- 5. Backup & Leadership Dispatch State ---
+  const [monthlyReports, setMonthlyReports] = useState<TuMonthlyReport[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+  const [reportNotes, setReportNotes] = useState<string>('');
+  const [isSendingReport, setIsSendingReport] = useState<boolean>(false);
+  const [reportSuccessMsg, setReportSuccessMsg] = useState<string | null>(null);
+
   // --- 4. Chat State ---
   const [chatMessages, setChatMessages] = useState<TuChatMessage[]>([]);
   const [selectedChatStudentId, setSelectedChatStudentId] = useState<string>('user_siswa_bintang');
@@ -98,18 +112,20 @@ export const TuDashboard: React.FC = () => {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [bList, tList, dList, cList, sList] = await Promise.all([
+      const [bList, tList, dList, cList, sList, rList] = await Promise.all([
         api.getTuitionBills(),
         api.getTuitionTransactions(),
         api.getTuDocuments(),
         api.getTuChatMessages(),
         api.getStudents(),
+        api.getTuMonthlyReports(),
       ]);
       setBills(bList);
       setTransactions(tList);
       setDocuments(dList);
       setChatMessages(cList);
       setAllStudents(sList);
+      setMonthlyReports(rList || []);
     } catch (e) {
       console.error('Failed to load TU data:', e);
     } finally {
@@ -363,7 +379,37 @@ export const TuDashboard: React.FC = () => {
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
           )}
         </button>
+
+        <button
+          onClick={() => setActiveTab('backup')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+            activeTab === 'backup'
+              ? 'bg-emerald-700 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <FolderDown className="w-4 h-4" />
+          <span>Rekap & Kirim ke Pemimpin</span>
+          {monthlyReports.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black border border-emerald-300">
+              {monthlyReports.length}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Alert Notifikasi Pengiriman Laporan */}
+      {reportSuccessMsg && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-emerald-800 text-xs sm:text-sm font-bold shadow-xs animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{reportSuccessMsg}</span>
+          </div>
+          <button onClick={() => setReportSuccessMsg(null)} className="text-emerald-600 hover:text-emerald-900 font-bold px-2">
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* ============================================================= */}
       {/* 1. TAB TAGIHAN SPP */}
@@ -837,6 +883,375 @@ export const TuDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      
+      {/* ============================================================= */}
+      {/* 5. TAB REKAP & BACKUP BULANAN (KIRIM KE PEMIMPIN & KEPSEK) */}
+      {/* ============================================================= */}
+      {activeTab === 'backup' && (
+        <div className="space-y-6">
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-emerald-700/40">
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold">
+                  <Archive className="w-4 h-4 text-emerald-300" />
+                  <span>PUSAT REKAPITULASI & LAPORAN RESMI TATA USAHA</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Backup Bulanan & Pengiriman ke Pemimpin
+                </h2>
+                <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl leading-relaxed">
+                  Pilih <strong>bulan apa saja</strong> untuk menghitung otomatis seluruh laporan keuangan kas, tagihan SPP, dan arsip dokumen. Hasil rekap otomatis dapat dikirim langsung ke <strong>Pemimpin Perguruan Tamansiswa Batam (Bpk. Titus Wahyu Diatmiko)</strong> dan <strong>Kepala Sekolah (Bpk. ST Bambang Sapto Nugroho S.Pd)</strong> melalui sistem serta WhatsApp.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <button
+                  onClick={handleExportBackupExcel}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
+                  <span>Ekspor Excel (.xlsx)</span>
+                </button>
+                <button
+                  onClick={handleExportBackupWord}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md transition"
+                >
+                  <FileText className="w-4 h-4 text-blue-200" />
+                  <span>Ekspor Word (.doc)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Month Selector Bar */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span className="text-xs sm:text-sm font-bold text-slate-700">Pilih Periode Bulan:</span>
+              </div>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              />
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                Periode Aktif: {formatMonthName(selectedMonth)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 font-medium">Pintasan:</span>
+              <button
+                type="button"
+                onClick={() => setSelectedMonth(new Date().toISOString().slice(0, 7))}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 text-xs font-bold rounded-lg transition"
+              >
+                Bulan Ini
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const now = new Date();
+                  now.setMonth(now.getMonth() - 1);
+                  setSelectedMonth(now.toISOString().slice(0, 7));
+                }}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 text-xs font-bold rounded-lg transition"
+              >
+                Bulan Lalu
+              </button>
+            </div>
+          </div>
+
+          {/* 4 Metric Cards for Selected Month */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Pemasukan Kas</span>
+                <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+                  <ArrowDownLeft className="w-4 h-4" />
+                </span>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+                Rp {monthIncome.toLocaleString('id-ID')}
+              </div>
+              <div className="text-[11px] text-emerald-600 font-bold mt-1">
+                {filteredTrxByMonth.filter((t) => t.type === 'pemasukan').length} transaksi tercatat
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Pengeluaran Kas</span>
+                <span className="p-2 rounded-xl bg-rose-50 text-rose-600">
+                  <ArrowUpRight className="w-4 h-4" />
+                </span>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+                Rp {monthExpense.toLocaleString('id-ID')}
+              </div>
+              <div className="text-[11px] text-rose-600 font-bold mt-1">
+                {filteredTrxByMonth.filter((t) => t.type === 'pengeluaran').length} pengeluaran operasional
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Surplus / Saldo Bersih</span>
+                <span className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                  <DollarSign className="w-4 h-4" />
+                </span>
+              </div>
+              <div className={`text-xl sm:text-2xl font-black mt-2 ${monthNet >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                Rp {monthNet.toLocaleString('id-ID')}
+              </div>
+              <div className="text-[11px] text-slate-500 font-bold mt-1">
+                {monthNet >= 0 ? 'Surplus Keuangan Positif' : 'Defisit Pengeluaran'}
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tagihan & SPP Siswa</span>
+                <span className="p-2 rounded-xl bg-amber-50 text-amber-600">
+                  <Receipt className="w-4 h-4" />
+                </span>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+                {monthPaidBills} <span className="text-xs text-slate-500 font-medium">Lunas</span> / {monthUnpaidBills} <span className="text-xs text-rose-500 font-medium">Tertunggak</span>
+              </div>
+              <div className="text-[11px] text-slate-500 font-bold mt-1">
+                Total Tagihan: Rp {monthBillsTotal.toLocaleString('id-ID')}
+              </div>
+            </div>
+          </div>
+
+          {/* Dispatch Section & Export Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Form Pengiriman ke Pemimpin & Kepala Sekolah */}
+            <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+              <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Send className="w-5 h-5 text-emerald-600" />
+                  <h3 className="font-bold text-sm sm:text-base text-slate-800">
+                    Kirim Otomatis ke Pemimpin & Kepala Sekolah
+                  </h3>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Laporan Resmi TU
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                  <span className="text-xs font-bold text-slate-700 block">Daftar Penerima Resmi Laporan:</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
+                      <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-800 font-black flex items-center justify-center shrink-0">
+                        T
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-800 truncate">Titus Wahyu Diatmiko</p>
+                        <p className="text-[10px] text-purple-700 font-semibold truncate">Pemimpin Perguruan Tamansiswa</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
+                      <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 font-black flex items-center justify-center shrink-0">
+                        B
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-800 truncate">ST Bambang Sapto Nugroho S.Pd</p>
+                        <p className="text-[10px] text-emerald-700 font-semibold truncate">Kepala Sekolah SMK Tamansiswa</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                    Catatan Pengantar / Evaluasi Tata Usaha:
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Tuliskan catatan khusus rekapitulasi, evaluasi tunggakan SPP, kendala operasional, atau pesan resmi untuk Pemimpin dan Kepala Sekolah..."
+                    value={reportNotes}
+                    onChange={(e) => setReportNotes(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                  <button
+                    onClick={handleSendReportToLeadership}
+                    disabled={isSendingReport}
+                    className="flex-1 px-5 py-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-95 disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>{isSendingReport ? 'Mengirimkan...' : 'Kirim Laporan Resmi ke Pemimpin & Kepsek'}</span>
+                  </button>
+
+                  <button
+                    onClick={handleShareWhatsAppLeader}
+                    className="px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                    title="Kirim Ringkasan ke WhatsApp Pemimpin Tamansiswa (Bpk. Titus Wahyu Diatmiko)"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>WA Pemimpin</span>
+                  </button>
+
+                  <button
+                    onClick={handleShareWhatsAppPrincipal}
+                    className="px-4 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                    title="Kirim Ringkasan ke WhatsApp Kepala Sekolah (Bpk. ST Bambang Sapto Nugroho)"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>WA Kepsek</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Export Cards */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between">
+              <div>
+                <h3 className="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2 mb-2">
+                  <Download className="w-5 h-5 text-emerald-600" />
+                  <span>Format Unduhan Backup</span>
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                  Dokumen laporan lengkap mencakup kop surat resmi, lembar pengesahan, dan rincian pembukuan.
+                </p>
+
+                <div className="space-y-3">
+                  <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <FileSpreadsheet className="w-6 h-6 text-emerald-700 shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">File Backup Excel (.xlsx)</p>
+                        <p className="text-[10px] text-slate-500">Multi-Sheet: Ringkasan, Kas, SPP, Dokumen</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleExportBackupExcel}
+                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition"
+                    >
+                      Unduh
+                    </button>
+                  </div>
+
+                  <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <FileText className="w-6 h-6 text-blue-700 shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">Dokumen Resmi Word (.doc)</p>
+                        <p className="text-[10px] text-slate-500">KOP Resmi, Tabel Rincian & Lembar TTD</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleExportBackupWord}
+                      className="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl transition"
+                    >
+                      Unduh
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600 leading-relaxed">
+                <span className="font-bold text-slate-800 block mb-0.5">Pengesahan Otomatis:</span>
+                Tanda tangan otomatis disematkan atas nama <strong>Titus Wahyu Diatmiko</strong> (Pemimpin Perguruan Tamansiswa) dan <strong>ST Bambang Sapto Nugroho S.Pd</strong> (Kepala Sekolah).
+              </div>
+            </div>
+          </div>
+
+          {/* Riwayat Laporan Terkirim */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <Archive className="w-5 h-5 text-emerald-600" />
+                <h3 className="font-bold text-sm sm:text-base text-slate-800">
+                  Riwayat Pengiriman & Arsip Laporan Bulanan ({monthlyReports.length})
+                </h3>
+              </div>
+              <span className="text-xs text-slate-500">
+                Laporan yang tersimpan langsung dapat diakses oleh Pemimpin di Dashboard Kepemimpinan
+              </span>
+            </div>
+
+            {monthlyReports.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs">
+                Belum ada laporan bulanan yang dikirimkan. Pilih bulan dan klik "Kirim Laporan Resmi ke Pemimpin & Kepsek" di atas.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold">
+                    <tr>
+                      <th className="py-3 px-4">Periode Bulan</th>
+                      <th className="py-3 px-4">Waktu Terkirim</th>
+                      <th className="py-3 px-4">Pengirim (TU)</th>
+                      <th className="py-3 px-4">Penerima Resmi</th>
+                      <th className="py-3 px-4 text-right">Pemasukan</th>
+                      <th className="py-3 px-4 text-right">Pengeluaran</th>
+                      <th className="py-3 px-4">Catatan TU</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {monthlyReports.map((rep) => (
+                      <tr key={rep.id} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3 px-4 font-bold text-slate-800">
+                          {rep.monthName || rep.month}
+                        </td>
+                        <td className="py-3 px-4 text-slate-500">
+                          {new Date(rep.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="py-3 px-4 font-medium text-slate-700">
+                          {rep.sentBy}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-[11px] font-semibold text-purple-800 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200 block mb-1">
+                            Pemimpin: Titus Wahyu Diatmiko
+                          </span>
+                          <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 block">
+                            Kepsek: ST Bambang Sapto Nugroho
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right font-bold text-emerald-700">
+                          Rp {(rep.summary?.totalRevenue || 0).toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4 text-right font-bold text-rose-700">
+                          Rp {(rep.summary?.totalExpense || 0).toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 max-w-xs truncate" title={rep.notes}>
+                          {rep.notes || '-'}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>{rep.status || 'Terkirim & Terarsip'}</span>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
 
       {/* Modal Buat Tagihan Baru */}
       {showCreateBillModal && (

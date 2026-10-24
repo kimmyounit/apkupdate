@@ -1140,6 +1140,47 @@ export const offlineStore = {
     return msg;
   },
 
+  getTuMonthlyReports() {
+    const db = loadDB();
+    if (!Array.isArray((db as any).tuMonthlyReports)) {
+      (db as any).tuMonthlyReports = [];
+      saveDB(db);
+    }
+    return [...(db as any).tuMonthlyReports].sort(
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  },
+
+  createTuMonthlyReport(data: any) {
+    const db = loadDB();
+    if (!Array.isArray((db as any).tuMonthlyReports)) (db as any).tuMonthlyReports = [];
+    const newReport = {
+      id: `report_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      month: data.month,
+      monthName: data.monthName,
+      createdAt: new Date().toISOString(),
+      sentBy: data.sentBy || 'Tata Usaha Haliza',
+      sentByUsername: data.sentByUsername || 'haliza.tu',
+      recipients: [
+        'Titus Wahyu Diatmiko (Pemimpin Tamansiswa Batam)',
+        'ST Bambang Sapto Nugroho S.Pd (Kepala Sekolah)',
+      ],
+      summary: data.summary || {
+        totalRevenue: 0,
+        paidBillsCount: 0,
+        unpaidBillsCount: 0,
+        totalStudents: 0,
+        attendanceCount: 0,
+        documentsCount: 0,
+      },
+      notes: data.notes || '',
+      status: 'Terkirim & Terarsip',
+    };
+    (db as any).tuMonthlyReports.unshift(newReport);
+    saveDB(db);
+    return newReport;
+  },
+
   // -------------------------------------------------------------
   // MANAJEMEN GURU, CENTANG BIRU & SISWA/ALUMNI
   // -------------------------------------------------------------

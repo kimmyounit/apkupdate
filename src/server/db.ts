@@ -49,6 +49,7 @@ export interface DatabaseSchema {
   tuitionTransactions: TuitionTransaction[];
   tuDocuments: TuDocument[];
   tuChatMessages: TuChatMessage[];
+  tuMonthlyReports?: any[];
   deletedUserIds?: string[];
   deletedPostIds?: string[];
 }
@@ -107,7 +108,7 @@ export const OFFICIAL_STAFF_LIST: StaffPreset[] = [
   },
   {
     name: 'Titus Wahyu Diatmiko',
-    jabatan: 'Ketua Yayasan Perguruan Tamansiswa Batam',
+    jabatan: 'Pemimpin Perguruan Tamansiswa Batam',
     username: 'titus.yayasan',
     initialPassword: 'Tamvesta!T2602',
     role: 'kepala_sekolah',
@@ -348,6 +349,7 @@ export function getInitialData(): DatabaseSchema {
     tuitionTransactions: [],
     tuDocuments: [],
     tuChatMessages: [],
+    tuMonthlyReports: [],
     deletedUserIds: [],
     deletedPostIds: [],
   };
@@ -568,6 +570,7 @@ class DatabaseManager {
           tuitionTransactions: parsed.tuitionTransactions || [],
           tuDocuments: parsed.tuDocuments || [],
           tuChatMessages: parsed.tuChatMessages || [],
+          tuMonthlyReports: parsed.tuMonthlyReports || [],
         };
       }
     } catch (err) {
@@ -2215,5 +2218,42 @@ class DatabaseManager {
     return { isAlumni: student.isAlumni };
   }
 }
+
+
+  getTuMonthlyReports(): any[] {
+    if (!Array.isArray(this.data.tuMonthlyReports)) this.data.tuMonthlyReports = [];
+    return [...this.data.tuMonthlyReports].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  createTuMonthlyReport(data: any): any {
+    if (!Array.isArray(this.data.tuMonthlyReports)) this.data.tuMonthlyReports = [];
+    const newReport = {
+      id: 'report_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      month: data.month,
+      monthName: data.monthName,
+      createdAt: new Date().toISOString(),
+      sentBy: data.sentBy || 'Tata Usaha Haliza',
+      sentByUsername: data.sentByUsername || 'haliza.tu',
+      recipients: [
+        'Titus Wahyu Diatmiko (Pemimpin Tamansiswa Batam)',
+        'ST Bambang Sapto Nugroho S.Pd (Kepala Sekolah)',
+      ],
+      summary: data.summary || {
+        totalRevenue: 0,
+        paidBillsCount: 0,
+        unpaidBillsCount: 0,
+        totalStudents: 0,
+        attendanceCount: 0,
+        documentsCount: 0,
+      },
+      notes: data.notes || '',
+      status: 'Terkirim & Terarsip',
+    };
+    this.data.tuMonthlyReports.unshift(newReport);
+    this.save();
+    return newReport;
+  }
 
 export const db = new DatabaseManager();

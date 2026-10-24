@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import {
   GraduationCap,
   Users,
@@ -27,6 +28,9 @@ import {
   School,
   Activity,
   Layers,
+  Download,
+  FileSpreadsheet,
+  FolderDown,
 } from 'lucide-react';
 import { api } from '../../lib/api.ts';
 import type {
@@ -40,7 +44,8 @@ import { useAuth } from '../../context/AuthContext.tsx';
 
 export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpenScanner }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'articles' | 'finance'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'articles' | 'finance' | 'tu_reports'>('overview');
+  const [tuReports, setTuReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Data states
@@ -65,14 +70,16 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [staffList, studentList, attEvents, artList, trxList, subjList] = await Promise.all([
+      const [staffList, studentList, attEvents, artList, trxList, subjList, repList] = await Promise.all([
         api.getStaff(),
         api.getStudents(),
         api.getAttendanceEvents(),
         api.getArticles(),
         api.getTuitionTransactions(),
         api.getSubjects(),
+        api.getTuMonthlyReports(),
       ]);
+      setTuReports(repList || []);
 
       setTeachers(staffList);
       setStudents(studentList);
@@ -153,16 +160,33 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30 text-xs font-bold tracking-wide">
-              <School className="w-4 h-4 text-purple-300" />
-              <span>DASHBOARD KEPALA SEKOLAH — TAMVESTA</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Pusat Komando & Pengawasan Sekolah
-            </h1>
-            <p className="text-xs sm:text-sm text-purple-200/90 max-w-2xl leading-relaxed">
-              Selamat datang, <strong>{user?.name || 'Kepala Sekolah'}</strong>. Pantau performa akademik, kehadiran harian siswa, tata kelola akun guru, dan rekapitulasi operasional Perguruan Tamansiswa Batam.
-            </p>
+            {user?.username === 'titus.yayasan' || (user?.name || '').toLowerCase().includes('titus') || (user?.jabatan || '').toLowerCase().includes('pemimpin') ? (
+              <>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-bold tracking-wide">
+                  <ShieldCheck className="w-4 h-4 text-amber-300" />
+                  <span>PEMIMPIN PERGURUAN TAMANSISWA BATAM — TAMVESTA</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Pusat Kepemimpinan & Pengawasan Perguruan Tamansiswa Batam
+                </h1>
+                <p className="text-xs sm:text-sm text-purple-200/90 max-w-2xl leading-relaxed">
+                  Selamat datang, <strong>Bpk. Titus Wahyu Diatmiko</strong> (Pemimpin Perguruan Tamansiswa Batam). Tinjau laporan berkala Tata Usaha, pembukuan kas & tagihan SPP, dewan guru & staf, serta performa seluruh unit pendidikan Tamansiswa Batam.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30 text-xs font-bold tracking-wide">
+                  <School className="w-4 h-4 text-purple-300" />
+                  <span>DASHBOARD KEPALA SEKOLAH — TAMVESTA</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Pusat Komando & Pengawasan Sekolah
+                </h1>
+                <p className="text-xs sm:text-sm text-purple-200/90 max-w-2xl leading-relaxed">
+                  Selamat datang, <strong>{user?.name || 'Kepala Sekolah'}</strong> (ST Bambang Sapto Nugroho S.Pd). Pantau performa akademik, kehadiran harian siswa, tata kelola akun guru, dan rekapitulasi operasional Perguruan Tamansiswa Batam.
+                </p>
+              </>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -225,6 +249,21 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
         >
           <DollarSign className="w-4 h-4" />
           <span>Pengawasan Keuangan TU</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('tu_reports')}
+          className={`py-3 px-4 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'tu_reports'
+              ? 'border-purple-600 text-purple-700'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <FolderDown className="w-4 h-4" />
+          <span>Laporan Tata Usaha ({tuReports.length})</span>
+          {tuReports.length > 0 && (
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          )}
         </button>
       </div>
 
@@ -683,6 +722,127 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+            {/* ============================================================= */}
+      {/* 5. TAB LAPORAN TATA USAHA UNTUK PEMIMPIN & KEPALA SEKOLAH */}
+      {/* ============================================================= */}
+      {activeTab === 'tu_reports' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <FolderDown className="w-5 h-5 text-purple-600" />
+                <h2 className="text-lg sm:text-xl font-black text-slate-900">
+                  Laporan & Rekapitulasi Tata Usaha
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
+                Arsip laporan bulanan yang dikirimkan secara otomatis oleh bagian Tata Usaha (Haliza) untuk ditinjau oleh <strong>Pemimpin Perguruan Tamansiswa Batam (Bpk. Titus Wahyu Diatmiko)</strong> dan <strong>Kepala Sekolah</strong>.
+              </p>
+            </div>
+
+            <button
+              onClick={loadAllData}
+              className="px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-xl border border-purple-200 transition"
+            >
+              Segarkan Data Laporan
+            </button>
+          </div>
+
+          {tuReports.length === 0 ? (
+            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs space-y-3">
+              <FolderDown className="w-12 h-12 text-slate-300 mx-auto" />
+              <h3 className="font-bold text-slate-700 text-base">Belum Ada Laporan Masuk</h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                Tata Usaha belum mengirimkan laporan bulanan. Bagian Tata Usaha dapat memilih bulan apa saja di menu TU dan mengirimkannya langsung ke sini.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {tuReports.map((rep) => (
+                <div
+                  key={rep.id}
+                  className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs hover:border-purple-300 transition space-y-4"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-100 text-purple-800">
+                          {rep.monthName || rep.month}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{rep.status || 'Terkirim & Terarsip'}</span>
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Dikirim oleh: <strong>{rep.sentBy}</strong> (@{rep.sentByUsername || 'haliza.tu'}) • {new Date(rep.createdAt).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200">
+                        Ditujukan: Titus Wahyu Diatmiko & Kepala Sekolah
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Summary Metric Strip */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Total Pemasukan</span>
+                      <span className="text-base font-black text-emerald-700">
+                        Rp {(rep.summary?.totalRevenue || 0).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Total Pengeluaran</span>
+                      <span className="text-base font-black text-rose-700">
+                        Rp {(rep.summary?.totalExpense || 0).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Surplus / Saldo Kas</span>
+                      <span className="text-base font-black text-slate-900">
+                        Rp {(rep.summary?.saldoKas ?? (rep.summary?.totalRevenue || 0) - (rep.summary?.totalExpense || 0)).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Status Tagihan SPP</span>
+                      <span className="text-xs font-bold text-slate-800">
+                        {rep.summary?.paidBillsCount || 0} Lunas / {rep.summary?.unpaidBillsCount || 0} Belum Lunas
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Catatan TU */}
+                  {rep.notes && (
+                    <div className="p-3.5 bg-purple-50/60 rounded-2xl border border-purple-100 text-xs text-purple-900 leading-relaxed">
+                      <span className="font-bold block mb-0.5 text-purple-950">Catatan dari Tata Usaha:</span>
+                      {rep.notes}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="text-[11px] text-slate-400">
+                      ID Arsip: <span className="font-mono text-slate-600">{rep.id}</span>
+                    </div>
+                    <div className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl">
+                      ✓ Disahkan Pemimpin Perguruan & Kepala Sekolah
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -1235,6 +1235,21 @@ app.post('/api/tu/chat', authMiddleware, (req: AuthenticatedRequest, res) => {
   return res.status(201).json(msg);
 });
 
+// GET /api/tu/monthly-reports - Ambil laporan bulanan TU
+app.get('/api/tu/monthly-reports', authMiddleware, (req, res) => {
+  return res.json(db.getTuMonthlyReports());
+});
+
+// POST /api/tu/monthly-reports - Kirim laporan bulanan TU ke Pemimpin & Kepala Sekolah
+app.post('/api/tu/monthly-reports', authMiddleware, requireRole(['admin', 'tata_usaha']), (req: AuthenticatedRequest, res) => {
+  const report = db.createTuMonthlyReport({
+    ...req.body,
+    sentBy: req.user?.name,
+    sentByUsername: req.user?.username,
+  });
+  return res.json({ message: 'Laporan bulanan berhasil dikirimkan ke Pemimpin & Kepala Sekolah!', report });
+});
+
 // -------------------------------------------------------------
 // MANAJEMEN PENGGUNA (GURU, ALUMNI & CENTANG BIRU)
 // -------------------------------------------------------------

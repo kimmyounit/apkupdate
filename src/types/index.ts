@@ -365,6 +365,28 @@ export interface TuChatMessage {
   isReadByStudent?: boolean;
 }
 
+export interface TuMonthlyReport {
+  id: string;
+  month: string;
+  monthName: string;
+  createdAt: string;
+  sentBy: string;
+  sentByUsername: string;
+  recipients: string[];
+  summary: {
+    totalRevenue: number;
+    totalExpense?: number;
+    saldoKas?: number;
+    paidBillsCount: number;
+    unpaidBillsCount: number;
+    totalStudents?: number;
+    documentsCount?: number;
+    billsTotalAmount?: number;
+  };
+  notes?: string;
+  status: string;
+}
+
 // -------------------------------------------------------------
 // NOTIFIKASI SISTEM
 // -------------------------------------------------------------

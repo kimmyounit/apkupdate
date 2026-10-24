@@ -716,9 +716,9 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
             <td style="border: none; width: 40%; text-align: center; vertical-align: top;">
               <p style="font-size: 10pt; margin: 0;">Batam, ${currentDate}</p>
               <p style="font-size: 10pt; font-weight: bold; margin: 2px 0 0 0;">Mengetahui & Menyetujui,</p>
-              <p style="font-size: 10pt; color: #475569; margin: 0 0 65px 0;">Kepala Perguruan Tamansiswa Batam</p>
-              <p style="font-size: 10pt; font-weight: bold; text-decoration: underline; margin: 0;">( PIMPINAN TAMANSISWA BATAM )</p>
-              <p style="font-size: 9pt; color: #64748b; margin: 2px 0 0 0;">NIP / NBM Resmi Sekolah</p>
+              <p style="font-size: 10pt; color: #475569; margin: 0 0 65px 0;">Pemimpin Perguruan Tamansiswa Batam</p>
+              <p style="font-size: 10pt; font-weight: bold; text-decoration: underline; margin: 0;">( Titus Wahyu Diatmiko )</p>
+              <p style="font-size: 9pt; color: #64748b; margin: 2px 0 0 0;">Pemimpin Perguruan Tamansiswa Batam</p>
             </td>
           </tr>
         </table>

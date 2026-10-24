@@ -1350,4 +1350,26 @@ export const api = {
       }
     }
   },
+
+  getTuMonthlyReports: async () => {
+    try {
+      return await tryServerRequest<any[]>('/api/tu/monthly-reports');
+    } catch (_) {
+      return offlineStore.getTuMonthlyReports();
+    }
+  },
+
+  createTuMonthlyReport: async (data: any) => {
+    try {
+      const res = await tryServerRequest<{ message: string; report: any }>('/api/tu/monthly-reports', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      offlineStore.createTuMonthlyReport(data);
+      return res;
+    } catch (_) {
+      const report = offlineStore.createTuMonthlyReport(data);
+      return { message: 'Laporan bulanan berhasil dikirimkan ke Pemimpin & Kepala Sekolah.', report };
+    }
+  },
 };
