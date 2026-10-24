@@ -135,6 +135,8 @@ function getStoredPasswords(): Record<string, string> {
   const defaults: Record<string, string> = {
     'TAMANSISWA': 'TAMVESTA123',
     'haliza.tu': 'Tamvesta!H2605',
+    'margaretha.h': 'Tamvesta!M2603',
+    'margaretha': 'Tamvesta!M2603',
     'haliza.admin': 'Tamvesta!H2605',
     'haliza': 'Tamvesta!H2605',
     'tata.usaha': 'Tamvesta!H2605',
@@ -314,6 +316,9 @@ export const offlineStore = {
 
       if (['haliza.tu', 'haliza.admin', 'haliza', 'tata.usaha', 'tatausaha'].includes(inputUser)) {
         return uName === 'haliza.tu' || uName === 'haliza.admin' || (u.role === 'tata_usaha' && u.name.toLowerCase().includes('haliza'));
+      }
+      if (['margaretha.h', 'margaretha', 'margaretha.handriani', 'margaretha.hendriani', 'margarethahandriani', 'margarethahendriani', 'margaretha.sd', 'margaretha.kepsek'].includes(inputUser)) {
+        return uName === 'margaretha.h' || (u.name || '').toLowerCase().includes('margaretha');
       }
       return false;
     });

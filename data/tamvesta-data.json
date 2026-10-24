@@ -29,8 +29,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_001:9e354f2f25d3717f",
       "createdAt": "2026-10-24T08:22:46.332Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7A001"
+      "updatedAt": "2026-10-24T08:22:47.186Z"
     },
     {
       "id": "user_siswa_siswa_smp7a_002",
@@ -46,8 +45,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
       "createdAt": "2026-10-24T08:22:46.353Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7A002"
+      "updatedAt": "2026-10-24T08:22:46.353Z"
     },
     {
       "id": "user_siswa_siswa_smp7a_003",
@@ -63,8 +61,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_003:a8b1bf53ef854371",
       "createdAt": "2026-10-24T08:22:46.372Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7A003"
+      "updatedAt": "2026-10-24T08:22:46.372Z"
     },
     {
       "id": "user_siswa_siswa_smp7b_001",
@@ -80,8 +77,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7b_001:7c216e93f287a1bb",
       "createdAt": "2026-10-24T08:22:46.391Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7B001"
+      "updatedAt": "2026-10-24T08:22:46.391Z"
     },
     {
       "id": "user_siswa_siswa_smp7b_002",
@@ -97,8 +93,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7b_002:2457918d2abf2cb9",
       "createdAt": "2026-10-24T08:22:46.404Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa7B002"
+      "updatedAt": "2026-10-24T08:22:46.404Z"
     },
     {
       "id": "user_siswa_siswa_smp8a_001",
@@ -114,8 +109,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_001:966df39795446bcf",
       "createdAt": "2026-10-24T08:22:46.424Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8A001"
+      "updatedAt": "2026-10-24T08:22:46.424Z"
     },
     {
       "id": "user_siswa_siswa_smp8a_002",
@@ -131,8 +125,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_002:5d5a0c75dfc6eeb4",
       "createdAt": "2026-10-24T08:22:46.442Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8A002"
+      "updatedAt": "2026-10-24T08:22:46.442Z"
     },
     {
       "id": "user_siswa_siswa_smp8a_003",
@@ -148,8 +141,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_003:d788251d1283e2fb",
       "createdAt": "2026-10-24T08:22:46.472Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8A003"
+      "updatedAt": "2026-10-24T08:22:46.472Z"
     },
     {
       "id": "user_siswa_siswa_smp8b_001",
@@ -165,8 +157,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8b_001:cda0a40be6d66724",
       "createdAt": "2026-10-24T08:22:46.490Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8B001"
+      "updatedAt": "2026-10-24T08:22:46.490Z"
     },
     {
       "id": "user_siswa_siswa_smp8b_002",
@@ -182,8 +173,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8b_002:f9d6c04a69c27b5d",
       "createdAt": "2026-10-24T08:22:46.509Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa8B002"
+      "updatedAt": "2026-10-24T08:22:46.509Z"
     },
     {
       "id": "user_siswa_siswa_smp9a_001",
@@ -199,8 +189,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_001:86e5c0c96dcb84e0",
       "createdAt": "2026-10-24T08:22:46.527Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9A001"
+      "updatedAt": "2026-10-24T08:22:46.527Z"
     },
     {
       "id": "user_siswa_siswa_smp9a_002",
@@ -216,8 +205,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_002:372888ff50d80ec5",
       "createdAt": "2026-10-24T08:22:46.548Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9A002"
+      "updatedAt": "2026-10-24T08:22:46.548Z"
     },
     {
       "id": "user_siswa_siswa_smp9a_003",
@@ -233,8 +221,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_003:603d6ac4d8c9b9c0",
       "createdAt": "2026-10-24T08:22:46.567Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9A003"
+      "updatedAt": "2026-10-24T08:22:46.567Z"
     },
     {
       "id": "user_siswa_siswa_smp9b_001",
@@ -250,8 +237,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9b_001:e0ea9879ea551c2d",
       "createdAt": "2026-10-24T08:22:46.578Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9B001"
+      "updatedAt": "2026-10-24T08:22:46.578Z"
     },
     {
       "id": "user_siswa_siswa_smp9b_002",
@@ -267,8 +253,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9b_002:4fc87e276cfb7953",
       "createdAt": "2026-10-24T08:22:46.595Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa9B002"
+      "updatedAt": "2026-10-24T08:22:46.595Z"
     },
     {
       "id": "user_siswa_siswa_sd1a_001",
@@ -284,8 +269,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd1a_001:7cc93e2358bdb31b",
       "createdAt": "2026-10-24T08:22:46.614Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa1A001"
+      "updatedAt": "2026-10-24T08:22:46.614Z"
     },
     {
       "id": "user_siswa_siswa_sd1a_002",
@@ -301,8 +285,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd1a_002:5892a39733f6eb6f",
       "createdAt": "2026-10-24T08:22:46.630Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa1A002"
+      "updatedAt": "2026-10-24T08:22:46.630Z"
     },
     {
       "id": "user_siswa_siswa_sd2a_001",
@@ -318,8 +301,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd2a_001:8ea5f1306268a6be",
       "createdAt": "2026-10-24T08:22:46.652Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa2A001"
+      "updatedAt": "2026-10-24T08:22:46.652Z"
     },
     {
       "id": "user_siswa_siswa_sd2a_002",
@@ -335,8 +317,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd2a_002:891e2c141386e350",
       "createdAt": "2026-10-24T08:22:46.669Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa2A002"
+      "updatedAt": "2026-10-24T08:22:46.669Z"
     },
     {
       "id": "user_siswa_siswa_sd3a_001",
@@ -352,8 +333,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd3a_001:2c0301dcc53eae1e",
       "createdAt": "2026-10-24T08:22:46.679Z",
-      "updatedAt": "2026-10-24T15:23:31.816Z",
-      "password": "Siswa3A001"
+      "updatedAt": "2026-10-24T08:22:46.679Z"
     },
     {
       "id": "user_siswa_siswa_sd3a_002",
@@ -369,8 +349,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd3a_002:5960a14aca5268d6",
       "createdAt": "2026-10-24T08:22:46.713Z",
-      "updatedAt": "2026-10-24T15:23:31.816Z",
-      "password": "Siswa3A002"
+      "updatedAt": "2026-10-24T08:22:46.713Z"
     },
     {
       "id": "user_siswa_siswa_sd4a_001",
@@ -386,8 +365,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd4a_001:6aeb9b32d1bf55eb",
       "createdAt": "2026-10-24T08:22:46.724Z",
-      "updatedAt": "2026-10-24T15:23:31.816Z",
-      "password": "Siswa4A001"
+      "updatedAt": "2026-10-24T08:22:46.724Z"
     },
     {
       "id": "user_siswa_siswa_sd4a_002",
@@ -403,8 +381,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd4a_002:a283bc69a415a513",
       "createdAt": "2026-10-24T08:22:46.740Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa4A002"
+      "updatedAt": "2026-10-24T08:22:46.740Z"
     },
     {
       "id": "user_siswa_siswa_sd5a_001",
@@ -420,8 +397,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd5a_001:4e8c898ff4dfe3dc",
       "createdAt": "2026-10-24T08:22:46.760Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa5A001"
+      "updatedAt": "2026-10-24T08:22:46.760Z"
     },
     {
       "id": "user_siswa_siswa_sd5a_002",
@@ -437,8 +413,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd5a_002:fc9fbc93082b55fa",
       "createdAt": "2026-10-24T08:22:46.776Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa5A002"
+      "updatedAt": "2026-10-24T08:22:46.776Z"
     },
     {
       "id": "user_siswa_siswa_sd6a_001",
@@ -454,8 +429,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd6a_001:7e0fcd4061dde883",
       "createdAt": "2026-10-24T08:22:46.792Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa6A001"
+      "updatedAt": "2026-10-24T08:22:46.792Z"
     },
     {
       "id": "user_siswa_siswa_sd6a_002",
@@ -471,8 +445,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd6a_002:43a3e7f44cf5224d",
       "createdAt": "2026-10-24T08:22:46.804Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "password": "Siswa6A002"
+      "updatedAt": "2026-10-24T08:22:46.804Z"
     },
     {
       "id": "user_staff_bambang_kepsek",
@@ -508,8 +481,8 @@
       "id": "user_staff_margaretha_h",
       "username": "margaretha.h",
       "name": "Margaretha Hendriani",
-      "role": "guru",
-      "jabatan": "Kepala Sekolah SD & Guru",
+      "role": "kepala_sekolah",
+      "jabatan": "Kepala Sekolah SD",
       "initialPassword": "Tamvesta!M2603",
       "passwordHash": "8e2bdf1c82dad1f8213675e6befaae5acf47614ca036703a005d776feb9433713740af469e41a43907ced7da0ac768f729f33ecbd10ffa1b66859e60fb873ae2",
       "salt": "2b60c46cab58d50b826b8a80e80fc543",
@@ -728,103 +701,6 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_angga_satpam:b970654ecf6fa094",
       "createdAt": "2026-10-24T08:22:47.082Z",
       "updatedAt": "2026-10-24T08:22:47.082Z"
-    },
-    {
-      "id": "stu_1792851265520_q4coj",
-      "username": "nelalagitidur",
-      "name": "Nailah Nur Insiah Br Sianturi",
-      "role": "siswa",
-      "gender": "Perempuan",
-      "kelas": "Kelas 7",
-      "initialPassword": "123456",
-      "password": "123456",
-      "passwordHash": "ca394ad56313790ff8bd3b3296d854737dfb0b86d8c1d4cfe987243eb9986ec44c73bfb13766645330aa8e16d5d5aeac2767bee3a126dcc5c7b962125e8e9f9b",
-      "salt": "9d61ab02cc60cc688660cf35aa693e9d",
-      "mustChangePassword": false,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:stu_1792851265520_q4coj:642eab8924e8d9f5",
-      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Nailah%20Nur%20Insiah%20Br%20Sianturi&backgroundColor=0284c7",
-      "createdAt": "2026-10-24T14:14:25.520Z",
-      "updatedAt": "2026-10-24T15:23:31.785Z",
-      "isVerified": true
-    },
-    {
-      "id": "stu_1792846008984_auzxw",
-      "username": "nelagemesh",
-      "name": "Nailah Nur Insiah Br Sianturi",
-      "role": "siswa",
-      "gender": "Perempuan",
-      "kelas": "Kelas 7",
-      "initialPassword": "123456",
-      "password": "123456",
-      "mustChangePassword": false,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:stu_1792846008984_auzxw:5d580b7d6c2be6cb",
-      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Nailah%20Nur%20Insiah%20Br%20Sianturi&backgroundColor=0284c7",
-      "createdAt": "2026-10-24T12:46:48.984Z",
-      "updatedAt": "2026-10-24T15:23:31.791Z",
-      "passwordHash": "102c2e23111bfe9fb02f7b32429df3422232c7ed9f5ac68bdadcb22690151c53aad3d6aec7fbbb89652482cf0904b9dd87637c8123d105016fc2585fb195d2c4",
-      "salt": "e957ede8c281cd6b28302c15d0b22060"
-    },
-    {
-      "id": "stu_1792843277051_0hnzz",
-      "username": "itskimz",
-      "name": "Alvaro Pratama Herlen",
-      "role": "siswa",
-      "gender": "Laki-laki",
-      "kelas": "Kelas 8",
-      "initialPassword": "123456",
-      "password": "123456",
-      "mustChangePassword": false,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:stu_1792843277051_0hnzz:1e4090a4e8d1a819",
-      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Alvaro%20Pratama%20Herlen&backgroundColor=0284c7",
-      "createdAt": "2026-10-24T12:01:17.051Z",
-      "updatedAt": "2026-10-24T15:33:12.153Z",
-      "isVerified": true,
-      "passwordHash": "5eb822586b0da93329b4280b7289664f4083003b818a1e034b45c5701d63145c86aea8ee5b5d671aa5fa63b7c4056315e498047d6c4f61553ae67cc011f17b10",
-      "salt": "caa48f271611d97f115add36d1a8a65d",
-      "phone": "",
-      "email": "",
-      "bio": "Developer Tamvesta"
-    },
-    {
-      "id": "stu_1792836933359_v2nao",
-      "username": "aldongker",
-      "name": "Ibrahim Al Ashry",
-      "role": "siswa",
-      "gender": "Laki-laki",
-      "kelas": "Kelas 9",
-      "initialPassword": "123456",
-      "password": "123456",
-      "mustChangePassword": false,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:stu_1792836933359_v2nao:586396b2beb5fc49",
-      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Ibrahim%20Al%20Ashry&backgroundColor=0284c7",
-      "createdAt": "2026-10-24T10:15:33.359Z",
-      "updatedAt": "2026-10-24T15:23:31.810Z",
-      "isVerified": true,
-      "passwordHash": "3db31b3c0c96856fa8aa28cbfd8eb9d803fe94b2d453288d34689b81a9de3ddfd76ca80e5b51a43946393837cb08624cda0bae147e880d780169c093d6763afd",
-      "salt": "0162ad198a5c99c5adab8ed93af0d845"
-    },
-    {
-      "id": "stu_1792836687543_f24fv",
-      "username": "titut222",
-      "name": "Putri Anggun Eldianti",
-      "role": "siswa",
-      "gender": "Perempuan",
-      "kelas": "Kelas 7",
-      "initialPassword": "123456",
-      "password": "123456",
-      "mustChangePassword": false,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:stu_1792836687543_f24fv:a31133f8e2af73fb",
-      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Putri%20Anggun%20Eldianti&backgroundColor=0284c7",
-      "createdAt": "2026-10-24T10:11:27.543Z",
-      "updatedAt": "2026-10-24T15:23:31.815Z",
-      "isVerified": true,
-      "passwordHash": "b454eb69641e9a93fb6c97efe39a304bca77787133121df44db5ca997b103b764ec8bbf8663eebb1ace2edddc599a974a7dab9410e2ebaa4d38e9ac596fae837",
-      "salt": "98ee3a526c63f6f3cd58fd2a28a4c9b2"
     }
   ],
   "subjects": [],
@@ -838,47 +714,11 @@
   "posts": [],
   "stories": [],
   "notes": [],
-  "notifications": [
-    {
-      "id": "notif_welcome",
-      "title": "Selamat Datang di TAMVESTA Mobile!",
-      "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
-      "type": "general",
-      "isImportant": true,
-      "linkType": "none",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-24T15:30:45.301Z"
-    },
-    {
-      "id": "notif_announcement_1",
-      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
-      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
-      "type": "announcement",
-      "isImportant": true,
-      "linkType": "announcement",
-      "linkId": "ann_1",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-24T14:30:45.301Z"
-    },
-    {
-      "id": "notif_subject_1",
-      "title": "Pembaruan Jadwal: Matematika Wajib",
-      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
-      "type": "subject_change",
-      "isImportant": false,
-      "linkType": "subject",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-24T13:30:45.301Z"
-    }
-  ],
+  "notifications": [],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
   "tuitionTransactions": [],
   "tuDocuments": [],
-  "tuChatMessages": [],
-  "tuMonthlyReports": []
+  "tuChatMessages": []
 }

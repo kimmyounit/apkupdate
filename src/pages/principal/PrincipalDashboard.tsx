@@ -173,17 +173,30 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
                   Selamat datang, <strong>Bpk. Titus Wahyu Diatmiko</strong> (Pemimpin Perguruan Tamansiswa Batam • +62 813-7289-4523). Tinjau laporan berkala Tata Usaha, pembukuan kas & tagihan SPP, dewan guru & staf, serta performa seluruh unit pendidikan Tamansiswa Batam.
                 </p>
               </>
+            ) : (user?.username || '').includes('margaretha') || (user?.name || '').toLowerCase().includes('margaretha') || (user?.jabatan || '').toLowerCase().includes('sd') ? (
+              <>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-bold tracking-wide">
+                  <School className="w-4 h-4 text-blue-300" />
+                  <span>DASHBOARD KEPALA SEKOLAH SD — TAMVESTA</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Pusat Pengawasan Akademik & Sekolah SD
+                </h1>
+                <p className="text-xs sm:text-sm text-purple-200/90 max-w-2xl leading-relaxed">
+                  Selamat datang, <strong>Ibu Margaretha Hendriani / Handriani</strong> (Kepala Sekolah SD Perguruan Tamansiswa Batam). Pantau performa akademik siswa SD, presensi harian siswa, dewan guru SD, serta laporan operasional dan keuangan Tata Usaha.
+                </p>
+              </>
             ) : (
               <>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30 text-xs font-bold tracking-wide">
                   <School className="w-4 h-4 text-purple-300" />
-                  <span>DASHBOARD KEPALA SEKOLAH — TAMVESTA</span>
+                  <span>DASHBOARD KEPALA SEKOLAH SMP — TAMVESTA</span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                  Pusat Komando & Pengawasan Sekolah
+                  Pusat Komando & Pengawasan Sekolah SMP
                 </h1>
                 <p className="text-xs sm:text-sm text-purple-200/90 max-w-2xl leading-relaxed">
-                  Selamat datang, <strong>{user?.name || 'Kepala Sekolah SMP'}</strong> (ST Bambang Sapto Nugroho S.Pd - Kepala Sekolah SMP). Pantau performa akademik, kehadiran harian siswa, tata kelola akun guru, dan rekapitulasi operasional Perguruan Tamansiswa Batam.
+                  Selamat datang, <strong>{user?.name || 'ST Bambang Sapto Nugroho S.Pd'}</strong> (Kepala Sekolah SMP Tamansiswa Batam). Pantau performa akademik, kehadiran harian siswa, tata kelola akun guru, dan rekapitulasi operasional Perguruan Tamansiswa Batam.
                 </p>
               </>
             )}

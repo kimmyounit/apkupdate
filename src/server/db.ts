@@ -127,10 +127,10 @@ export const OFFICIAL_STAFF_LIST: StaffPreset[] = [
   },
   {
     name: 'Margaretha Hendriani',
-    jabatan: 'Kepala Sekolah SD & Guru',
+    jabatan: 'Kepala Sekolah SD',
     username: 'margaretha.h',
     initialPassword: 'Tamvesta!M2603',
-    role: 'guru',
+    role: 'kepala_sekolah',
   },
   {
     name: 'Bambang Sapto Nugroho',
@@ -715,6 +715,12 @@ class DatabaseManager {
         (u) => (u.username || '').toLowerCase().replace(/^@+/, '') === 'haliza.tu' ||
                (u.username || '').toLowerCase().replace(/^@+/, '') === 'haliza.admin' ||
                u.role === 'tata_usaha'
+      );
+    }
+    if (['margaretha.h', 'margaretha', 'margaretha.handriani', 'margaretha.hendriani', 'margarethahandriani', 'margarethahendriani', 'margaretha.sd', 'margaretha.kepsek'].includes(term)) {
+      return this.data.users.find(
+        (u) => (u.username || '').toLowerCase().replace(/^@+/, '') === 'margaretha.h' ||
+               (u.name || '').toLowerCase().includes('margaretha')
       );
     }
     return undefined;
