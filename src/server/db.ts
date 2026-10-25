@@ -394,8 +394,9 @@ class DatabaseManager {
     try {
       let parsed: any = null;
       if (token) {
-        const url = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json';
-        const res = await fetch(url, {
+        // Coba muat dari branch data-sync terlebih dahulu
+        const urlSync = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json?ref=data-sync';
+        const resSync = await fetch(urlSync, {
           headers: {
             Authorization: `Bearer ${token}`,
             'User-Agent': 'TAMVESTA-Cloud-Sync',
@@ -403,21 +404,47 @@ class DatabaseManager {
           },
           signal: AbortSignal.timeout(5000),
         });
-        if (res.ok) {
-          const json: any = await res.json();
+        if (resSync.ok) {
+          const json: any = await resSync.json();
           if (json.content) {
             const decoded = Buffer.from(json.content, 'base64').toString('utf-8');
             parsed = JSON.parse(decoded);
           }
         }
+        if (!parsed) {
+          const urlMain = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json';
+          const resMain = await fetch(urlMain, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'User-Agent': 'TAMVESTA-Cloud-Sync',
+              Accept: 'application/vnd.github.v3+json',
+            },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (resMain.ok) {
+            const json: any = await resMain.json();
+            if (json.content) {
+              const decoded = Buffer.from(json.content, 'base64').toString('utf-8');
+              parsed = JSON.parse(decoded);
+            }
+          }
+        }
       }
       if (!parsed) {
-        const rawRes = await fetch('https://raw.githubusercontent.com/kimmyounit/apkupdate/main/data/tamvesta-data.json', {
+        const rawRes = await fetch('https://raw.githubusercontent.com/kimmyounit/apkupdate/data-sync/data/tamvesta-data.json', {
           headers: { 'User-Agent': 'TAMVESTA-Cloud-Sync' },
           signal: AbortSignal.timeout(5000),
         });
         if (rawRes.ok) {
           parsed = await rawRes.json();
+        } else {
+          const rawMain = await fetch('https://raw.githubusercontent.com/kimmyounit/apkupdate/main/data/tamvesta-data.json', {
+            headers: { 'User-Agent': 'TAMVESTA-Cloud-Sync' },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (rawMain.ok) {
+            parsed = await rawMain.json();
+          }
         }
       }
       if (!parsed || !Array.isArray(parsed.users)) return;
@@ -686,7 +713,7 @@ class DatabaseManager {
     }
 
     try {
-      const url = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json';
+      const url = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json?ref=data-sync';
       const getRes = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -702,7 +729,8 @@ class DatabaseManager {
       }
 
       const content = Buffer.from(JSON.stringify(dataToSave, null, 2)).toString('base64');
-      await fetch(url, {
+      const putUrl = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json';
+      await fetch(putUrl, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -714,6 +742,7 @@ class DatabaseManager {
           message: 'Sync TAMVESTA cloud database [skip ci]',
           content,
           sha: sha || undefined,
+          branch: 'data-sync',
         }),
         signal: AbortSignal.timeout(5000),
       });
