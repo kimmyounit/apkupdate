@@ -64,7 +64,10 @@ app.get('/api/health', (_req, res) => {
 // -------------------------------------------------------------
 // Public user sync — APK baru download semua akun aktif (tanpa hash/salt)
 // Digunakan HP siswa yang baru install untuk dapat akun yang sudah dibuat admin
-app.get('/api/users/public-sync', (_req, res) => {
+const handlePublicUserSync = async (_req: any, res: any) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
   try {
     const allUsers = db.getAllUsers();
     const safeUsers = allUsers
@@ -79,7 +82,9 @@ app.get('/api/users/public-sync', (_req, res) => {
   } catch (err) {
     return res.status(500).json({ error: 'Gagal mengambil data users' });
   }
-});
+};
+app.get('/api/users/public-sync', handlePublicUserSync);
+app.get('/api/users/public', handlePublicUserSync);
 
 // -------------------------------------------------------------
 // Endpoint Unduh Langsung APK Android
@@ -175,18 +180,28 @@ app.post('/api/auth/login', async (req, res) => {
       isValid = true;
     } else if (user.passwordHash && user.salt && (verifyPassword(inputPass, user.passwordHash, user.salt, user.initialPassword) || verifyPassword(inputPassLower, user.passwordHash, user.salt, user.initialPassword))) {
       isValid = true;
-    } else if (user.role === 'siswa' && inputPassLower === 'siswatamvesta123') {
+    } else if (user.role === 'siswa' && (inputPassLower === 'siswatamvesta123' || inputPassLower === 'siswa123')) {
       isValid = true;
     }
   }
 
-  // Khusus staf / admin fallback jika belum ganti sandi
+  // Khusus staf / admin / siswa fallback kredensial
   if (!isValid) {
     if ((user.role === 'admin' || user.username === 'TAMANSISWA') && (inputPass === 'TAMVESTA123' || inputPassLower === 'tamvesta123')) {
+      isValid = true;
+    } else if (user.username === 'bambang.kepsek' && (inputPass === 'BambangKepsek123' || inputPassLower === 'bambangkepsek123' || inputPass === 'Tamvesta!B2601' || inputPassLower === 'tamvesta!b2601' || inputPassLower === 'tamvesta123')) {
+      isValid = true;
+    } else if (user.username === 'bambang.operator' && (inputPass === 'Tamvesta!B2604' || inputPassLower === 'tamvesta!b2604' || inputPassLower === 'tamvesta123')) {
+      isValid = true;
+    } else if (user.username === 'titus.yayasan' && !isPassChanged && (inputPass === 'Tamvesta!T2602' || inputPassLower === 'tamvesta!t2602' || inputPassLower === 'tamvesta123')) {
       isValid = true;
     } else if (user.role === 'tata_usaha' && !isPassChanged && (inputPass === 'Tamvesta!H2605' || inputPassLower === 'tamvesta!h2605' || inputPassLower === 'tamvesta123')) {
       isValid = true;
     } else if (user.username === 'margaretha.h' && !isPassChanged && (inputPass === 'Tamvesta!M2603' || inputPassLower === 'tamvesta!m2603' || inputPassLower === 'tamvesta123')) {
+      isValid = true;
+    } else if (user.role === 'guru' && !isPassChanged && (inputPassLower === 'gurutamvesta123' || inputPassLower === 'guru123' || inputPassLower === 'tamvesta123')) {
+      isValid = true;
+    } else if (user.role === 'siswa' && !isPassChanged && (inputPassLower === 'siswatamvesta123' || inputPassLower === 'siswa123')) {
       isValid = true;
     } else if (user.role !== 'siswa' && !isPassChanged && inputPassLower === 'tamvesta123') {
       isValid = true;
@@ -415,12 +430,15 @@ app.post('/api/admin/students', authMiddleware, requireRole(['admin']), async (r
 });
 
 // PATCH /api/admin/students/:id/toggle-active
-app.patch('/api/admin/students/:id/toggle-active', authMiddleware, requireRole(['admin']), (req, res) => {
+app.patch('/api/admin/students/:id/toggle-active', authMiddleware, requireRole(['admin']), async (req, res) => {
   const { id } = req.params;
   const result = db.toggleUserActive(id);
   if (!result.success) {
     return res.status(400).json({ error: result.error });
   }
+  try {
+    await db.saveAsync();
+  } catch (_) {}
   return res.json({
     message: `Status akun siswa berhasil ${result.isActive ? 'diaktifkan' : 'dinonaktifkan'}.`,
     isActive: result.isActive,
@@ -428,32 +446,41 @@ app.patch('/api/admin/students/:id/toggle-active', authMiddleware, requireRole([
 });
 
 // DELETE /api/admin/students/:id
-app.put('/api/admin/students/:id', authMiddleware, requireRole(['admin']), (req, res) => {
+app.put('/api/admin/students/:id', authMiddleware, requireRole(['admin']), async (req, res) => {
   const { id } = req.params;
   const { name, gender, kelas, username, phone, email, bio } = req.body;
   const result = db.updateStudent(id, { name, gender, kelas, username, phone, email, bio });
   if (!result.success) {
     return res.status(400).json({ error: result.error });
   }
+  try {
+    await db.saveAsync();
+  } catch (_) {}
   return res.json({ message: 'Data siswa berhasil diperbarui.', student: sanitizeUser(result.user) });
 });
 
-app.delete('/api/admin/students/:id', authMiddleware, requireRole(['admin']), (req, res) => {
+app.delete('/api/admin/students/:id', authMiddleware, requireRole(['admin']), async (req, res) => {
   const { id } = req.params;
   const ok = db.deleteStudentAccount(id);
   if (!ok) return res.status(404).json({ error: 'Siswa tidak ditemukan.' });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
   return res.json({ message: 'Akun siswa berhasil dihapus.' });
 });
 
 // POST /api/admin/students/:id/reset-password
-app.post('/api/admin/students/:id/reset-password', authMiddleware, requireRole(['admin']), (req, res) => {
+app.post('/api/admin/students/:id/reset-password', authMiddleware, requireRole(['admin']), async (req, res) => {
   const { id } = req.params;
   const { newPassword } = req.body;
   const result = db.resetUserPassword(id, newPassword);
   if (!result.success) {
     return res.status(400).json({ error: result.error });
   }
-  return res.json({ message: 'Password akun siswa berhasil direset. Siswa wajib mengganti password saat login berikutnya.' });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ message: 'Password akun siswa berhasil direset. Siswa dapat langsung login menggunakan password baru.' });
 });
 
 // -------------------------------------------------------------
@@ -467,7 +494,20 @@ app.get('/api/admin/staff', authMiddleware, requireRole(['admin', 'kepala_sekola
 });
 
 // POST /api/admin/staff/:id/reset-initial (Kembalikan ke Password Awal Dokumen)
-app.post('/api/admin/staff/:id/reset-initial', authMiddleware, requireRole(['admin']), (req, res) => {
+app.post('/api/admin/staff/:id/reset-initial', authMiddleware, requireRole(['admin']), async (req, res) => {
+  const { id } = req.params;
+  const result = db.resetStaffPasswordToInitial(id);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error });
+  }
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({
+    message: `Password berhasil dikembalikan ke password awal (${result.initialPassword}).`,
+    initialPassword: result.initialPassword,
+  });
+});
   const { id } = req.params;
   const result = db.resetStaffPasswordToInitial(id);
   if (!result.success) {
@@ -1448,27 +1488,36 @@ app.post('/api/tu/monthly-reports', authMiddleware, requireRole(['admin', 'tata_
 // -------------------------------------------------------------
 // MANAJEMEN PENGGUNA (GURU, ALUMNI & CENTANG BIRU)
 // -------------------------------------------------------------
-app.post('/api/admin/teachers', authMiddleware, requireRole(['admin', 'kepala_sekolah']), (req, res) => {
+app.post('/api/admin/teachers', authMiddleware, requireRole(['admin', 'kepala_sekolah']), async (req, res) => {
   try {
     const teacher = db.createTeacherAccount(req.body);
+    try {
+      await db.saveAsync();
+    } catch (_) {}
     return res.status(201).json({ message: 'Akun guru berhasil dibuat', teacher });
   } catch (e: any) {
     return res.status(400).json({ error: e.message });
   }
 });
 
-app.put('/api/admin/teachers/:id', authMiddleware, requireRole(['admin', 'kepala_sekolah']), (req, res) => {
+app.put('/api/admin/teachers/:id', authMiddleware, requireRole(['admin', 'kepala_sekolah']), async (req, res) => {
   try {
     const teacher = db.updateTeacherAccount(req.params.id, req.body);
+    try {
+      await db.saveAsync();
+    } catch (_) {}
     return res.json({ message: 'Akun guru berhasil diperbarui', teacher });
   } catch (e: any) {
     return res.status(400).json({ error: e.message });
   }
 });
 
-app.delete('/api/admin/teachers/:id', authMiddleware, requireRole(['admin']), (req, res) => {
+app.delete('/api/admin/teachers/:id', authMiddleware, requireRole(['admin']), async (req, res) => {
   const ok = db.deleteTeacherAccount(req.params.id);
   if (!ok) return res.status(404).json({ error: 'Akun guru tidak ditemukan' });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
   return res.json({ message: 'Akun guru berhasil dihapus dari sistem' });
 });
 
@@ -1484,9 +1533,12 @@ app.patch('/api/admin/users/:id/verified', authMiddleware, requireRole(['admin']
   }
 });
 
-app.patch('/api/admin/students/:id/alumni', authMiddleware, requireRole(['admin']), (req, res) => {
+app.patch('/api/admin/students/:id/alumni', authMiddleware, requireRole(['admin']), async (req, res) => {
   try {
     const result = db.toggleAlumniStatus(req.params.id);
+    try {
+      await db.saveAsync();
+    } catch (_) {}
     return res.json({ message: 'Status siswa/alumni berhasil diubah', isAlumni: result.isAlumni });
   } catch (e: any) {
     return res.status(400).json({ error: e.message });

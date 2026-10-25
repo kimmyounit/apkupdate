@@ -167,6 +167,21 @@ async function tryServerRequest<T>(endpoint: string, options: RequestInit = {}):
 }
 
 export const api = {
+  // Pre-sync all public users from server for multi-device support
+  syncPublicUsers: async () => {
+    try {
+      const syncRes = await tryServerRequest<{ users: User[]; passwordResetRequests?: any[] }>('/api/users/public-sync');
+      if (Array.isArray(syncRes?.users) && syncRes.users.length > 0) {
+        offlineStore.mergeUsersFromServer(syncRes.users);
+        if (Array.isArray(syncRes.passwordResetRequests)) {
+          syncRes.passwordResetRequests.forEach((t: any) => offlineStore.saveTicketDirect(t));
+        }
+        return syncRes.users;
+      }
+    } catch (_) {}
+    return null;
+  },
+
   // Bulk sync local users to cloud server
   syncLocalUsersToServer: async () => {
     try {

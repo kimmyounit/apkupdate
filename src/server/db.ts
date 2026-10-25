@@ -401,7 +401,7 @@ class DatabaseManager {
             'User-Agent': 'TAMVESTA-Cloud-Sync',
             Accept: 'application/vnd.github.v3+json',
           },
-          signal: AbortSignal.timeout(3000),
+          signal: AbortSignal.timeout(5000),
         });
         if (res.ok) {
           const json: any = await res.json();
@@ -414,7 +414,7 @@ class DatabaseManager {
       if (!parsed) {
         const rawRes = await fetch('https://raw.githubusercontent.com/kimmyounit/apkupdate/main/data/tamvesta-data.json', {
           headers: { 'User-Agent': 'TAMVESTA-Cloud-Sync' },
-          signal: AbortSignal.timeout(3000),
+          signal: AbortSignal.timeout(5000),
         });
         if (rawRes.ok) {
           parsed = await rawRes.json();
@@ -767,8 +767,16 @@ class DatabaseManager {
     const alphaNumericTerm = term.replace(/[^a-z0-9]/g, '');
 
     // 0. If username refers to Bambang Sapto Nugroho (Kepsek SMP vs Operator)
+    if (term === 'bambang.operator' || term === 'operator' || term === 'dapodik' || term === 'operator.dapodik') {
+      const operator = this.data.users.find((u) => (u.username || '').toLowerCase() === 'bambang.operator');
+      if (operator) return operator;
+    }
+    if (term === 'bambang.kepsek' || term === 'kepsek.smp' || term === 'bambang.smp' || term === 'st.bambang') {
+      const kepsek = this.data.users.find((u) => (u.username || '').toLowerCase() === 'bambang.kepsek');
+      if (kepsek) return kepsek;
+    }
     if (
-      ['bambang', 'bambang.kepsek', 'bambang.operator', 'bambang sapto nugroho', 'st bambang sapto nugroho s.pd', 'st.bambang', 'kepsek.smp', 'bambang.smp'].includes(term) ||
+      ['bambang', 'bambang sapto nugroho', 'st bambang sapto nugroho s.pd'].includes(term) ||
       alphaNumericTerm === 'bambang' ||
       alphaNumericTerm === 'bambangsaptonugroho' ||
       alphaNumericTerm === 'stbambangsaptonugrohospd'
@@ -1065,7 +1073,8 @@ class DatabaseManager {
     user.salt = hashed.salt;
     user.initialPassword = cleanPass;
     user.password = cleanPass;
-    user.mustChangePassword = true;
+    (user as any).passwordChanged = true;
+    user.mustChangePassword = false;
     user.updatedAt = new Date().toISOString();
     this.save();
     return { success: true };
@@ -1084,9 +1093,12 @@ class DatabaseManager {
       return { success: false, error: 'Password baru minimal 6 karakter.' };
     }
 
-    const hashed = hashPassword(newPassword);
+    const hashed = hashPassword(newPassword.trim());
     user.passwordHash = hashed.hash;
     user.salt = hashed.salt;
+    user.password = newPassword.trim();
+    user.initialPassword = newPassword.trim();
+    (user as any).passwordChanged = true;
     user.mustChangePassword = false;
     user.updatedAt = new Date().toISOString();
     this.save();
@@ -2401,6 +2413,7 @@ class DatabaseManager {
       role: 'guru',
       jabatan: data.jabatan || 'Guru Mata Pelajaran',
       initialPassword,
+      password: initialPassword,
       passwordHash: pass.hash,
       salt: pass.salt,
       mustChangePassword: false,

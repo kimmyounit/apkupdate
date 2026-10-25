@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Lock,
   User as UserIcon,
@@ -12,6 +12,7 @@ import {
   Download,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
+import { api } from '../lib/api.ts';
 import { IosInstallModal } from '../components/IosInstallModal.tsx';
 
 export const Login: React.FC = () => {
@@ -24,6 +25,11 @@ export const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showIosModal, setShowIosModal] = useState(false);
+
+  useEffect(() => {
+    // Sinkronkan akun terdaftar & sinyal terbaru dari server saat halaman login dimuat
+    api.syncPublicUsers().catch(() => {});
+  }, []);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
