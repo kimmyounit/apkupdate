@@ -67,7 +67,6 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
 
   // Scanner states
   const [isScanning, setIsScanning] = useState(false);
-  const [showCameraConfirmModal, setShowCameraConfirmModal] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [lastScanResult, setLastScanResult] = useState<ScanResultPayload | null>(null);
   const [manualCode, setManualCode] = useState('');
@@ -115,13 +114,6 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
     }
   }, [selectedEventId]);
 
-  // Clean up scanner on unmount
-  useEffect(() => {
-    return () => {
-      stopCameraScanner();
-    };
-  }, []);
-
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
   // Toggle Session Buka / Tutup
@@ -129,7 +121,6 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
     if (!selectedEventId) return;
     try {
       const res = await api.toggleEventSession(selectedEventId);
-      // update state
       setEvents((prev) =>
         prev.map((e) => (e.id === selectedEventId ? { ...e, isOpen: res.isOpen } : e))
       );
@@ -158,7 +149,6 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
           spread: 60,
           origin: { y: 0.7 },
         });
-        // Refresh records & event live counts immediately
         await loadRecords(selectedEventId);
         await loadEvents();
       } else {
@@ -174,11 +164,11 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
     } finally {
       setTimeout(() => {
         setProcessingScan(false);
-      }, 1200); // 1.2s debounce to prevent fast accidental multi-scans
+      }, 1200);
     }
   };
 
-  // Start Camera
+  // Start Camera immediately without asking permission
   const startCameraScanner = async () => {
     setCameraError(null);
     try {
@@ -186,26 +176,51 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
         html5QrCodeRef.current = new Html5Qrcode(scannerContainerId);
       }
 
-      await html5QrCodeRef.current.start(
-        { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 260, height: 260 },
-          aspectRatio: 1.0,
+      if (html5QrCodeRef.current.isScanning) {
+        setIsScanning(true);
+        return;
+      }
+
+      const scanConfig = {
+        fps: 15,
+        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+          const edge = Math.min(viewfinderWidth, viewfinderHeight);
+          const size = Math.floor(edge * 0.75);
+          return {
+            width: Math.max(size, 220),
+            height: Math.max(size, 220),
+          };
         },
-        (decodedText) => {
-          handleProcessQr(decodedText);
-        },
-        () => {
-          // Frame parse error (ignore standard scan misses)
-        }
-      );
+        aspectRatio: 1.0,
+      };
+
+      try {
+        // Coba kamera belakang (environment)
+        await html5QrCodeRef.current.start(
+          { facingMode: 'environment' },
+          scanConfig,
+          (decodedText) => {
+            handleProcessQr(decodedText);
+          },
+          () => {}
+        );
+      } catch (_envErr) {
+        // Fallback langsung ke webcam laptop / kamera depan tanpa memunculkan pesan error
+        await html5QrCodeRef.current.start(
+          { facingMode: 'user' },
+          scanConfig,
+          (decodedText) => {
+            handleProcessQr(decodedText);
+          },
+          () => {}
+        );
+      }
 
       setIsScanning(true);
     } catch (err: any) {
       console.error('Camera start error:', err);
       setCameraError(
-        'Kamera tidak dapat diakses atau izin ditolak oleh browser. Pastikan webcam laptop aktif dan izin kamera telah diberikan.'
+        'Kamera tidak dapat diakses secara otomatis. Pastikan perangkat Anda memiliki webcam/kamera aktif.'
       );
       setIsScanning(false);
     }
@@ -213,15 +228,33 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
 
   // Stop Camera
   const stopCameraScanner = async () => {
-    if (html5QrCodeRef.current && isScanning) {
+    if (html5QrCodeRef.current) {
       try {
-        await html5QrCodeRef.current.stop();
+        if (html5QrCodeRef.current.isScanning) {
+          await html5QrCodeRef.current.stop();
+        }
       } catch (err) {
         console.warn('Error stopping camera:', err);
       }
     }
     setIsScanning(false);
   };
+
+  // Auto start camera immediately on mount without asking permission
+  useEffect(() => {
+    let active = true;
+    const timer = setTimeout(() => {
+      if (active) {
+        startCameraScanner();
+      }
+    }, 350);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      stopCameraScanner();
+    };
+  }, []);
 
   const handleManualCheckin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -510,7 +543,7 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
               </div>
 
               <button
-                onClick={isScanning ? stopCameraScanner : () => setShowCameraConfirmModal(true)}
+                onClick={isScanning ? stopCameraScanner : startCameraScanner}
                 disabled={!selectedEvent?.isOpen && !isScanning}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition active:scale-95 ${
                   isScanning
@@ -521,12 +554,12 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
                 {isScanning ? (
                   <>
                     <CameraOff className="w-4 h-4" />
-                    <span>Hentikan Kamera</span>
+                    <span>Matikan Kamera</span>
                   </>
                 ) : (
                   <>
                     <Camera className="w-4 h-4" />
-                    <span>Mulai Pemindaian</span>
+                    <span>Hidupkan Kamera</span>
                   </>
                 )}
               </button>
@@ -547,11 +580,19 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
                     <Camera className="w-8 h-8" />
                   </div>
                   <div>
-                    <p className="font-bold text-sm">Kamera Belum Aktif</p>
+                    <p className="font-bold text-sm">Kamera Sedang Mati</p>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Klik "Mulai Pemindaian" untuk meminta izin dan menyalakan kamera laptop
+                      Klik tombol di bawah untuk langsung menyalakan kamera pemindai tanpa konfirmasi
                     </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={startCameraScanner}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow active:scale-95 flex items-center gap-2"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Hidupkan Kamera Sekarang</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -674,49 +715,6 @@ export const ScannerPage: React.FC<{ onBackToDashboard?: () => void }> = ({ onBa
           </div>
         </div>
       </div>
-    
-      {/* Modal Konfirmasi Hidupkan Kamera */}
-      {showCameraConfirmModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-in zoom-in-95">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
-              <Camera className="w-7 h-7" />
-            </div>
-
-            <div className="text-center space-y-1.5">
-              <h3 className="text-lg font-black text-slate-900">Hidupkan Kamera?</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                TAMVESTA memerlukan izin untuk mengakses kamera webcam perangkat Anda untuk memindai QR Code kehadiran siswa secara langsung.
-              </p>
-            </div>
-
-            <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-[11px] text-emerald-800 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Kamera hanya aktif selama sesi pemindaian dan dapat dinonaktifkan kapan saja.</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowCameraConfirmModal(false)}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCameraConfirmModal(false);
-                  startCameraScanner();
-                }}
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md active:scale-95"
-              >
-                Izinkan & Hidupkan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
