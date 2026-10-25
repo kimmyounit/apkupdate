@@ -748,8 +748,6 @@
   "tuitionTransactions": [],
   "tuDocuments": [],
   "tuChatMessages": [],
-  "deletedUserIds": [
-    "user_siswa_siswa_smp7a_001",
-    "siswa.smp7a.001"
-  ]
+  "tuMonthlyReports": [],
+  "gameRooms": []
 }
