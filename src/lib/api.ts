@@ -871,13 +871,16 @@ export const api = {
     }
   },
 
-  // Student Feed Posts
+  // Student Feed Posts (Hanya diisi oleh akun terdaftar)
   getPosts: async () => {
     const deletedPostIds = offlineStore.getDeletedPostIds();
-    const localPosts = offlineStore.getPosts();
+    const localPosts = offlineStore.getPosts().filter((p) => !p.id.startsWith('post_seed_'));
     let serverPosts: StudentPost[] = [];
     try {
       serverPosts = await tryServerRequest<StudentPost[]>('/api/posts');
+      if (Array.isArray(serverPosts)) {
+        serverPosts = serverPosts.filter((p) => !p.id.startsWith('post_seed_'));
+      }
     } catch (_) {
       serverPosts = [];
     }
@@ -905,9 +908,7 @@ export const api = {
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    if (merged.length > 0) {
-      offlineStore.setPostsList(merged);
-    }
+    offlineStore.setPostsList(merged);
     return merged;
   },
 
@@ -993,17 +994,19 @@ export const api = {
     }
   },
 
-  // Stories (Permanen Selamanya Tanpa Menghilang)
+  // Stories (Hanya diisi oleh akun terdaftar - Permanen)
   getStories: async () => {
     let serverStories: Story[] = [];
     try {
       serverStories = await tryServerRequest<Story[]>('/api/stories');
+      if (Array.isArray(serverStories)) {
+        serverStories = serverStories.filter((s) => !s.id.startsWith('story_seed_'));
+      }
     } catch (_) {
       serverStories = [];
     }
-    const localStories = offlineStore.getStories();
+    const localStories = offlineStore.getStories().filter((s) => !s.id.startsWith('story_seed_'));
     const storyMap = new Map<string, Story>();
-    // Simpan seluruh story tanpa batas kedaluwarsa
     localStories.forEach((s) => {
       storyMap.set(s.id, s);
     });
@@ -1019,9 +1022,7 @@ export const api = {
     const merged = Array.from(storyMap.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-    if (merged.length > 0) {
-      offlineStore.setStoriesList(merged);
-    }
+    offlineStore.setStoriesList(merged);
     return merged;
   },
 

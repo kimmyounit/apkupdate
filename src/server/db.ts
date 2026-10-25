@@ -452,11 +452,14 @@ class DatabaseManager {
           }
         });
       }
-      if (Array.isArray(parsed.posts) && parsed.posts.length > 0) {
+      if (Array.isArray(parsed.posts)) {
         const postMap = new Map<string, any>();
-        this.data.posts.forEach((p) => postMap.set(p.id, p));
+        this.data.posts.forEach((p) => {
+          if (!p.id.startsWith('post_seed_')) postMap.set(p.id, p);
+        });
         parsed.posts.forEach((p: any) => {
-          if ((this.data.deletedPostIds || []).includes(p.id)) return; // Postingan terhapus permanen
+          if (p.id.startsWith('post_seed_')) return;
+          if ((this.data.deletedPostIds || []).includes(p.id)) return;
           postMap.set(p.id, p);
         });
         this.data.posts = Array.from(postMap.values()).sort(
@@ -465,9 +468,11 @@ class DatabaseManager {
       }
       if (Array.isArray(parsed.stories)) {
         const storyMap = new Map<string, any>();
-        this.data.stories.forEach((s) => storyMap.set(s.id, s));
-        // Stories stay permanently ("selamanya tanpa menghilang")
+        this.data.stories.forEach((s) => {
+          if (!s.id.startsWith('story_seed_')) storyMap.set(s.id, s);
+        });
         parsed.stories.forEach((s: any) => {
+          if (s.id.startsWith('story_seed_')) return;
           storyMap.set(s.id, s);
         });
         this.data.stories = Array.from(storyMap.values())
@@ -632,8 +637,8 @@ class DatabaseManager {
           attendanceEvents: parsed.attendanceEvents || [],
           attendanceRecords: parsed.attendanceRecords || [],
           passwordResetRequests: parsed.passwordResetRequests || [],
-          posts: parsed.posts || [],
-          stories: parsed.stories || [],
+          posts: (parsed.posts || []).filter((p: any) => !p.id.startsWith('post_seed_')),
+          stories: (parsed.stories || []).filter((s: any) => !s.id.startsWith('story_seed_')),
           notes: parsed.notes || [],
           notifications: parsed.notifications || [],
           articles: parsed.articles || [],
@@ -1642,104 +1647,13 @@ class DatabaseManager {
   }
 
   // -------------------------------------------------------------
-  // POSTS & FEED SISWA
+  // POSTS & FEED SISWA (Hanya diisi oleh akun terdaftar)
   // -------------------------------------------------------------
   getPosts(): StudentPost[] {
     if (!Array.isArray(this.data.posts)) this.data.posts = [];
-    if (this.data.posts.length === 0) {
-      this.seedDefaultPosts();
-    }
-    return [...this.data.posts].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }
-
-  private seedDefaultPosts() {
-    const now = Date.now();
-    this.data.posts = [
-      {
-        id: 'post_seed_1',
-        authorId: 'user_staff_bambang_kepsek',
-        authorName: 'ST Bambang Sapto Nugroho S.Pd',
-        authorUsername: 'bambang.kepsek',
-        authorKelas: 'Kepala Sekolah SMP',
-        authorRole: 'guru',
-        authorAvatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=256',
-        authorIsVerified: true,
-        authorIsAlumni: false,
-        caption: 'Salam dan Bahagia! Selamat datang seluruh siswa di ruang sosial media resmi TAMVESTA. Mari jadikan wadah ini sebagai sarana saling bertukar wawasan, karya seni, dan kegiatan positif sekolah Tamansiswa Batam. Tetap junjung tinggi nilai budi pekerti Ki Hadjar Dewantara! 🏫🙏',
-        mediaType: 'photo',
-        mediaUrl: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&q=80&w=1000',
-        mediaName: 'kegiatan_tamansiswa.jpg',
-        likes: ['user_staff_margaretha_h', 'user_siswa_siswa_smp7a_002', 'user_siswa_siswa_smp7a_003', 'user_staff_haliza_tu'],
-        comments: [
-          {
-            id: 'comm_1',
-            authorId: 'user_siswa_siswa_smp7a_002',
-            authorName: 'Bunga Pertiwi',
-            authorUsername: 'siswa.smp7a.002',
-            authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bunga%20Pertiwi&backgroundColor=ec4899',
-            content: 'Salam dan Bahagia Pak Bambang! Siap belajar dengan semangat hari ini 🙏✨',
-            createdAt: new Date(now - 30 * 60 * 1000).toISOString(),
-          },
-          {
-            id: 'comm_2',
-            authorId: 'user_siswa_siswa_smp7a_003',
-            authorName: 'Citra Dewi',
-            authorUsername: 'siswa.smp7a.003',
-            authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Citra%20Dewi&backgroundColor=8b5cf6',
-            content: 'Keren sekali TAMVESTA makin lengkap dan seru fiturnya! 👏',
-            createdAt: new Date(now - 15 * 60 * 1000).toISOString(),
-          }
-        ],
-        createdAt: new Date(now - 2 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'post_seed_2',
-        authorId: 'user_siswa_siswa_smp7a_002',
-        authorName: 'Bunga Pertiwi',
-        authorUsername: 'siswa.smp7a.002',
-        authorKelas: 'VII-A SMP',
-        authorRole: 'siswa',
-        authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bunga%20Pertiwi&backgroundColor=ec4899',
-        authorIsVerified: true,
-        authorIsAlumni: false,
-        caption: 'Belajar kelompok materi sains dan membaca buku digital di Tamvesta bareng teman-teman. Pembahasannya mudah dipahami! Jangan lupa ikutan quiz mingguan ya teman-teman 💡📚',
-        mediaType: 'photo',
-        mediaUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1000',
-        mediaName: 'belajar_kelompok.jpg',
-        likes: ['user_staff_bambang_kepsek', 'user_siswa_siswa_smp7a_003'],
-        comments: [
-          {
-            id: 'comm_3',
-            authorId: 'user_staff_bambang_kepsek',
-            authorName: 'ST Bambang Sapto Nugroho S.Pd',
-            authorUsername: 'bambang.kepsek',
-            authorAvatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=256',
-            content: 'Bagus sekali Bunga, lanjutkan kolaborasi belajarnya bersama teman-teman.',
-            createdAt: new Date(now - 20 * 60 * 1000).toISOString(),
-          }
-        ],
-        createdAt: new Date(now - 1 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'post_seed_3',
-        authorId: 'user_siswa_siswa_smp7a_003',
-        authorName: 'Citra Dewi',
-        authorUsername: 'siswa.smp7a.003',
-        authorKelas: 'VII-A SMP',
-        authorRole: 'siswa',
-        authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Citra%20Dewi&backgroundColor=8b5cf6',
-        authorIsVerified: true,
-        authorIsAlumni: false,
-        caption: 'Waktu istirahat tadi seru banget main game "Who\'s the Spy" di menu Permainan bareng teman-teman sekelas! Impostornya pintar menyamar tapi akhirnya ketahuan juga haha 🕵️‍♂️🎮😂',
-        mediaType: 'none',
-        likes: ['user_siswa_siswa_smp7a_002', 'user_staff_bambang_kepsek'],
-        comments: [],
-        createdAt: new Date(now - 40 * 60 * 1000).toISOString(),
-      }
-    ];
-    this.save();
+    return [...this.data.posts]
+      .filter((p) => !p.id.startsWith('post_seed_'))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   addPost(payload: {
@@ -1957,71 +1871,16 @@ class DatabaseManager {
   }
 
   // -------------------------------------------------------------
-  // STORIES (Permanent - Selamanya Tanpa Menghilang)
+  // STORIES (Hanya diisi oleh akun terdaftar - Permanen)
   // -------------------------------------------------------------
   getStories(): Story[] {
     if (!Array.isArray(this.data.stories)) {
       this.data.stories = [];
     }
 
-    // Never purge stories! Stories remain permanently ("selamanya tanpa menghilang")
-    if (this.data.stories.length === 0) {
-      this.seedDefaultStories();
-    }
-
-    return [...this.data.stories].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }
-
-  private seedDefaultStories() {
-    const now = Date.now();
-    const expires = '2099-12-31T23:59:59.999Z';
-    this.data.stories = [
-      {
-        id: 'story_seed_1',
-        authorId: 'user_staff_margaretha_h',
-        authorName: 'Margaretha Hendriani',
-        authorUsername: 'margaretha.h',
-        authorKelas: 'Kepala Sekolah SD',
-        authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256',
-        authorIsVerified: true,
-        mediaType: 'photo',
-        mediaUrl: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=1000',
-        caption: 'Semangat belajar anak-anak Tamansiswa Batam pagi ini! 🌅📚',
-        createdAt: new Date(now - 15 * 60 * 1000).toISOString(),
-        expiresAt: expires,
-      },
-      {
-        id: 'story_seed_2',
-        authorId: 'user_siswa_siswa_smp7a_002',
-        authorName: 'Bunga Pertiwi',
-        authorUsername: 'siswa.smp7a.002',
-        authorKelas: 'VII-A SMP',
-        authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bunga%20Pertiwi&backgroundColor=ec4899',
-        authorIsVerified: true,
-        mediaType: 'photo',
-        mediaUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=1000',
-        caption: 'Membaca buku baru di perpustakaan digital Tamvesta 📖✨',
-        createdAt: new Date(now - 10 * 60 * 1000).toISOString(),
-        expiresAt: expires,
-      },
-      {
-        id: 'story_seed_3',
-        authorId: 'user_siswa_siswa_smp7a_003',
-        authorName: 'Citra Dewi',
-        authorUsername: 'siswa.smp7a.003',
-        authorKelas: 'VII-A SMP',
-        authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Citra%20Dewi&backgroundColor=8b5cf6',
-        authorIsVerified: true,
-        mediaType: 'photo',
-        mediaUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1000',
-        caption: 'Seru banget kuis matematika hari ini, dapet skor tinggi! 🎉',
-        createdAt: new Date(now - 5 * 60 * 1000).toISOString(),
-        expiresAt: expires,
-      }
-    ];
-    this.save();
+    return [...this.data.stories]
+      .filter((s) => !s.id.startsWith('story_seed_'))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   createStory(storyData: {
