@@ -738,21 +738,7 @@
   "attendanceEvents": [],
   "attendanceRecords": [],
   "passwordResetRequests": [],
-  "posts": [
-    {
-      "id": "post_1792928103845_ps921",
-      "authorId": "user_admin_tamansiswa",
-      "authorName": "Administrator Tamansiswa Batam",
-      "authorUsername": "TAMANSISWA",
-      "authorKelas": "",
-      "authorAvatar": "",
-      "caption": "Postingan tes akun resmi",
-      "mediaType": "none",
-      "likes": [],
-      "comments": [],
-      "createdAt": "2026-10-25T11:35:03.845Z"
-    }
-  ],
+  "posts": [],
   "stories": [],
   "notes": [],
   "notifications": [],
@@ -763,5 +749,8 @@
   "tuDocuments": [],
   "tuChatMessages": [],
   "tuMonthlyReports": [],
-  "gameRooms": []
+  "gameRooms": [],
+  "deletedPostIds": [
+    "post_1792928103845_ps921"
+  ]
 }
