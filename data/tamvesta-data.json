@@ -740,7 +740,23 @@
   "quizAttempts": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
-  "passwordResetRequests": [],
+  "passwordResetRequests": [
+    {
+      "id": "pr_1792917912367",
+      "ticketNumber": "TKT-518981",
+      "userId": "user_siswa_siswa_smp7a_002",
+      "username": "siswa.smp7a.002",
+      "name": "Bunga Pertiwi",
+      "kelas": "VII-A SMP",
+      "role": "siswa",
+      "reason": "Lupa sandi lama",
+      "status": "pending",
+      "newPasswordHash": "dfac6cdadcd942367b213d896292beefecd679ca173fa2254be7f43577baec79aaad98ee060679f21dfc9a483ad0c255313570d2de247b5b194f41b73107e23f",
+      "newSalt": "74e3e27276868a01b89db48080b8ed99",
+      "newPassword": "BungaBaru123",
+      "createdAt": "2026-10-25T08:45:12.367Z"
+    }
+  ],
   "posts": [
     {
       "id": "post_1792916695729_49qnk",
