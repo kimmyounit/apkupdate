@@ -1,4 +1,10 @@
-import { offlineStore } from './offlineStore.ts';
+import {
+  offlineStore,
+  getPermanentAvatar,
+  savePermanentAvatar,
+  getPermanentBio,
+  savePermanentBio,
+} from './offlineStore.ts';
 import type {
   User,
   Subject,
@@ -271,6 +277,12 @@ export const api = {
     } catch (_) {}
 
     try {
+      const channel = new BroadcastChannel('tamvesta_admin_sync');
+      channel.postMessage({ type: 'REFRESH_ALL', timestamp: Date.now() });
+      channel.close();
+    } catch (_) {}
+
+    try {
       const res = await tryServerRequest<{ message: string; user: User }>('/api/users/profile', {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -398,19 +410,43 @@ export const api = {
     localStudents.forEach((ls) => {
       const cleanU = (ls.username || '').toLowerCase().replace(/^@+/, '');
       if (!deletedIds.includes(ls.id) && !deletedIds.includes(cleanU)) {
-        studentMap.set(cleanU, ls);
+        const permAvatar = getPermanentAvatar(ls.id, ls.username);
+        const permBio = getPermanentBio(ls.id, ls.username);
+        studentMap.set(cleanU, {
+          ...ls,
+          avatarUrl: permAvatar || ls.avatarUrl,
+          bio: permBio !== null && permBio !== undefined ? permBio : ls.bio,
+        });
       }
     });
 
-    // 2. Merge server students
+    // 2. Merge server students: ALWAYS update with latest server data (photo, bio, phone, email)!
     if (Array.isArray(serverStudents) && serverStudents.length > 0) {
       serverStudents.forEach((ss) => {
         const cleanU = (ss.username || '').toLowerCase().replace(/^@+/, '');
         if (!deletedIds.includes(ss.id) && !deletedIds.includes(cleanU)) {
-          if (!studentMap.has(cleanU)) {
-            studentMap.set(cleanU, ss);
-            offlineStore.syncStudentEntity(ss);
-          }
+          const existing = studentMap.get(cleanU);
+          const permAvatar = getPermanentAvatar(ss.id, ss.username);
+          const permBio = getPermanentBio(ss.id, ss.username);
+          const finalAvatar = ss.avatarUrl || (existing ? existing.avatarUrl : null) || permAvatar;
+          const finalBio = ss.bio || (existing ? existing.bio : null) || permBio;
+          const finalPhone = ss.phone || (existing ? existing.phone : undefined);
+          const finalEmail = ss.email || (existing ? existing.email : undefined);
+
+          const merged: User = {
+            ...(existing || {}),
+            ...ss,
+            avatarUrl: finalAvatar || ss.avatarUrl,
+            bio: finalBio || ss.bio,
+            phone: finalPhone,
+            email: finalEmail,
+          };
+
+          if (finalAvatar) savePermanentAvatar(ss.id, ss.username, finalAvatar);
+          if (finalBio !== undefined && finalBio !== null) savePermanentBio(ss.id, ss.username, finalBio);
+
+          studentMap.set(cleanU, merged);
+          offlineStore.syncStudentEntity(merged);
         }
       });
     }

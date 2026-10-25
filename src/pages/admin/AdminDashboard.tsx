@@ -40,6 +40,12 @@ import {
   Filter,
   RefreshCw,
   X,
+  Phone,
+  Mail,
+  MessageCircle,
+  Send,
+  Contact,
+  Share2,
 } from 'lucide-react';
 import { api } from '../../lib/api.ts';
 import type {
@@ -56,7 +62,7 @@ import { StudentProfileModal } from '../../components/StudentProfileModal.tsx';
 import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
 import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
 
-type AdminTab = 'students' | 'staff' | 'subjects' | 'library' | 'announcements' | 'quizzes' | 'events' | 'tickets';
+type AdminTab = 'students' | 'contacts' | 'staff' | 'subjects' | 'library' | 'announcements' | 'quizzes' | 'events' | 'tickets';
 
 export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpenScanner }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('students');
@@ -77,12 +83,24 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   const [studentKelasFilter, setStudentKelasFilter] = useState<string>('all');
   const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
 
+  // --- Student Contact Management State ---
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactKelasFilter, setContactKelasFilter] = useState('all');
+  const [contactStatusFilter, setContactStatusFilter] = useState<'all' | 'complete' | 'phone_only' | 'email_only' | 'missing'>('all');
+  const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [editingContactStudent, setEditingContactStudent] = useState<User | null>(null);
+  const [editContactPhone, setEditContactPhone] = useState('');
+  const [editContactEmail, setEditContactEmail] = useState('');
+  const [savingContact, setSavingContact] = useState(false);
+
   // Edit Student Modal state
   const [editingStudent, setEditingStudent] = useState<User | null>(null);
   const [editFormName, setEditFormName] = useState('');
   const [editFormGender, setEditFormGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
   const [editFormKelas, setEditFormKelas] = useState('');
   const [editFormUsername, setEditFormUsername] = useState('');
+  const [editFormPhone, setEditFormPhone] = useState('');
+  const [editFormEmail, setEditFormEmail] = useState('');
   const [editStudentLoading, setEditStudentLoading] = useState(false);
 
   // Delete Student Modal state
@@ -891,6 +909,8 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     setEditFormGender(stu.gender || 'Laki-laki');
     setEditFormKelas(stu.kelas || 'Kelas 7');
     setEditFormUsername(stu.username);
+    setEditFormPhone(stu.phone || '');
+    setEditFormEmail(stu.email || '');
   };
 
   const handleSaveEditStudent = async (e: React.FormEvent) => {
@@ -903,6 +923,8 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         gender: editFormGender,
         kelas: editFormKelas.trim(),
         username: editFormUsername.trim().toLowerCase(),
+        phone: editFormPhone.trim() || undefined,
+        email: editFormEmail.trim() || undefined,
       });
       alert('Data profil siswa berhasil diperbarui!');
       setEditingStudent(null);
@@ -1180,6 +1202,82 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     }
   };
 
+  // --- 7. STUDENT CONTACT ACTIONS ---
+  const handleCopyContact = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedItem(key);
+    setTimeout(() => setCopiedItem(null), 2500);
+  };
+
+  const handleCopyAllPhones = () => {
+    const validPhones = filteredContacts
+      .map((s) => s.phone?.trim())
+      .filter((p): p is string => Boolean(p && p.length >= 7));
+    if (validPhones.length === 0) {
+      alert('Tidak ada nomor WhatsApp yang tersedia pada daftar kontak saat ini.');
+      return;
+    }
+    const joined = validPhones.join(', ');
+    navigator.clipboard.writeText(joined);
+    setCopiedItem('all_phones');
+    setTimeout(() => setCopiedItem(null), 3000);
+  };
+
+  const handleExportContacts = () => {
+    if (filteredContacts.length === 0) {
+      alert('Tidak ada data kontak siswa yang sesuai filter untuk diekspor.');
+      return;
+    }
+    const data = filteredContacts.map((s, idx) => ({
+      'No': idx + 1,
+      'Nama Siswa': s.name,
+      'Username': `@${s.username}`,
+      'Kelas': s.kelas || '-',
+      'Nomor WhatsApp / HP': s.phone || '-',
+      'Format Internasional WA': s.phone ? (s.phone.startsWith('0') ? `62${s.phone.slice(1)}` : s.phone) : '-',
+      'Alamat Gmail': s.email || '-',
+      'Bio Profil': s.bio || '-',
+      'Status Kontak': s.phone && s.email ? 'Lengkap (WA & Gmail)' : s.phone ? 'Hanya WhatsApp' : s.email ? 'Hanya Gmail' : 'Belum Ada Kontak',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Kontak Siswa TAMVESTA');
+    XLSX.writeFile(wb, `Kontak_Siswa_TAMVESTA_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const handleOpenEditContact = (stu: User) => {
+    setEditingContactStudent(stu);
+    setEditContactPhone(stu.phone || '');
+    setEditContactEmail(stu.email || '');
+  };
+
+  const handleSaveEditContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingContactStudent) return;
+    setSavingContact(true);
+    try {
+      await api.updateStudent(editingContactStudent.id, {
+        phone: editContactPhone.trim(),
+        email: editContactEmail.trim(),
+      });
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === editingContactStudent.id
+            ? { ...s, phone: editContactPhone.trim(), email: editContactEmail.trim() }
+            : s
+        )
+      );
+      setEditingContactStudent(null);
+      notifyMultiDeviceSync();
+      alert('Kontak siswa berhasil diperbarui.');
+    } catch (err: any) {
+      alert(err.message || 'Gagal menyimpan kontak siswa.');
+    } finally {
+      setSavingContact(false);
+    }
+  };
+
   const filteredStudents = students.filter((s) => {
     const matchesSearch =
       s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -1206,6 +1304,27 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       staffRoleFilter === 'all' || staff.role === staffRoleFilter;
 
     return matchesQuery && matchesRole;
+  });
+
+  const filteredContacts = students.filter((s) => {
+    const q = contactSearch.toLowerCase();
+    const matchesSearch =
+      !contactSearch ||
+      s.name.toLowerCase().includes(q) ||
+      s.username.toLowerCase().includes(q) ||
+      (s.phone && s.phone.includes(contactSearch)) ||
+      (s.email && s.email.toLowerCase().includes(q)) ||
+      (s.kelas && s.kelas.toLowerCase().includes(q));
+
+    const matchesKelas = contactKelasFilter === 'all' || s.kelas === contactKelasFilter;
+
+    let matchesStatus = true;
+    if (contactStatusFilter === 'complete') matchesStatus = Boolean(s.phone && s.email);
+    else if (contactStatusFilter === 'phone_only') matchesStatus = Boolean(s.phone && !s.email);
+    else if (contactStatusFilter === 'email_only') matchesStatus = Boolean(!s.phone && s.email);
+    else if (contactStatusFilter === 'missing') matchesStatus = Boolean(!s.phone && !s.email);
+
+    return matchesSearch && matchesKelas && matchesStatus;
   });
 
   return (
@@ -1252,7 +1371,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       </div>
 
       {/* Admin Tabs */}
-      <div className="bg-white rounded-2xl p-1.5 shadow-sm border border-slate-200 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5">
+      <div className="bg-white rounded-2xl p-1.5 shadow-sm border border-slate-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-1.5">
         <button
           onClick={() => setActiveTab('students')}
           className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition ${
@@ -1261,6 +1380,23 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         >
           <Users className="w-4 h-4 shrink-0" />
           <span className="truncate">Akun Siswa</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('contacts')}
+          className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition ${
+            activeTab === 'contacts' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <Phone className="w-4 h-4 shrink-0" />
+          <span className="truncate">Kontak Siswa</span>
+          {students.filter((s) => s.phone || s.email).length > 0 && (
+            <span className={`ml-1 px-1.5 py-0.2 rounded-full text-[9px] font-black ${
+              activeTab === 'contacts' ? 'bg-white text-emerald-800' : 'bg-emerald-100 text-emerald-800'
+            }`}>
+              {students.filter((s) => s.phone || s.email).length}
+            </span>
+          )}
         </button>
 
         <button
@@ -1728,6 +1864,358 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                         </td>
                       </tr>
                     ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: BUKU KONTAK & DATABASE NOMOR/EMAIL SISWA */}
+      {activeTab === 'contacts' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Official Contact Banner */}
+          <div className="bg-gradient-to-r from-teal-900 via-emerald-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-emerald-700/40">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10 space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-xs font-bold text-emerald-200 border border-white/15">
+                <Phone className="w-4 h-4 text-amber-300" />
+                <span>DATABASE RESMI • BUKU KONTAK SISWA TAMVESTA</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                Buku Kontak & Saluran Komunikasi Siswa
+              </h2>
+              <p className="text-xs sm:text-sm text-emerald-100 max-w-3xl leading-relaxed">
+                Database nomor WhatsApp dan akun Gmail siswa untuk koordinasi sekolah, wali kelas, guru piket, dan notifikasi resmi. Data kontak terisi otomatis saat siswa pertama kali masuk aplikasi atau memperbarui profil mereka.
+              </p>
+
+              {/* Statistics Chips */}
+              <div className="pt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+                <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 text-center">
+                  <span className="block text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Total Siswa</span>
+                  <span className="text-xl font-black text-white">{students.length}</span>
+                </div>
+                <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 text-center">
+                  <span className="block text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Kontak Lengkap</span>
+                  <span className="text-xl font-black text-emerald-300">{students.filter((s) => s.phone && s.email).length}</span>
+                </div>
+                <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 text-center">
+                  <span className="block text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Ada WhatsApp</span>
+                  <span className="text-xl font-black text-teal-300">{students.filter((s) => s.phone).length}</span>
+                </div>
+                <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 text-center">
+                  <span className="block text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Ada Gmail</span>
+                  <span className="text-xl font-black text-cyan-300">{students.filter((s) => s.email).length}</span>
+                </div>
+                <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 text-center col-span-2 sm:col-span-1">
+                  <span className="block text-[10px] text-rose-200 font-bold uppercase tracking-wider">Belum Isi Kontak</span>
+                  <span className="text-xl font-black text-rose-300">{students.filter((s) => !s.phone && !s.email).length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Controls: Search, Filters, Bulk Copy, Export */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2.5 flex-1">
+                {/* Search */}
+                <div className="relative min-w-[240px] flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    value={contactSearch}
+                    onChange={(e) => setContactSearch(e.target.value)}
+                    placeholder="Cari siswa, username, nomor WA, gmail, kelas..."
+                    className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                  />
+                  {contactSearch && (
+                    <button
+                      onClick={() => setContactSearch('')}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Kelas */}
+                <div className="w-full sm:w-auto">
+                  <select
+                    value={contactKelasFilter}
+                    onChange={(e) => setContactKelasFilter(e.target.value)}
+                    className="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="all">Semua Kelas</option>
+                    {Array.from(new Set(students.map((s) => s.kelas).filter(Boolean))).sort().map((k) => (
+                      <option key={k} value={k}>{k}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Filter Status Kontak */}
+                <div className="w-full sm:w-auto">
+                  <select
+                    value={contactStatusFilter}
+                    onChange={(e) => setContactStatusFilter(e.target.value as any)}
+                    className="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="all">Semua Status Kontak</option>
+                    <option value="complete">Lengkap (WA & Gmail)</option>
+                    <option value="phone_only">Hanya Nomor WhatsApp</option>
+                    <option value="email_only">Hanya Alamat Gmail</option>
+                    <option value="missing">Belum Mengisi Kontak</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Action Buttons: Bulk Copy & Export */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleCopyAllPhones}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-black transition active:scale-95"
+                  title="Salin seluruh nomor WA siswa yang tampil untuk broadcast WA"
+                >
+                  {copiedItem === 'all_phones' ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span>Tersalin!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 text-emerald-600" />
+                      <span>Salin Semua Nomor WA</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleExportContacts}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-black shadow-md transition active:scale-95"
+                  title="Unduh seluruh data kontak siswa ke dalam file Excel"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-teal-200" />
+                  <span>Export Kontak (.xlsx)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="p-3 text-center w-10">No</th>
+                    <th className="p-3">Foto Profil & Siswa</th>
+                    <th className="p-3">Kelas</th>
+                    <th className="p-3">Nomor WhatsApp / HP</th>
+                    <th className="p-3">Alamat Gmail</th>
+                    <th className="p-3">Bio Profil Siswa</th>
+                    <th className="p-3 text-center">Status Kontak</th>
+                    <th className="p-3 text-center">Aksi Hubungi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {filteredContacts.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-10 text-center text-slate-400 italic">
+                        Tidak ada data kontak siswa yang sesuai dengan filter atau kata kunci pencarian.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredContacts.map((stu, cIdx) => {
+                      const cleanPhone = (stu.phone || '').trim().replace(/[^0-9+]/g, '');
+                      let waPhone = cleanPhone;
+                      if (waPhone.startsWith('0')) waPhone = '62' + waPhone.slice(1);
+                      else if (waPhone.startsWith('+')) waPhone = waPhone.slice(1);
+
+                      return (
+                        <tr key={stu.id} className="hover:bg-slate-50/80 transition">
+                          <td className="p-3 text-center font-bold text-slate-400">
+                            {cIdx + 1}
+                          </td>
+                          <td className="p-3">
+                            <div className="flex items-center gap-2.5">
+                              {/* Avatar with click to zoom */}
+                              <div
+                                className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0 hover:ring-2 ring-emerald-500 transition relative cursor-zoom-in group shadow-xs"
+                                onClick={() =>
+                                  setLightboxImage({
+                                    url: stu.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(stu.name)}&backgroundColor=0284c7`,
+                                    title: `Foto Profil • ${stu.name}`,
+                                  })
+                                }
+                                title="Klik untuk memperbesar foto profil"
+                              >
+                                <img
+                                  src={stu.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(stu.name)}&backgroundColor=0284c7`}
+                                  alt={stu.name}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition duration-200"
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className="font-bold text-slate-900 hover:text-emerald-700 cursor-pointer transition truncate"
+                                    onClick={() => setPreviewQrStudent(stu)}
+                                    title="Klik untuk membuka kartu profil lengkap"
+                                  >
+                                    {stu.name}
+                                  </span>
+                                  {stu.isVerified && <VerifiedBadge size="sm" />}
+                                </div>
+                                <span className="text-[11px] font-mono text-emerald-800">
+                                  @{stu.username}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-bold text-[11px] border border-slate-200">
+                              {stu.kelas || '-'}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            {stu.phone ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                                  <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <span>{stu.phone}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <a
+                                    href={`https://wa.me/${waPhone}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black transition active:scale-95"
+                                    title="Langsung chat siswa via WhatsApp Web / App"
+                                  >
+                                    <MessageCircle className="w-3 h-3" />
+                                    <span>Chat WA</span>
+                                    <ExternalLink className="w-2.5 h-2.5 opacity-80" />
+                                  </a>
+                                  <button
+                                    onClick={() => handleCopyContact(stu.phone!, `phone_${stu.id}`)}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition"
+                                    title="Salin nomor WhatsApp"
+                                  >
+                                    {copiedItem === `phone_${stu.id}` ? (
+                                      <>
+                                        <Check className="w-3 h-3 text-emerald-600" />
+                                        <span className="text-emerald-700">Tersalin</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="w-3 h-3 text-slate-500" />
+                                        <span>Salin</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic text-[11px] flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                Belum diisi
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {stu.email ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 text-slate-800 font-medium truncate max-w-[200px]" title={stu.email}>
+                                  <Mail className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+                                  <span className="truncate">{stu.email}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <a
+                                    href={`mailto:${stu.email}`}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-[10px] font-black transition active:scale-95"
+                                    title="Kirim email langsung melalui aplikasi email default"
+                                  >
+                                    <Send className="w-3 h-3" />
+                                    <span>Kirim Email</span>
+                                  </a>
+                                  <button
+                                    onClick={() => handleCopyContact(stu.email!, `email_${stu.id}`)}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition"
+                                    title="Salin alamat email"
+                                  >
+                                    {copiedItem === `email_${stu.id}` ? (
+                                      <>
+                                        <Check className="w-3 h-3 text-cyan-600" />
+                                        <span className="text-cyan-700">Tersalin</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="w-3 h-3 text-slate-500" />
+                                        <span>Salin</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic text-[11px] flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                Belum diisi
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 max-w-[220px]">
+                            {stu.bio ? (
+                              <p className="text-slate-600 text-[11px] italic line-clamp-2" title={stu.bio}>
+                                “{stu.bio}”
+                              </p>
+                            ) : (
+                              <span className="text-slate-400 italic text-[11px]">
+                                Belum menulis bio profil
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-center">
+                            {stu.phone && stu.email ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                Lengkap
+                              </span>
+                            ) : stu.phone ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-teal-100 text-teal-800 border border-teal-200">
+                                Ada WA
+                              </span>
+                            ) : stu.email ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-cyan-100 text-cyan-800 border border-cyan-200">
+                                Ada Gmail
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                                Belum Ada
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => handleOpenEditContact(stu)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition"
+                                title="Perbarui / tambahkan nomor WhatsApp & Gmail siswa"
+                              >
+                                <Edit2 className="w-3 h-3 text-emerald-600" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => setPreviewQrStudent(stu)}
+                                className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition"
+                                title="Lihat profil lengkap dan QR Code siswa"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -2848,6 +3336,96 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs"
                 >
                   {editStudentLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT KONTAK SISWA */}
+      {editingContactStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-emerald-600" />
+                  <span>Edit Kontak Siswa</span>
+                </h3>
+                <p className="text-xs text-slate-500">Perbarui nomor WhatsApp dan email untuk {editingContactStudent.name}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingContactStudent(null)}
+                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditContact} className="space-y-4">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-white border border-slate-200 shrink-0">
+                  <img
+                    src={editingContactStudent.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(editingContactStudent.name)}&backgroundColor=0284c7`}
+                    alt={editingContactStudent.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-xs text-slate-900 truncate">{editingContactStudent.name}</h4>
+                  <p className="text-[11px] text-slate-500 font-mono">@{editingContactStudent.username} • {editingContactStudent.kelas || 'Belum ada kelas'}</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nomor WhatsApp / HP
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <input
+                    type="tel"
+                    value={editContactPhone}
+                    onChange={(e) => setEditContactPhone(e.target.value)}
+                    placeholder="Contoh: 081234567890"
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Gunakan format 08... atau 62...</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Alamat Gmail / Email
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <input
+                    type="email"
+                    value={editContactEmail}
+                    onChange={(e) => setEditContactEmail(e.target.value)}
+                    placeholder="Contoh: siswa@gmail.com"
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingContactStudent(null)}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingContact}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md transition disabled:opacity-50"
+                >
+                  {savingContact ? 'Menyimpan...' : 'Simpan Kontak'}
                 </button>
               </div>
             </form>

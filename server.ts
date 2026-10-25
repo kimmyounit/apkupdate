@@ -70,8 +70,6 @@ app.get('/api/users/public-sync', (_req, res) => {
     return res.status(500).json({ error: 'Gagal mengambil data users' });
   }
 });
-  }
-});
 
 // -------------------------------------------------------------
 // Endpoint Unduh Langsung APK Android
@@ -347,8 +345,8 @@ app.patch('/api/admin/students/:id/toggle-active', authMiddleware, requireRole([
 // DELETE /api/admin/students/:id
 app.put('/api/admin/students/:id', authMiddleware, requireRole(['admin']), (req, res) => {
   const { id } = req.params;
-  const { name, gender, kelas, username } = req.body;
-  const result = db.updateStudent(id, { name, gender, kelas, username });
+  const { name, gender, kelas, username, phone, email, bio } = req.body;
+  const result = db.updateStudent(id, { name, gender, kelas, username, phone, email, bio });
   if (!result.success) {
     return res.status(400).json({ error: result.error });
   }

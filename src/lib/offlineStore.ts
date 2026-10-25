@@ -1453,6 +1453,16 @@ export const offlineStore = {
         u.username = data.username.trim().toLowerCase();
         u.qrToken = `TAMVESTA:STUDENT:${u.username}`;
       }
+      if (data.phone !== undefined) u.phone = data.phone;
+      if (data.email !== undefined) u.email = data.email;
+      if (data.bio !== undefined) {
+        u.bio = data.bio;
+        savePermanentBio(u.id, u.username, data.bio);
+      }
+      if (data.avatarUrl !== undefined) {
+        u.avatarUrl = data.avatarUrl;
+        savePermanentAvatar(u.id, u.username, data.avatarUrl);
+      }
       u.updatedAt = new Date().toISOString();
       saveDB(db);
     }

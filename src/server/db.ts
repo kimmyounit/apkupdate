@@ -871,7 +871,7 @@ class DatabaseManager {
     return { success: true, user: newUser };
   }
 
-  public updateStudent(id: string, data: { name?: string; gender?: 'Laki-laki' | 'Perempuan'; kelas?: string; username?: string }): { success: boolean; user?: User; error?: string } {
+  public updateStudent(id: string, data: { name?: string; gender?: 'Laki-laki' | 'Perempuan'; kelas?: string; username?: string; phone?: string; email?: string; bio?: string }): { success: boolean; user?: User; error?: string } {
     const user = this.findUserById(id);
     if (!user || user.role !== 'siswa') return { success: false, error: 'Data siswa tidak ditemukan.' };
 
@@ -887,6 +887,9 @@ class DatabaseManager {
     if (data.name && data.name.trim()) user.name = data.name.trim();
     if (data.gender) user.gender = data.gender;
     if (data.kelas) user.kelas = data.kelas.trim();
+    if (data.phone !== undefined) user.phone = data.phone.trim();
+    if (data.email !== undefined) user.email = data.email.trim();
+    if (data.bio !== undefined) user.bio = data.bio.trim();
     user.updatedAt = new Date().toISOString();
     this.save();
     return { success: true, user };
