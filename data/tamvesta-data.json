@@ -441,23 +441,6 @@
       "password": "Siswa6A001"
     },
     {
-      "id": "user_siswa_siswa_sd6a_002",
-      "username": "siswa.sd6a.002",
-      "name": "Aldi Firmansyah",
-      "role": "siswa",
-      "kelas": "VI-A SD",
-      "gender": "Laki-laki",
-      "initialPassword": "Siswa6A002",
-      "passwordHash": "d9b2a27b34b3459801198e764b7654e4d99029b58dc1b679ee5f13b0643affe7fe3efee2dff1d7f7c879e5716947f7cf2e411f465deed3c467a1b8062c485968",
-      "salt": "84ed134e6ca9a677e4c8a3d0f50c3535",
-      "mustChangePassword": false,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd6a_002:43a3e7f44cf5224d",
-      "createdAt": "2026-10-24T08:22:46.804Z",
-      "updatedAt": "2026-10-24T08:22:46.804Z",
-      "password": "Siswa6A002"
-    },
-    {
       "id": "user_staff_bambang_kepsek",
       "username": "bambang.kepsek",
       "name": "ST Bambang Sapto Nugroho S.Pd",
@@ -749,5 +732,9 @@
   "tuDocuments": [],
   "tuChatMessages": [],
   "tuMonthlyReports": [],
-  "gameRooms": []
+  "gameRooms": [],
+  "deletedUserIds": [
+    "user_siswa_siswa_sd6a_002",
+    "siswa.sd6a.002"
+  ]
 }
