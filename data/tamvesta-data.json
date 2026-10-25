@@ -885,9 +885,5 @@
   "tuDocuments": [],
   "tuChatMessages": [],
   "tuMonthlyReports": [],
-  "gameRooms": [],
-  "deletedUserIds": [
-    "user_siswa_siswa_smp7a_001",
-    "siswa.smp7a.001"
-  ]
+  "gameRooms": []
 }
