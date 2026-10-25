@@ -720,5 +720,6 @@
   "tuitionBills": [],
   "tuitionTransactions": [],
   "tuDocuments": [],
-  "tuChatMessages": []
+  "tuChatMessages": [],
+  "tuMonthlyReports": []
 }
