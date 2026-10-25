@@ -22,18 +22,19 @@
       "role": "siswa",
       "kelas": "VII-A SMP",
       "gender": "Perempuan",
-      "initialPassword": "Siswa7A002",
-      "passwordHash": "ecf000a1f3f71f553369e71389a4ef281d77a7899521c5c1cba2013a5e552a84249139cc3603a8a110589db062b9b3645b3a955906506754ebaa385c7a85179c",
-      "salt": "319cb080d8075f5c285297a01674fb70",
+      "initialPassword": "BungaBaru123",
+      "passwordHash": "dfac6cdadcd942367b213d896292beefecd679ca173fa2254be7f43577baec79aaad98ee060679f21dfc9a483ad0c255313570d2de247b5b194f41b73107e23f",
+      "salt": "74e3e27276868a01b89db48080b8ed99",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
       "createdAt": "2026-10-24T08:22:46.353Z",
-      "updatedAt": "2026-10-25T09:18:48.367Z",
-      "password": "Siswa7A002",
+      "updatedAt": "2026-10-25T09:18:50.875Z",
+      "password": "BungaBaru123",
       "phone": "081234567890",
       "email": "bunga.pertiwi@gmail.com",
-      "bio": "Siswa SMP Tamansiswa Batam"
+      "bio": "Siswa SMP Tamansiswa Batam",
+      "passwordChanged": true
     },
     {
       "id": "user_siswa_siswa_smp7a_003",
@@ -750,11 +751,14 @@
       "kelas": "VII-A SMP",
       "role": "siswa",
       "reason": "Lupa sandi lama",
-      "status": "pending",
+      "status": "approved",
       "newPasswordHash": "dfac6cdadcd942367b213d896292beefecd679ca173fa2254be7f43577baec79aaad98ee060679f21dfc9a483ad0c255313570d2de247b5b194f41b73107e23f",
       "newSalt": "74e3e27276868a01b89db48080b8ed99",
       "newPassword": "BungaBaru123",
-      "createdAt": "2026-10-25T08:45:12.367Z"
+      "createdAt": "2026-10-25T08:45:12.367Z",
+      "processedAt": "2026-10-25T09:18:50.868Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "Disetujui Admin Tamansiswa"
     }
   ],
   "posts": [
@@ -774,7 +778,20 @@
   ],
   "stories": [],
   "notes": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif_1792919930876_79z7v",
+      "title": "Pengajuan Ganti Sandi Disetujui",
+      "message": "Pengajuan ganti sandi Anda (Tiket: TKT-518981) telah DISETUJUI oleh Admin. Silakan masuk menggunakan kata sandi baru.",
+      "type": "security",
+      "isImportant": false,
+      "linkType": "none",
+      "targetUserId": "user_siswa_siswa_smp7a_002",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-25T09:18:50.876Z"
+    }
+  ],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
