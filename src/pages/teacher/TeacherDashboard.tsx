@@ -54,6 +54,55 @@ import { useAuth } from '../../context/AuthContext.tsx';
 
 type TeacherTab = 'articles' | 'attendance' | 'quizzes';
 
+// Helper pemetaan tingkat kelas 1 - 9 (SD & SMP) untuk pencarian siswa akurat
+const getGradeNumber = (str: string): number | null => {
+  if (!str) return null;
+  const s = str.toUpperCase();
+  // Evaluasi angka romawi terpanjang lebih dahulu
+  if (/\bVIII\b|VIII[-_ ]|GRADE[-_ ]?8/.test(s)) return 8;
+  if (/\bVII\b|VII[-_ ]|GRADE[-_ ]?7/.test(s)) return 7;
+  if (/\bIX\b|IX[-_ ]|GRADE[-_ ]?9/.test(s)) return 9;
+  if (/\bVI\b|VI[-_ ]|GRADE[-_ ]?6/.test(s)) return 6;
+  if (/\bIV\b|IV[-_ ]|GRADE[-_ ]?4/.test(s)) return 4;
+  if (/\bV\b|V[-_ ]|GRADE[-_ ]?5/.test(s)) return 5;
+  if (/\bIII\b|III[-_ ]|GRADE[-_ ]?3/.test(s)) return 3;
+  if (/\bII\b|II[-_ ]|GRADE[-_ ]?2/.test(s)) return 2;
+  if (/\bI\b|I[-_ ]|GRADE[-_ ]?1/.test(s)) return 1;
+  const digitMatch = s.match(/(?:KELAS|TINGKAT|GRADE|\b)[ ]?([1-9])\b/);
+  if (digitMatch) return parseInt(digitMatch[1], 10);
+  return null;
+};
+
+const getSectionLetter = (str: string): string | null => {
+  if (!str) return null;
+  const s = str.toUpperCase();
+  const m = s.match(/(?:VIII|VII|IX|VI|IV|III|II|V|I|[1-9])[-_ ]?([A-Z])\b/);
+  return m ? m[1] : null;
+};
+
+const isStudentInSelectedClass = (stuKelasRaw: string, selKelasRaw: string): boolean => {
+  const stu = (stuKelasRaw || '').trim();
+  const sel = (selKelasRaw || '').trim();
+  if (!stu || !sel) return false;
+  if (stu.toLowerCase() === sel.toLowerCase()) return true;
+
+  const stuGrade = getGradeNumber(stu);
+  const selGrade = getGradeNumber(sel);
+  if (stuGrade === null || selGrade === null || stuGrade !== selGrade) {
+    return false;
+  }
+
+  // Jika guru memilih rombel spesifik (misal VII-A atau VII-B)
+  const selSection = getSectionLetter(sel);
+  const stuSection = getSectionLetter(stu);
+  if (selSection) {
+    return stuSection === selSection;
+  }
+
+  // Jika guru memilih tingkat umum (misal Kelas 1 atau Kelas 7), cocokkan semua rombel tingkat tersebut
+  return true;
+};
+
 export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpenScanner }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TeacherTab>('articles');
@@ -113,7 +162,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
 
   // --- Attendance State ---
   const [allStudents, setAllStudents] = useState<User[]>([]);
-  const [selectedKelas, setSelectedKelas] = useState<string>('X TKJ 1');
+  const [selectedKelas, setSelectedKelas] = useState<string>('Kelas 7');
   const [attendanceDate, setAttendanceDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -128,38 +177,40 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   const [globalSuccess, setGlobalSuccess] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
 
-  // Comprehensive classes list for SD, SMP, and SMK
+  // Daftar tingkat kelas resmi Perguruan Tamansiswa Batam (Kelas 1 - 9)
   const defaultClassList = [
-    // SD (Sekolah Dasar)
+    // SD (Kelas 1 - 6)
+    'Kelas 1',
     'Kelas 1 SD',
+    'I-A SD',
+    'Kelas 2',
     'Kelas 2 SD',
+    'II-A SD',
+    'Kelas 3',
     'Kelas 3 SD',
+    'III-A SD',
+    'Kelas 4',
     'Kelas 4 SD',
+    'IV-A SD',
+    'Kelas 5',
     'Kelas 5 SD',
+    'V-A SD',
+    'Kelas 6',
     'Kelas 6 SD',
-    // SMP (Sekolah Menengah Pertama)
+    'VI-A SD',
+    // SMP (Kelas 7 - 9)
+    'Kelas 7',
+    'Kelas 7 SMP',
     'VII-A SMP',
     'VII-B SMP',
+    'Kelas 8',
+    'Kelas 8 SMP',
     'VIII-A SMP',
     'VIII-B SMP',
+    'Kelas 9',
+    'Kelas 9 SMP',
     'IX-A SMP',
     'IX-B SMP',
-    'Kelas 7 SMP',
-    'Kelas 8 SMP',
-    'Kelas 9 SMP',
-    // SMK (Sekolah Menengah Kejuruan)
-    'X TKJ 1',
-    'X TKJ 2',
-    'X RPL 1',
-    'X RPL 2',
-    'XI TKJ 1',
-    'XI TKJ 2',
-    'XI RPL 1',
-    'XI RPL 2',
-    'XII TKJ 1',
-    'XII TKJ 2',
-    'XII RPL 1',
-    'XII RPL 2',
   ];
 
   // Dynamic classList combining presets and actual student data
@@ -469,13 +520,11 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   };
 
   // ===================== ATTENDANCE HANDLERS =====================
-  // Filter students by selected class
+  // Filter students by selected class (mendukung tingkat 1 - 9 serta rombel spesifik)
   const classStudents = allStudents.filter(
     (stu) => {
       if (stu.isAlumni) return false;
-      const k = (stu.kelas || '').trim().toLowerCase();
-      const sel = selectedKelas.trim().toLowerCase();
-      return k === sel || (sel.startsWith('kelas ') && k === sel.replace('kelas ', '')) || (k.startsWith('kelas ') && sel === k.replace('kelas ', ''));
+      return isStudentInSelectedClass(stu.kelas || '', selectedKelas);
     }
   );
 
@@ -1054,7 +1103,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                     <span>Pencatatan Presensi & Absensi Siswa Per Kelas</span>
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Pilih kelas (SD, SMP, SMK), lampirkan file absen, ekspor berkas, dan otomatis ter-backup di aplikasi.
+                    Pilih tingkat / kelas (Kelas 1 s/d 9 SD & SMP), lampirkan file absen, ekspor berkas, dan otomatis ter-backup di aplikasi.
                   </p>
                 </div>
 
@@ -1072,28 +1121,63 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                 <div className="flex flex-wrap items-center gap-2.5">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                      Pilih Tingkat / Kelas
+                      Pilih Tingkat / Kelas (Kelas 1 - 9)
                     </label>
                     <select
                       value={selectedKelas}
                       onChange={(e) => setSelectedKelas(e.target.value)}
                       className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-2xs"
                     >
-                      <optgroup label="Tingkat SD (Sekolah Dasar)">
-                        {classList.filter((k) => k.includes('SD')).map((kls) => (
-                          <option key={kls} value={kls}>{kls}</option>
-                        ))}
+                      <optgroup label="🏫 Tingkat SD (Sekolah Dasar) — Kelas 1 s/d 6">
+                        <option value="Kelas 1">Kelas 1 SD (Semua Rombel / I-A)</option>
+                        <option value="I-A SD">Kelas 1-A SD (I-A)</option>
+                        <option value="Kelas 2">Kelas 2 SD (Semua Rombel / II-A)</option>
+                        <option value="II-A SD">Kelas 2-A SD (II-A)</option>
+                        <option value="Kelas 3">Kelas 3 SD (Semua Rombel / III-A)</option>
+                        <option value="III-A SD">Kelas 3-A SD (III-A)</option>
+                        <option value="Kelas 4">Kelas 4 SD (Semua Rombel / IV-A)</option>
+                        <option value="IV-A SD">Kelas 4-A SD (IV-A)</option>
+                        <option value="Kelas 5">Kelas 5 SD (Semua Rombel / V-A)</option>
+                        <option value="V-A SD">Kelas 5-A SD (V-A)</option>
+                        <option value="Kelas 6">Kelas 6 SD (Semua Rombel / VI-A)</option>
+                        <option value="VI-A SD">Kelas 6-A SD (VI-A)</option>
                       </optgroup>
-                      <optgroup label="Tingkat SMP (Sekolah Menengah Pertama)">
-                        {classList.filter((k) => k.includes('SMP')).map((kls) => (
-                          <option key={kls} value={kls}>{kls}</option>
-                        ))}
+                      <optgroup label="🏫 Tingkat SMP (Sekolah Menengah Pertama) — Kelas 7 s/d 9">
+                        <option value="Kelas 7">Kelas 7 SMP (Semua Rombel VII-A & VII-B)</option>
+                        <option value="VII-A SMP">Kelas 7-A SMP (VII-A)</option>
+                        <option value="VII-B SMP">Kelas 7-B SMP (VII-B)</option>
+                        <option value="Kelas 8">Kelas 8 SMP (Semua Rombel VIII-A & VIII-B)</option>
+                        <option value="VIII-A SMP">Kelas 8-A SMP (VIII-A)</option>
+                        <option value="VIII-B SMP">Kelas 8-B SMP (VIII-B)</option>
+                        <option value="Kelas 9">Kelas 9 SMP (Semua Rombel IX-A & IX-B)</option>
+                        <option value="IX-A SMP">Kelas 9-A SMP (IX-A)</option>
+                        <option value="IX-B SMP">Kelas 9-B SMP (IX-B)</option>
                       </optgroup>
-                      <optgroup label="Tingkat SMK (Sekolah Menengah Kejuruan)">
-                        {classList.filter((k) => !k.includes('SD') && !k.includes('SMP')).map((kls) => (
-                          <option key={kls} value={kls}>{kls}</option>
-                        ))}
-                      </optgroup>
+                      {classList.filter(
+                        (k) =>
+                          !['kelas 1', 'kelas 2', 'kelas 3', 'kelas 4', 'kelas 5', 'kelas 6', 'kelas 7', 'kelas 8', 'kelas 9',
+                            'kelas 1 sd', 'kelas 2 sd', 'kelas 3 sd', 'kelas 4 sd', 'kelas 5 sd', 'kelas 6 sd',
+                            'kelas 7 smp', 'kelas 8 smp', 'kelas 9 smp',
+                            'i-a sd', 'ii-a sd', 'iii-a sd', 'iv-a sd', 'v-a sd', 'vi-a sd',
+                            'vii-a smp', 'vii-b smp', 'viii-a smp', 'viii-b smp', 'ix-a smp', 'ix-b smp'
+                          ].includes(k.trim().toLowerCase())
+                      ).length > 0 && (
+                        <optgroup label="Kelas Lainnya / Tambahan">
+                          {classList
+                            .filter(
+                              (k) =>
+                                !['kelas 1', 'kelas 2', 'kelas 3', 'kelas 4', 'kelas 5', 'kelas 6', 'kelas 7', 'kelas 8', 'kelas 9',
+                                  'kelas 1 sd', 'kelas 2 sd', 'kelas 3 sd', 'kelas 4 sd', 'kelas 5 sd', 'kelas 6 sd',
+                                  'kelas 7 smp', 'kelas 8 smp', 'kelas 9 smp',
+                                  'i-a sd', 'ii-a sd', 'iii-a sd', 'iv-a sd', 'v-a sd', 'vi-a sd',
+                                  'vii-a smp', 'vii-b smp', 'viii-a smp', 'viii-b smp', 'ix-a smp', 'ix-b smp'
+                                ].includes(k.trim().toLowerCase())
+                            )
+                            .map((kls) => (
+                              <option key={kls} value={kls}>{kls}</option>
+                            ))}
+                        </optgroup>
+                      )}
                     </select>
                   </div>
 

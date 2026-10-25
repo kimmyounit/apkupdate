@@ -1443,7 +1443,7 @@ export const offlineStore = {
       id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       studentId: isStudent ? (user ? user.id : 'user_siswa_bintang') : (data.studentId || ''),
       studentName: isStudent ? (user ? user.name : 'Siswa') : (data.studentName || 'Siswa'),
-      studentKelas: isStudent ? (user?.kelas || user?.classGrade || 'X TKJ 1') : data.studentKelas,
+      studentKelas: isStudent ? (user?.kelas || user?.classGrade || 'VII-A SMP') : data.studentKelas,
       senderRole: isStudent ? 'siswa' : 'tata_usaha',
       senderName: user ? user.name : 'Pengguna',
       message: (data.message || '').trim(),
