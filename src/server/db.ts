@@ -74,21 +74,27 @@ export function hashPassword(password: string, salt?: string): { hash: string; s
 }
 
 export function verifyPassword(password: string, hash?: string, salt?: string, initialPassword?: string): boolean {
-  if (initialPassword && password.trim() === initialPassword.trim()) {
-    return true;
+  const pTrim = (password || '').trim();
+  if (initialPassword) {
+    const initTrim = initialPassword.trim();
+    if (pTrim === initTrim || pTrim.toLowerCase() === initTrim.toLowerCase()) {
+      return true;
+    }
   }
   if (!hash || !salt) {
     return false;
   }
   try {
-    const newHash = crypto.pbkdf2Sync(password.trim(), salt, 10000, 64, 'sha512').toString('hex');
+    const newHash = crypto.pbkdf2Sync(pTrim, salt, 10000, 64, 'sha512').toString('hex');
     const buf1 = Buffer.from(hash, 'hex');
     const buf2 = Buffer.from(newHash, 'hex');
-    if (buf1.length !== buf2.length) return false;
-    return crypto.timingSafeEqual(buf1, buf2);
+    if (buf1.length === buf2.length && crypto.timingSafeEqual(buf1, buf2)) {
+      return true;
+    }
   } catch {
     return false;
   }
+  return false;
 }
 
 export function generateQrToken(userId: string, username: string): string {
@@ -426,6 +432,21 @@ class DatabaseManager {
           );
           if (!existing) {
             this.data.users.push(ghUser);
+          } else {
+            if (ghUser.password) existing.password = ghUser.password;
+            if (ghUser.initialPassword) existing.initialPassword = ghUser.initialPassword;
+            if (ghUser.passwordHash) existing.passwordHash = ghUser.passwordHash;
+            if (ghUser.salt) existing.salt = ghUser.salt;
+            if (ghUser.passwordChanged !== undefined) existing.passwordChanged = ghUser.passwordChanged;
+            if (ghUser.phone) existing.phone = ghUser.phone;
+            if (ghUser.email) existing.email = ghUser.email;
+            if (ghUser.bio) existing.bio = ghUser.bio;
+            if (ghUser.profilePhoto) existing.profilePhoto = ghUser.profilePhoto;
+            if (ghUser.avatarUrl && (!existing.avatarUrl || existing.avatarUrl.includes('dicebear.com'))) existing.avatarUrl = ghUser.avatarUrl;
+            if (ghUser.name) existing.name = ghUser.name;
+            if (ghUser.kelas) existing.kelas = ghUser.kelas;
+            if (ghUser.gender) existing.gender = ghUser.gender;
+            if (ghUser.isActive !== undefined) existing.isActive = ghUser.isActive;
           }
         });
       }
@@ -506,17 +527,18 @@ class DatabaseManager {
             existing.kelas = student.kelas;
             existing.name = student.name;
             existing.gender = student.gender;
-            existing.initialPassword = student.initialPassword;
+            if (!existing.initialPassword) {
+              existing.initialPassword = student.initialPassword;
+            }
+            if (!existing.password) {
+              existing.password = existing.initialPassword || student.initialPassword;
+            }
             if (!existing.passwordHash || !existing.salt) {
-              const pass = hashPassword(student.initialPassword);
+              const pass = hashPassword(existing.password || student.initialPassword);
               existing.passwordHash = pass.hash;
               existing.salt = pass.salt;
             }
-            // Siswa wajib mengganti kata sandi awal jika masih menggunakan sandi bawaan
-            const isStillDefaultPass = verifyPassword(student.initialPassword, existing.passwordHash, existing.salt, existing.initialPassword);
-            if (isStillDefaultPass) {
-              existing.mustChangePassword = true;
-            }
+            existing.mustChangePassword = false;
           }
         });
 
@@ -542,13 +564,19 @@ class DatabaseManager {
             });
           } else {
             existing.jabatan = staff.jabatan;
-            existing.initialPassword = staff.initialPassword;
             existing.name = staff.name;
             existing.role = staff.role;
-            // Ensure password matches initialPassword from official list if user needs to login
-            const pass = hashPassword(staff.initialPassword);
-            existing.passwordHash = pass.hash;
-            existing.salt = pass.salt;
+            if (!existing.initialPassword) {
+              existing.initialPassword = staff.initialPassword;
+            }
+            if (!existing.password) {
+              existing.password = staff.initialPassword;
+            }
+            if (!existing.passwordHash || !existing.salt) {
+              const pass = hashPassword(existing.password || staff.initialPassword);
+              existing.passwordHash = pass.hash;
+              existing.salt = pass.salt;
+            }
             existing.mustChangePassword = false;
           }
         });
@@ -679,52 +707,124 @@ class DatabaseManager {
     }
   }
 
+  public async saveAsync(): Promise<void> {
+    this.save();
+    if (process.env.VERCEL) {
+      try {
+        await this.syncToGitHub(this.data);
+      } catch (e) {
+        console.warn('[DB] saveAsync syncToGitHub failed:', e);
+      }
+    }
+  }
+
   // --- Users & Authentication ---
-  public findUserByUsername(username: string): User | undefined {
+  public findUserByUsername(username: string, candidatePassword?: string): User | undefined {
     if (!username) return undefined;
-    const raw = username.trim();
+    const raw = String(username).trim();
     const term = raw.toLowerCase().replace(/^@+/, '');
     const alphaNumericTerm = term.replace(/[^a-z0-9]/g, '');
 
-    // 1. Exact or cleaned username match
-    const found = this.data.users.find((u) => {
-      const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
+    // 0. If username refers to Bambang Sapto Nugroho (Kepsek SMP vs Operator)
+    if (
+      ['bambang', 'bambang.kepsek', 'bambang.operator', 'bambang sapto nugroho', 'st bambang sapto nugroho s.pd', 'st.bambang', 'kepsek.smp', 'bambang.smp'].includes(term) ||
+      alphaNumericTerm === 'bambang' ||
+      alphaNumericTerm === 'bambangsaptonugroho' ||
+      alphaNumericTerm === 'stbambangsaptonugrohospd'
+    ) {
+      const kepsek = this.data.users.find((u) => (u.username || '').toLowerCase() === 'bambang.kepsek');
+      const operator = this.data.users.find((u) => (u.username || '').toLowerCase() === 'bambang.operator');
+      if (candidatePassword) {
+        const pLower = candidatePassword.trim().toLowerCase();
+        if (operator && (pLower === 'tamvesta!b2604' || pLower === (operator.password || '').toLowerCase() || pLower === (operator.initialPassword || '').toLowerCase())) {
+          return operator;
+        }
+        if (kepsek) return kepsek;
+      }
+      if (term.includes('operator') || term.includes('dapodik')) return operator || kepsek;
+      return kepsek || operator;
+    }
+
+    // 1. Admin Aliases (TAMANSISWA)
+    if (['admin', 'tamansiswa', 'tamvesta', 'administrator', 'admin.tamansiswa', 'admin.utama'].includes(term) || alphaNumericTerm === 'admin' || alphaNumericTerm === 'tamansiswa' || alphaNumericTerm === 'tamvesta') {
+      const admin = this.data.users.find((u) => u.username === 'TAMANSISWA' || u.role === 'admin');
+      if (admin) return admin;
+    }
+
+    // 2. Titus / Yayasan Aliases
+    if (['titus', 'titus.yayasan', 'titus wahyu diatmiko', 'yayasan', 'pemimpin', 'pemimpin.tamansiswa'].includes(term) || alphaNumericTerm === 'titus' || alphaNumericTerm === 'tituswahyudiatmiko') {
+      const titus = this.data.users.find((u) => (u.username || '').toLowerCase() === 'titus.yayasan');
+      if (titus) return titus;
+    }
+
+    // 3. Margaretha Aliases
+    if (['margaretha.h', 'margaretha', 'margaretha.handriani', 'margaretha.hendriani', 'margarethahandriani', 'margarethahendriani', 'margaretha.sd', 'margaretha.kepsek', 'kepsek.sd'].includes(term) || alphaNumericTerm.startsWith('margaretha')) {
+      const margaretha = this.data.users.find((u) => (u.username || '').toLowerCase() === 'margaretha.h' || (u.name || '').toLowerCase().includes('margaretha'));
+      if (margaretha) return margaretha;
+    }
+
+    // 4. Haliza / Tata Usaha Aliases
+    if (['haliza.tu', 'haliza.admin', 'haliza', 'tata.usaha', 'tatausaha', 'tu'].includes(term) || alphaNumericTerm === 'halizatu' || alphaNumericTerm === 'tatausaha') {
+      const haliza = this.data.users.find((u) => (u.username || '').toLowerCase() === 'haliza.tu' || (u.username || '').toLowerCase() === 'haliza.admin' || u.role === 'tata_usaha');
+      if (haliza) return haliza;
+    }
+
+    // 5. Exact or Cleaned Username match
+    const foundByUsername = this.data.users.find((u) => {
+      const uName = (u.username || '').trim().toLowerCase().replace(/^@+/, '');
+      if (!uName) return false;
       if (uName === term) return true;
       if (alphaNumericTerm && uName.replace(/[^a-z0-9]/g, '') === alphaNumericTerm) return true;
       return false;
     });
-    if (found) return found;
+    if (foundByUsername) return foundByUsername;
 
-    // 2. Full Name match (in case student enters their name instead of username)
+    // 6. Student shortcode patterns (e.g. "7a001", "7a.001", "smp7a001", "siswa7a001" -> matches "siswa.smp7a.001")
+    const cleanStudentPattern = term.replace(/^(siswa[._]?)?(smp|sd)?/, '').replace(/[^a-z0-9]/g, '');
+    if (cleanStudentPattern.length >= 3) {
+      const foundStudent = this.data.users.find((u) => {
+        if (u.role !== 'siswa') return false;
+        const uPattern = (u.username || '').toLowerCase().replace(/^(siswa[._]?)?(smp|sd)?/, '').replace(/[^a-z0-9]/g, '');
+        return uPattern && uPattern === cleanStudentPattern;
+      });
+      if (foundStudent) return foundStudent;
+    }
+
+    // 7. Full Name match or Name without dots/special characters
     const foundByName = this.data.users.find((u) => {
       const fullName = (u.name || '').trim().toLowerCase();
       if (!fullName) return false;
       if (fullName === term) return true;
-      if (alphaNumericTerm && fullName.replace(/[^a-z0-9]/g, '') === alphaNumericTerm) return true;
+      const alphaFullName = fullName.replace(/[^a-z0-9]/g, '');
+      if (alphaNumericTerm && alphaFullName === alphaNumericTerm) return true;
+      if (term.length >= 4 && (fullName.includes(term) || term.includes(fullName))) return true;
       return false;
     });
     if (foundByName) return foundByName;
 
-    // 3. NISN match
+    // 8. Email match
+    const foundByEmail = this.data.users.find((u) => {
+      return u.email && u.email.trim().toLowerCase() === term;
+    });
+    if (foundByEmail) return foundByEmail;
+
+    // 9. Phone match
+    const cleanPhone = raw.replace(/[^0-9]/g, '');
+    if (cleanPhone.length >= 7) {
+      const foundByPhone = this.data.users.find((u) => {
+        if (!u.phone) return false;
+        const uPhone = u.phone.trim().replace(/[^0-9]/g, '');
+        return uPhone === cleanPhone || uPhone.endsWith(cleanPhone) || cleanPhone.endsWith(uPhone);
+      });
+      if (foundByPhone) return foundByPhone;
+    }
+
+    // 10. NISN match
     const foundByNisn = this.data.users.find((u) => {
       return (u as any).nisn && String((u as any).nisn).trim() === raw;
     });
     if (foundByNisn) return foundByNisn;
 
-    // 4. Staff aliases
-    if (['haliza.tu', 'haliza.admin', 'haliza', 'tata.usaha', 'tatausaha'].includes(term)) {
-      return this.data.users.find(
-        (u) => (u.username || '').toLowerCase().replace(/^@+/, '') === 'haliza.tu' ||
-               (u.username || '').toLowerCase().replace(/^@+/, '') === 'haliza.admin' ||
-               u.role === 'tata_usaha'
-      );
-    }
-    if (['margaretha.h', 'margaretha', 'margaretha.handriani', 'margaretha.hendriani', 'margarethahandriani', 'margarethahendriani', 'margaretha.sd', 'margaretha.kepsek'].includes(term)) {
-      return this.data.users.find(
-        (u) => (u.username || '').toLowerCase().replace(/^@+/, '') === 'margaretha.h' ||
-               (u.name || '').toLowerCase().includes('margaretha')
-      );
-    }
     return undefined;
   }
 
