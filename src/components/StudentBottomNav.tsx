@@ -1,16 +1,18 @@
 import React from 'react';
-import { Home, BookOpen, HelpCircle, Archive, QrCode, User } from 'lucide-react';
+import { Home, BookOpen, HelpCircle, Archive, QrCode, User, Lock } from 'lucide-react';
 
 export type StudentNavTab = 'home' | 'articles' | 'quiz' | 'archive' | 'qr' | 'profile';
 
 interface StudentBottomNavProps {
   activeTab: StudentNavTab;
   onTabChange: (tab: StudentNavTab) => void;
+  isQuizActive?: boolean;
 }
 
 export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
   activeTab,
   onTabChange,
+  isQuizActive = false,
 }) => {
   const navItems = [
     {
@@ -72,9 +74,11 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
 
               {/* Icon Container with subtle background when active */}
               <div
-                className={`w-8 h-6 flex items-center justify-center rounded-xl transition-all ${
+                className={`w-8 h-6 flex items-center justify-center rounded-xl transition-all relative ${
                   isActive
                     ? 'bg-emerald-100/90 text-emerald-700 scale-105 shadow-xs'
+                    : isQuizActive
+                    ? 'text-slate-400 group-hover:scale-105 opacity-60'
                     : 'text-slate-400 group-hover:scale-105'
                 }`}
               >
@@ -83,6 +87,11 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
                     isActive ? 'stroke-[2.5]' : 'stroke-2'
                   }`}
                 />
+                {isQuizActive && !isActive && (
+                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 shadow-xs">
+                    <Lock className="w-2 h-2" />
+                  </span>
+                )}
               </div>
 
               {/* Label */}

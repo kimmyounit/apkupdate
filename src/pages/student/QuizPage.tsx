@@ -28,13 +28,16 @@ import {
   setAppVolumeDuringQuiz,
   playQuizExitAlertSound,
   resetAppVolumeLock,
+  lockMaxVolumeForQuiz,
+  ensureAudioContext,
 } from '../../lib/audio.ts';
 
 interface Props {
   onBackToDashboard?: () => void;
+  onQuizActiveChange?: (isActive: boolean) => void;
 }
 
-export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
+export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChange }) => {
   const { user } = useAuth();
 
   // Form open toggle (Landing vs Entrance Form)
@@ -54,8 +57,8 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  // Sound Control State (In-app control only, locked if increased)
-  const [appVolume, setAppVolume] = useState<number>(getAppVolume());
+  // Sound Control State (In-app control only, locked at maximum 100%)
+  const [appVolume, setAppVolume] = useState<number>(1.0);
   const [volumeLockMessage, setVolumeLockMessage] = useState<string | null>(null);
 
   // Exit warning modal state
@@ -64,12 +67,61 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
   // Result state
   const [quizResult, setQuizResult] = useState<QuizAttempt | null>(null);
 
-  // Reset volume lock when component unmounts or quiz ends
+  // Reset volume lock and inform parent when component unmounts or quiz ends
   useEffect(() => {
     return () => {
       resetAppVolumeLock();
+      if (onQuizActiveChange) onQuizActiveChange(false);
     };
-  }, []);
+  }, [onQuizActiveChange]);
+
+  // Sync quiz active state to parent
+  useEffect(() => {
+    const isExamRunning = Boolean(activeQuiz && !quizResult);
+    if (onQuizActiveChange) {
+      onQuizActiveChange(isExamRunning);
+    }
+  }, [activeQuiz, quizResult, onQuizActiveChange]);
+
+  // Anti-cheat navigation lock: intercept hardware back button, browser back, window blur & tab switch
+  useEffect(() => {
+    if (!activeQuiz || quizResult) return;
+
+    // Push state into history so popping it doesn't navigate away from page
+    window.history.pushState({ quizActive: true }, '');
+
+    const handlePopState = (e: PopStateEvent) => {
+      // Re-push history to trap navigation and stay on exam page
+      window.history.pushState({ quizActive: true }, '');
+      playQuizExitAlertSound();
+      setShowExitWarning(true);
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      playQuizExitAlertSound();
+      e.preventDefault();
+      e.returnValue = 'PERINGATAN UJIAN: Kuis sedang berlangsung! Dilarang keluar sebelum selesai.';
+      return e.returnValue;
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab switch or app minimized
+        playQuizExitAlertSound();
+        setShowExitWarning(true);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [activeQuiz, quizResult]);
 
   // Timer countdown
   useEffect(() => {
@@ -108,13 +160,15 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
         password: quizPassword.trim() || undefined,
       });
 
+      ensureAudioContext();
+      lockMaxVolumeForQuiz();
       setActiveQuiz(res.quiz);
       setTimeLeft((res.quiz.durationMinutes || 15) * 60);
       setAnswers({});
       setCurrentQuestionIndex(0);
       setQuizResult(null);
-      resetAppVolumeLock();
-      setAppVolume(getAppVolume());
+      setAppVolume(1.0);
+      if (onQuizActiveChange) onQuizActiveChange(true);
     } catch (err: any) {
       setVerifyError(err.message || 'Token quiz tidak valid atau kuis tidak ditemukan.');
     } finally {
@@ -122,13 +176,14 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
     }
   };
 
-  // Handle Volume Change (In-app only: Cannot decrease if increased)
+  // Handle Volume Change (In-app only: Cannot decrease if increased, locked at 100% during exam)
   const handleVolumeSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVol = parseFloat(e.target.value);
     const result = setAppVolumeDuringQuiz(newVol);
     if (!result.allowed) {
-      setVolumeLockMessage('Sesuai ketentuan, volume suara aplikasi yang sudah dinaikkan tidak dapat dikecilkan selama quiz berlangsung.');
-      setTimeout(() => setVolumeLockMessage(null), 3500);
+      playQuizExitAlertSound();
+      setVolumeLockMessage('Peringatan: Volume suara HP & aplikasi terkunci maksimal (100%) dan tidak dapat dikecilkan selama kuis berlangsung!');
+      setTimeout(() => setVolumeLockMessage(null), 4000);
     } else {
       setAppVolume(result.currentVolume);
       setVolumeLockMessage(null);
@@ -137,18 +192,9 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
 
   // Trigger Exit Warning & Play Alarm Sound
   const handleAttemptExit = () => {
-    // Bunyikan suara peringatan ketika tombol navigasi keluar ditekan
+    // Bunyikan beep gede ketika tombol navigasi keluar ditekan
     playQuizExitAlertSound();
     setShowExitWarning(true);
-  };
-
-  // Force Exit from Quiz
-  const handleConfirmExit = () => {
-    setShowExitWarning(false);
-    setActiveQuiz(null);
-    setQuizResult(null);
-    resetAppVolumeLock();
-    if (onBackToDashboard) onBackToDashboard();
   };
 
   // Submit Quiz Answers
@@ -169,6 +215,8 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
 
       setQuizResult(res.attempt);
       setActiveQuiz(null);
+      resetAppVolumeLock();
+      if (onQuizActiveChange) onQuizActiveChange(false);
 
       if (res.attempt.passed) {
         confetti({
@@ -249,25 +297,33 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
             </div>
           </div>
 
-          {/* Action to Exit */}
-          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3">
+          {/* Action to Exit After Quiz Finish */}
+          <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => {
                 setQuizResult(null);
                 setQuizToken('');
                 setQuizPassword('');
+                resetAppVolumeLock();
+                if (onQuizActiveChange) onQuizActiveChange(false);
               }}
-              className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition"
+              className="w-full sm:w-auto px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2"
             >
-              Kembali ke Menu Kuis
+              <ArrowLeft className="w-4 h-4" />
+              <span>Kembali ke Menu Kuis</span>
             </button>
 
             <button
-              onClick={handleConfirmExit}
-              className="w-full sm:w-auto px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2"
+              onClick={() => {
+                setQuizResult(null);
+                resetAppVolumeLock();
+                if (onQuizActiveChange) onQuizActiveChange(false);
+                if (onBackToDashboard) onBackToDashboard();
+              }}
+              className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-xs sm:text-sm font-black shadow-xl shadow-emerald-600/30 transition flex items-center justify-center gap-2 transform active:scale-95"
             >
               <LogOut className="w-4 h-4" />
-              <span>Keluar dari Quiz</span>
+              <span>Keluar dari Quiz (Selesai)</span>
             </button>
           </div>
         </div>
@@ -309,17 +365,16 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
               </span>
             </div>
 
-            {/* In-app Volume Control with lock rule */}
-            <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 rounded-2xl border border-slate-700">
-              {appVolume > 0.5 ? (
-                <Volume2 className="w-4 h-4 text-emerald-400" />
-              ) : appVolume > 0 ? (
-                <Volume1 className="w-4 h-4 text-emerald-400" />
-              ) : (
-                <VolumeX className="w-4 h-4 text-slate-500" />
-              )}
+            {/* In-app Volume Control locked at 100% */}
+            <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 rounded-2xl border border-amber-500/30">
+              <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />
               <div className="flex flex-col">
-                <span className="text-[9px] text-slate-400 font-bold leading-none">Suara Aplikasi: {Math.round(appVolume * 100)}%</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] text-amber-300 font-black leading-none">
+                    Suara: {Math.round(appVolume * 100)}% (Terkunci)
+                  </span>
+                  <Lock className="w-2.5 h-2.5 text-amber-400" />
+                </div>
                 <input
                   type="range"
                   min="0"
@@ -327,8 +382,8 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
                   step="0.05"
                   value={appVolume}
                   onChange={handleVolumeSliderChange}
-                  className="w-20 sm:w-24 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                  title="Kontrol volume suara aplikasi (terkunci jika dinaikkan)"
+                  className="w-20 sm:w-24 h-1.5 bg-amber-500/30 rounded-lg appearance-none cursor-pointer accent-amber-400"
+                  title="Volume suara HP & aplikasi terkunci maksimal dan tidak dapat dikecilkan selama kuis berlangsung"
                 />
               </div>
             </div>
@@ -510,42 +565,49 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
           </div>
         )}
 
-        {/* MODAL PERINGATAN KELUAR & ALARM SUARA */}
+        {/* MODAL PERINGATAN KELUAR & ALARM BEEP GEDE */}
         {showExitWarning && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-rose-500 space-y-4 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-inner animate-bounce">
-                <ShieldAlert className="w-8 h-8 text-rose-600" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-4 border-rose-600 space-y-5 text-center">
+              <div className="w-20 h-20 rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-inner animate-bounce border-2 border-rose-200">
+                <ShieldAlert className="w-10 h-10 text-rose-600" />
               </div>
 
-              <div className="space-y-1">
-                <h3 className="text-lg font-black text-slate-900">
-                  Peringatan Sesi Ujian Sedang Berjalan!
+              <div className="space-y-2">
+                <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black uppercase tracking-widest border border-rose-200">
+                  KEAMANAN UJIAN KETAT
+                </span>
+                <h3 className="text-xl font-black text-slate-900">
+                  DILARANG KELUAR! UJIAN SEDANG BERJALAN
                 </h3>
-                <p className="text-xs text-rose-600 font-semibold leading-relaxed">
-                  Anda sedang dalam proses mengerjakan quiz. Meninggalkan halaman ini akan membatalkan sesi atau mengumpulkan jawaban apa adanya.
+                <p className="text-xs text-rose-600 font-bold leading-relaxed">
+                  Anda sedang dalam sesi pengerjaan kuis. Navigasi keluar tidak diperbolehkan dan volume suara HP/aplikasi terkunci maksimal (100%).
                 </p>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-[11px] text-slate-600 text-left space-y-1">
-                <p>• Suara peringatan sistem telah dibunyikan.</p>
-                <p>• Pastikan Anda menyelesaikan butir soal sebelum keluar.</p>
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-700 text-left space-y-2">
+                <p className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Alarm beep peringatan berbunyi keras saat navigasi keluar ditekan.</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Volume suara terkunci maksimal dan tidak dapat dikecilkan.</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span><strong>Tombol Keluar resmi</strong> akan otomatis tersedia setelah Anda selesai mengerjakan kuis.</span>
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="pt-2">
                 <button
                   type="button"
                   onClick={() => setShowExitWarning(false)}
-                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                  className="w-full py-3.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-xs sm:text-sm font-black shadow-lg shadow-emerald-600/30 transition transform active:scale-95 flex items-center justify-center gap-2"
                 >
-                  Lanjutkan Mengerjakan
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmExit}
-                  className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
-                >
-                  Tetap Keluar
+                  <span>Lanjutkan Mengerjakan Kuis</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -737,12 +799,12 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard }) => {
             </div>
           </form>
 
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-[11px] text-slate-500 space-y-1">
-            <p className="font-bold text-slate-700">Peraturan Sesi Quiz:</p>
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-[11px] text-slate-500 space-y-1.5">
+            <p className="font-bold text-slate-700">Peraturan Sesi Quiz & Keamanan Anti-Curang:</p>
             <p>• Navigasi soal tersedia untuk berpindah antarsoal secara bebas.</p>
-            <p>• Jika mencoba keluar, sistem membunyikan suara alarm dan menampilkan peringatan.</p>
-            <p>• Volume suara aplikasi yang telah dinaikkan tidak dapat dikecilkan selama kuis.</p>
-            <p>• Setelah kuis selesai, tersedia tombol Keluar dan hasil nilai pengerjaan.</p>
+            <p>• Jika memencet navigasi keluar, sistem akan berbunyi alarm beep gede dan menampilkan peringatan.</p>
+            <p>• Volume suara HP & aplikasi terkunci maksimal (100%) dan tidak dapat dikecilkan selama kuis berlangsung.</p>
+            <p>• Setelah kuis selesai dikerjakan, tombol Keluar resmi akan otomatis tersedia bersama hasil nilai pengerjaan.</p>
           </div>
         </div>
       )}
