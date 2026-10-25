@@ -1032,13 +1032,6 @@ app.post(['/api/posts/:id/comments', '/api/posts/:id/comment'], authMiddleware, 
   return res.status(201).json(comment);
 });
 
-  if (!comment) {
-    return res.status(404).json({ error: 'Postingan tidak ditemukan.' });
-  }
-
-  return res.status(201).json(comment);
-});
-
 // POST /api/users/:id/toggle-follow & /api/users/:id/follow - Ikuti / Berhenti Mengikuti
 app.post(['/api/users/:id/toggle-follow', '/api/users/:id/follow'], authMiddleware, (req: AuthenticatedRequest, res) => {
   const targetId = req.params.id;
