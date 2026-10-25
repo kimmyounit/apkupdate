@@ -939,10 +939,14 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   };
 
   const [isRefreshingTickets, setIsRefreshingTickets] = useState(false);
+  const [isRefreshingContacts, setIsRefreshingContacts] = useState(false);
 
   const handleRefreshTickets = async () => {
     setIsRefreshingTickets(true);
     try {
+      try {
+        await api.syncLocalTicketsToServer();
+      } catch (_) {}
       const tickets = await api.getPasswordResetRequests();
       setResetRequests(tickets || []);
       notifyMultiDeviceSync();
@@ -950,6 +954,22 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       console.warn('Gagal memuat tiket:', err);
     } finally {
       setIsRefreshingTickets(false);
+    }
+  };
+
+  const handleRefreshContacts = async () => {
+    setIsRefreshingContacts(true);
+    try {
+      try {
+        await api.syncLocalUsersToServer();
+      } catch (_) {}
+      const updated = await api.getStudents();
+      setStudents(updated || []);
+      notifyMultiDeviceSync();
+    } catch (err: any) {
+      console.warn('Gagal memuat kontak siswa:', err);
+    } finally {
+      setIsRefreshingContacts(false);
     }
   };
 
@@ -1970,8 +1990,19 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                 </div>
               </div>
 
-              {/* Action Buttons: Bulk Copy & Export */}
+              {/* Action Buttons: Refresh, Bulk Copy & Export */}
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRefreshContacts}
+                  disabled={isRefreshingContacts}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-black shadow-xs transition active:scale-95 disabled:opacity-50"
+                  title="Segarkan data kontak siswa dari server"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isRefreshingContacts ? 'animate-spin' : ''}`} />
+                  <span>{isRefreshingContacts ? 'Memperbarui...' : 'Segarkan Kontak'}</span>
+                </button>
+
                 <button
                   onClick={handleCopyAllPhones}
                   className="flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-black transition active:scale-95"

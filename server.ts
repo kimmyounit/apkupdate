@@ -250,7 +250,7 @@ app.put('/api/auth/username', authMiddleware, (req: AuthenticatedRequest, res) =
 });
 
 // POST /api/auth/password-reset-request (Permintaan reset/ganti sandi siswa)
-app.post('/api/auth/password-reset-request', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.post('/api/auth/password-reset-request', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const { newPassword, confirmPassword, reason } = req.body;
   if (!newPassword || newPassword.length < 6) {
     return res.status(400).json({ error: 'Password baru minimal 6 karakter.' });
@@ -263,6 +263,11 @@ app.post('/api/auth/password-reset-request', authMiddleware, (req: Authenticated
   if (!result.success) {
     return res.status(400).json({ error: result.error });
   }
+
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+
   return res.status(201).json({
     message: 'Pengajuan ganti sandi berhasil dikirim! Menunggu persetujuan Administrator.',
     request: result.request,
@@ -270,7 +275,10 @@ app.post('/api/auth/password-reset-request', authMiddleware, (req: Authenticated
 });
 
 // GET /api/student/tickets (Riwayat tiket siswa sendiri)
-app.get('/api/student/tickets', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.get('/api/student/tickets', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
   const all = db.getPasswordResetRequests();
   const currentUserId = req.user!.id;
   const currentUsername = (req.user!.username || '').toLowerCase();
@@ -282,7 +290,10 @@ app.get('/api/student/tickets', authMiddleware, (req: AuthenticatedRequest, res)
 });
 
 // GET /api/admin/password-reset-requests (Admin only)
-app.get('/api/admin/password-reset-requests', authMiddleware, requireRole(['admin', 'kepala_sekolah']), (req, res) => {
+app.get('/api/admin/password-reset-requests', authMiddleware, requireRole(['admin', 'kepala_sekolah']), async (req, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
   const requests = db.getPasswordResetRequests();
   return res.json(requests);
 });
@@ -315,7 +326,10 @@ app.post('/api/admin/password-reset-requests/:id/process', authMiddleware, requi
 // -------------------------------------------------------------
 
 // GET /api/admin/students
-app.get('/api/admin/students', authMiddleware, requireRole(['admin', 'kepala_sekolah']), (req, res) => {
+app.get('/api/admin/students', authMiddleware, requireRole(['admin', 'kepala_sekolah']), async (req, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
   const students = db.getUsers().filter((u) => u.role === 'siswa');
   return res.json(students.map(sanitizeUser));
 });
@@ -915,7 +929,10 @@ app.get('/api/attendance/export/:eventId', authMiddleware, requireRole(['admin',
 // -------------------------------------------------------------
 
 // GET /api/posts - Ambil daftar postingan siswa
-app.get('/api/posts', authMiddleware, (req, res) => {
+app.get('/api/posts', authMiddleware, async (req, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
   const posts = db.getPosts();
   const enriched = posts.map(p => {
     const author = db.findUserById(p.authorId);
@@ -929,7 +946,7 @@ app.get('/api/posts', authMiddleware, (req, res) => {
 });
 
 // POST /api/posts - Terbitkan postingan baru
-app.post('/api/posts', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.post('/api/posts', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const { caption, mediaType, mediaUrl, mediaName } = req.body;
 
   if (!caption?.trim() && !mediaUrl) {
@@ -958,29 +975,39 @@ app.post('/api/posts', authMiddleware, (req: AuthenticatedRequest, res) => {
     mediaName: mediaName || undefined,
   });
 
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+
   return res.status(201).json(newPost);
 });
 
 // DELETE /api/posts/:id - Hapus postingan
-app.delete('/api/posts/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.delete('/api/posts/:id', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const success = db.deletePost(req.params.id, req.user!.id, req.user!.role === 'admin');
   if (!success) {
     return res.status(403).json({ error: 'Postingan tidak ditemukan atau Anda tidak memiliki izin untuk menghapusnya.' });
   }
+  try {
+    await db.saveAsync();
+  } catch (_) {}
   return res.json({ message: 'Postingan berhasil dihapus.' });
 });
 
 // POST /api/posts/:id/like - Toggle like postingan
-app.post('/api/posts/:id/like', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.post('/api/posts/:id/like', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const result = db.toggleLikePost(req.params.id, req.user!.id);
   if (!result) {
     return res.status(404).json({ error: 'Postingan tidak ditemukan.' });
   }
+  try {
+    await db.saveAsync();
+  } catch (_) {}
   return res.json({ success: true, ...result });
 });
 
 // POST /api/posts/:id/comments & /api/posts/:id/comment - Tambah komentar
-app.post(['/api/posts/:id/comments', '/api/posts/:id/comment'], authMiddleware, (req: AuthenticatedRequest, res) => {
+app.post(['/api/posts/:id/comments', '/api/posts/:id/comment'], authMiddleware, async (req: AuthenticatedRequest, res) => {
   const commentText = req.body.content || req.body.text;
   if (!commentText || !commentText.trim()) {
     return res.status(400).json({ error: 'Isi komentar tidak boleh kosong.' });
@@ -993,6 +1020,17 @@ app.post(['/api/posts/:id/comments', '/api/posts/:id/comment'], authMiddleware, 
     authorAvatar: req.user!.avatarUrl,
     content: commentText.trim(),
   });
+
+  if (!comment) {
+    return res.status(404).json({ error: 'Postingan tidak ditemukan.' });
+  }
+
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+
+  return res.status(201).json(comment);
+});
 
   if (!comment) {
     return res.status(404).json({ error: 'Postingan tidak ditemukan.' });
@@ -1035,15 +1073,20 @@ app.put('/api/posts/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
   return res.json(updated);
 });
 
-// PUT /api/users/profile - Perbarui foto profil & bio
-app.put('/api/users/profile', authMiddleware, (req: AuthenticatedRequest, res) => {
+// PUT /api/users/profile - Perbarui foto profil, bio, nomor WhatsApp & Gmail
+app.put('/api/users/profile', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const { bio, avatarUrl, phone, email } = req.body;
   const updated = db.updateUserProfile(req.user!.id, { bio, avatarUrl, phone, email });
   if (!updated) {
     return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
   }
+
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+
   return res.json({
-    message: 'Profil berhasil diperbarui!',
+    message: 'Profil dan informasi kontak berhasil diperbarui!',
     user: sanitizeUser(updated),
   });
 });
@@ -1068,13 +1111,16 @@ app.get(['/api/users/profile/:username', '/api/users/:username/public-profile'],
 // -------------------------------------------------------------
 
 // GET /api/stories - Ambil story aktif
-app.get('/api/stories', authMiddleware, (req, res) => {
+app.get('/api/stories', authMiddleware, async (req, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
   const stories = db.getStories();
   return res.json(stories);
 });
 
 // POST /api/stories - Buat story baru
-app.post('/api/stories', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.post('/api/stories', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const { mediaUrl, mediaType, caption } = req.body;
   if (!mediaUrl) {
     return res.status(400).json({ error: 'Media foto atau video untuk Story wajib diisi.' });
@@ -1091,15 +1137,22 @@ app.post('/api/stories', authMiddleware, (req: AuthenticatedRequest, res) => {
     caption,
   });
 
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+
   return res.status(201).json(newStory);
 });
 
 // DELETE /api/stories/:id - Hapus story
-app.delete('/api/stories/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.delete('/api/stories/:id', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const success = db.deleteStory(req.params.id, req.user!.id, req.user!.role === 'admin');
   if (!success) {
     return res.status(403).json({ error: 'Story tidak ditemukan atau Anda tidak memiliki izin untuk menghapusnya.' });
   }
+  try {
+    await db.saveAsync();
+  } catch (_) {}
   return res.json({ message: 'Story berhasil dihapus.' });
 });
 

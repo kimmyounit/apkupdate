@@ -460,13 +460,29 @@ class DatabaseManager {
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
       }
-      if (Array.isArray(parsed.stories) && parsed.stories.length > this.data.stories.length) {
-        this.data.stories = parsed.stories;
+      if (Array.isArray(parsed.stories)) {
+        const storyMap = new Map<string, any>();
+        this.data.stories.forEach((s) => storyMap.set(s.id, s));
+        const now = Date.now();
+        parsed.stories.forEach((s: any) => {
+          if (new Date(s.expiresAt).getTime() > now) {
+            storyMap.set(s.id, s);
+          }
+        });
+        this.data.stories = Array.from(storyMap.values())
+          .filter((s) => new Date(s.expiresAt).getTime() > now)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       }
       if (Array.isArray(parsed.passwordResetRequests)) {
         parsed.passwordResetRequests.forEach((req: any) => {
-          if (!this.data.passwordResetRequests.find((r) => r.id === req.id)) {
-            this.data.passwordResetRequests.push(req);
+          const existingIdx = this.data.passwordResetRequests.findIndex((r) => r.id === req.id);
+          if (existingIdx === -1) {
+            this.data.passwordResetRequests.unshift(req);
+          } else {
+            this.data.passwordResetRequests[existingIdx] = {
+              ...this.data.passwordResetRequests[existingIdx],
+              ...req,
+            };
           }
         });
       }
