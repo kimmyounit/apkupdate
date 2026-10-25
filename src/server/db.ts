@@ -249,8 +249,7 @@ export interface StudentPreset {
 }
 
 export const OFFICIAL_STUDENT_LIST: StudentPreset[] = [
-  // SMP (15 Siswa)
-  { username: 'siswa.smp7a.001', initialPassword: 'Siswa7A001', name: 'Ahmad Fauzi', kelas: 'VII-A SMP', gender: 'Laki-laki' },
+  // SMP (14 Siswa)
   { username: 'siswa.smp7a.002', initialPassword: 'Siswa7A002', name: 'Bunga Pertiwi', kelas: 'VII-A SMP', gender: 'Perempuan' },
   { username: 'siswa.smp7a.003', initialPassword: 'Siswa7A003', name: 'Cahya Ramadhan', kelas: 'VII-A SMP', gender: 'Laki-laki' },
   { username: 'siswa.smp7b.001', initialPassword: 'Siswa7B001', name: 'Dinda Aulia', kelas: 'VII-B SMP', gender: 'Perempuan' },
@@ -425,7 +424,7 @@ class DatabaseManager {
           const cleanGh = (ghUser.username || '').toLowerCase().replace(/^@+/, '');
           const isDeleted = (this.data.deletedUserIds || []).some(
             (did) => did === ghUser.id || did.toLowerCase() === cleanGh || did.toLowerCase() === (ghUser.username || '').toLowerCase()
-          );
+          ) || cleanGh === 'siswa.smp7a.001' || (ghUser.name || '').toLowerCase() === 'ahmad fauzi';
           if (isDeleted) return; // Akun terhapus permanen
           const existing = this.data.users.find(
             (u) => u.id === ghUser.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanGh
@@ -500,6 +499,18 @@ class DatabaseManager {
 
         // Ensure all 17 official staff/teacher accounts exist and can log in with their credentials
         if (!parsed.users) parsed.users = [];
+
+        // Exclude permanently deleted users
+        parsed.deletedUserIds = parsed.deletedUserIds || [];
+        const toDeleteIds = ['user_siswa_siswa_smp7a_001', 'siswa.smp7a.001'];
+        toDeleteIds.forEach((did) => {
+          if (!parsed.deletedUserIds.includes(did)) parsed.deletedUserIds.push(did);
+        });
+        parsed.users = parsed.users.filter((u: User) => {
+          const uName = (u.username || '').toLowerCase();
+          const name = (u.name || '').toLowerCase();
+          return u.id !== 'user_siswa_siswa_smp7a_001' && uName !== 'siswa.smp7a.001' && name !== 'ahmad fauzi';
+        });
         
         // Ensure all 27 official students exist and can log in with their credentials
         OFFICIAL_STUDENT_LIST.forEach((student) => {

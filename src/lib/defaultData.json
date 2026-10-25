@@ -271,20 +271,6 @@
       "updatedAt": "2026-10-20T12:20:35.350Z"
     },
     {
-      "id": "user_siswa_siswa_smp7a_001",
-      "username": "siswa.smp7a.001",
-      "name": "Ahmad Fauzi",
-      "role": "siswa",
-      "kelas": "VII-A SMP",
-      "gender": "Laki-laki",
-      "initialPassword": "Siswa7A001",
-      "isActive": true,
-      "mustChangePassword": true,
-      "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_001:9e354f2f25d3717f",
-      "createdAt": "2026-10-23T00:00:00.000Z",
-      "updatedAt": "2026-10-23T00:00:00.000Z"
-    },
-    {
       "id": "user_siswa_siswa_smp7a_002",
       "username": "siswa.smp7a.002",
       "name": "Bunga Pertiwi",
@@ -666,5 +652,9 @@
   "tuitionBills": [],
   "tuitionTransactions": [],
   "tuDocuments": [],
-  "tuChatMessages": []
+  "tuChatMessages": [],
+  "deletedUserIds": [
+    "user_siswa_siswa_smp7a_001",
+    "siswa.smp7a.001"
+  ]
 }

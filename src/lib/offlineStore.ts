@@ -135,7 +135,7 @@ function loadDB(): StandaloneDB {
     });
   }
 
-  // Pastikan akun contoh lama tidak masuk
+  // Pastikan akun contoh lama & akun terhapus tidak masuk
   if (Array.isArray(db.users)) {
     const demoUsernames = [
       'guru.matematika',
@@ -145,13 +145,18 @@ function loadDB(): StandaloneDB {
       'alvaro1234',
       'itskimzz',
       'tamansiswa1',
+      'siswa.smp7a.001',
     ];
     db.users = db.users.filter((u) => {
-      const lower = u.username.toLowerCase();
-      if (demoUsernames.includes(lower)) return false;
+      const lower = (u.username || '').toLowerCase();
+      const lowerName = (u.name || '').toLowerCase();
+      if (demoUsernames.includes(lower) || u.id === 'user_siswa_siswa_smp7a_001' || lowerName === 'ahmad fauzi') return false;
       return true;
     });
   }
+  (db as any).deletedUserIds = (db as any).deletedUserIds || [];
+  if (!(db as any).deletedUserIds.includes('siswa.smp7a.001')) (db as any).deletedUserIds.push('siswa.smp7a.001');
+  if (!(db as any).deletedUserIds.includes('user_siswa_siswa_smp7a_001')) (db as any).deletedUserIds.push('user_siswa_siswa_smp7a_001');
 
   // Pastikan struktur array ada dan tidak di-reset agar postingan & data tidak hilang
   if (!Array.isArray(db.posts)) db.posts = [];
