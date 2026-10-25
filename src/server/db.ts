@@ -376,6 +376,7 @@ export function getInitialData(): DatabaseSchema {
 class DatabaseManager {
   private data: DatabaseSchema;
   private isSaving = false;
+  private isSyncingGitHub = false;
 
   constructor() {
     this.data = this.loadData();
@@ -400,6 +401,7 @@ class DatabaseManager {
             'User-Agent': 'TAMVESTA-Cloud-Sync',
             Accept: 'application/vnd.github.v3+json',
           },
+          signal: AbortSignal.timeout(3000),
         });
         if (res.ok) {
           const json: any = await res.json();
@@ -412,6 +414,7 @@ class DatabaseManager {
       if (!parsed) {
         const rawRes = await fetch('https://raw.githubusercontent.com/kimmyounit/apkupdate/main/data/tamvesta-data.json', {
           headers: { 'User-Agent': 'TAMVESTA-Cloud-Sync' },
+          signal: AbortSignal.timeout(3000),
         });
         if (rawRes.ok) {
           parsed = await rawRes.json();
@@ -672,8 +675,13 @@ class DatabaseManager {
   }
 
   private async syncToGitHub(dataToSave: DatabaseSchema) {
+    if (this.isSyncingGitHub) return;
+    this.isSyncingGitHub = true;
     const token = getGitHubToken();
-    if (!token) return;
+    if (!token) {
+      this.isSyncingGitHub = false;
+      return;
+    }
 
     try {
       const url = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json';
@@ -683,6 +691,7 @@ class DatabaseManager {
           'User-Agent': 'TAMVESTA-Cloud-Sync',
           Accept: 'application/vnd.github.v3+json',
         },
+        signal: AbortSignal.timeout(4000),
       });
       let sha = '';
       if (getRes.ok) {
@@ -704,9 +713,12 @@ class DatabaseManager {
           content,
           sha: sha || undefined,
         }),
+        signal: AbortSignal.timeout(5000),
       });
     } catch (err) {
       console.warn('[Cloud Sync] Failed to sync to GitHub:', err);
+    } finally {
+      this.isSyncingGitHub = false;
     }
   }
 
@@ -736,13 +748,6 @@ class DatabaseManager {
 
   public async saveAsync(): Promise<void> {
     this.save();
-    if (process.env.VERCEL) {
-      try {
-        await this.syncToGitHub(this.data);
-      } catch (e) {
-        console.warn('[DB] saveAsync syncToGitHub failed:', e);
-      }
-    }
   }
 
   // --- Users & Authentication ---
