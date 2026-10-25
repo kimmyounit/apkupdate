@@ -17,6 +17,7 @@ import {
   Check,
   X,
   ShieldCheck,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -68,11 +69,39 @@ export const ProfilePage: React.FC = () => {
   const [resetError, setResetError] = useState<string | null>(null);
   const [myTickets, setMyTickets] = useState<any[]>([]);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [syncingStatus, setSyncingStatus] = useState(false);
+  const [syncSuccessMsg, setSyncSuccessMsg] = useState<string | null>(null);
+
+  const handleSyncStatus = async () => {
+    setSyncingStatus(true);
+    setSyncSuccessMsg(null);
+    try {
+      await refreshUser();
+      setSyncSuccessMsg('Sinyal Admin Terhubung! Status akun berhasil diperbarui.');
+      setTimeout(() => setSyncSuccessMsg(null), 3500);
+    } catch (_) {
+    } finally {
+      setSyncingStatus(false);
+    }
+  };
 
   useEffect(() => {
     // Refresh user data immediately to pull latest verified badge status
     refreshUser();
-  }, []);
+
+    // Sinyal sinkronisasi otomatis dari Admin Dashboard
+    try {
+      const channel = new BroadcastChannel('tamvesta_admin_sync');
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'REFRESH_ALL' || event.data?.userId === user?.id) {
+          refreshUser();
+        }
+      };
+      return () => {
+        try { channel.close(); } catch (_) {}
+      };
+    } catch (_) {}
+  }, [user?.id]);
 
   const loadMyTickets = async () => {
     try {
@@ -521,7 +550,25 @@ export const ProfilePage: React.FC = () => {
             </span>
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">Status Verifikasi Resmi</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-bold text-slate-700 block">Status Verifikasi Resmi</label>
+              <button
+                type="button"
+                onClick={handleSyncStatus}
+                disabled={syncingStatus}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-[11px] font-bold transition shadow-xs disabled:opacity-50"
+                title="Segarkan sinyal verifikasi centang biru dari Admin Dashboard"
+              >
+                <RefreshCw className={`w-3 h-3 ${syncingStatus ? 'animate-spin text-blue-600' : ''}`} />
+                <span>{syncingStatus ? 'Menyinkron...' : 'Segarkan Sinyal Admin'}</span>
+              </button>
+            </div>
+            {syncSuccessMsg && (
+              <p className="text-[11px] text-emerald-600 font-bold mb-1.5 animate-in fade-in flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{syncSuccessMsg}</span>
+              </p>
+            )}
             {user.isVerified ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold">
                 <VerifiedBadge size="sm" />
@@ -529,7 +576,7 @@ export const ProfilePage: React.FC = () => {
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 text-xs font-semibold">
-                <span>Belum Terverifikasi</span>
+                <span>Belum Terverifikasi (Klik Segarkan Sinyal jika Admin telah mendaftarkan)</span>
               </span>
             )}
           </div>

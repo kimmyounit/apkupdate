@@ -993,8 +993,8 @@ export const api = {
     }
   },
 
-  // Stories (24h)
-    getStories: async () => {
+  // Stories (Permanen Selamanya Tanpa Menghilang)
+  getStories: async () => {
     let serverStories: Story[] = [];
     try {
       serverStories = await tryServerRequest<Story[]>('/api/stories');
@@ -1003,18 +1003,16 @@ export const api = {
     }
     const localStories = offlineStore.getStories();
     const storyMap = new Map<string, Story>();
-    const now = Date.now();
+    // Simpan seluruh story tanpa batas kedaluwarsa
     localStories.forEach((s) => {
-      if (new Date(s.expiresAt).getTime() > now) storyMap.set(s.id, s);
+      storyMap.set(s.id, s);
     });
     if (Array.isArray(serverStories) && serverStories.length > 0) {
       serverStories.forEach((s) => {
-        if (new Date(s.expiresAt).getTime() > now) {
-          if (storyMap.has(s.id)) {
-            storyMap.set(s.id, { ...storyMap.get(s.id)!, ...s });
-          } else {
-            storyMap.set(s.id, s);
-          }
+        if (storyMap.has(s.id)) {
+          storyMap.set(s.id, { ...storyMap.get(s.id)!, ...s });
+        } else {
+          storyMap.set(s.id, s);
         }
       });
     }

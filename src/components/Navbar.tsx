@@ -15,6 +15,7 @@ import {
   HelpCircle,
   UserCheck,
   Gamepad2,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { StudentProfileModal } from './StudentProfileModal.tsx';
@@ -26,9 +27,24 @@ interface Props {
 }
 
 export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleQuickRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshUser();
+      try {
+        const channel = new BroadcastChannel('tamvesta_admin_sync');
+        channel.postMessage({ type: 'REFRESH_ALL', timestamp: Date.now() });
+        channel.close();
+      } catch (_) {}
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 600);
+    }
+  };
 
   if (!user) return null;
 
@@ -248,6 +264,17 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
           {/* Right User Controls */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Tombol Segarkan Sinyal Admin & Centang Biru */}
+            <button
+              onClick={handleQuickRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition border bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200 hover:border-blue-300 shadow-xs"
+              title="Segarkan sinyal status akun & centang biru dari Admin Dashboard"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{isRefreshing ? 'Menyinkron...' : 'Segarkan Sinyal'}</span>
+            </button>
+
             {/* Profil Saya Button */}
             <button
               onClick={() => handleNav('profil')}
@@ -308,6 +335,16 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
               {badge.label}
             </span>
           </div>
+
+          {/* Tombol Segarkan Sinyal Admin Mobile */}
+          <button
+            onClick={handleQuickRefresh}
+            disabled={isRefreshing}
+            className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition mb-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+            <span>{isRefreshing ? 'Menyinkronkan Sinyal Admin...' : 'Segarkan Sinyal Admin & Centang Biru'}</span>
+          </button>
 
           {userRole === 'siswa' && (
             <>

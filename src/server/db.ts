@@ -466,14 +466,11 @@ class DatabaseManager {
       if (Array.isArray(parsed.stories)) {
         const storyMap = new Map<string, any>();
         this.data.stories.forEach((s) => storyMap.set(s.id, s));
-        const now = Date.now();
+        // Stories stay permanently ("selamanya tanpa menghilang")
         parsed.stories.forEach((s: any) => {
-          if (new Date(s.expiresAt).getTime() > now) {
-            storyMap.set(s.id, s);
-          }
+          storyMap.set(s.id, s);
         });
         this.data.stories = Array.from(storyMap.values())
-          .filter((s) => new Date(s.expiresAt).getTime() > now)
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       }
       if (Array.isArray(parsed.passwordResetRequests)) {
@@ -1960,24 +1957,16 @@ class DatabaseManager {
   }
 
   // -------------------------------------------------------------
-  // STORIES (24-Hour Expiration)
+  // STORIES (Permanent - Selamanya Tanpa Menghilang)
   // -------------------------------------------------------------
   getStories(): Story[] {
     if (!Array.isArray(this.data.stories)) {
       this.data.stories = [];
     }
 
-    const now = new Date().toISOString();
-    const initialCount = this.data.stories.length;
-
-    // Automatically purge stories that have expired (> 24 hours)
-    this.data.stories = this.data.stories.filter((s) => s.expiresAt > now);
-
-    // If stories are empty, seed lively active stories for the current 24-hour cycle
+    // Never purge stories! Stories remain permanently ("selamanya tanpa menghilang")
     if (this.data.stories.length === 0) {
       this.seedDefaultStories();
-    } else if (this.data.stories.length !== initialCount) {
-      this.save();
     }
 
     return [...this.data.stories].sort(
@@ -1987,7 +1976,7 @@ class DatabaseManager {
 
   private seedDefaultStories() {
     const now = Date.now();
-    const expires = new Date(now + 24 * 60 * 60 * 1000).toISOString();
+    const expires = '2099-12-31T23:59:59.999Z';
     this.data.stories = [
       {
         id: 'story_seed_1',
@@ -1996,6 +1985,7 @@ class DatabaseManager {
         authorUsername: 'margaretha.h',
         authorKelas: 'Kepala Sekolah SD',
         authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256',
+        authorIsVerified: true,
         mediaType: 'photo',
         mediaUrl: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=1000',
         caption: 'Semangat belajar anak-anak Tamansiswa Batam pagi ini! 🌅📚',
@@ -2009,6 +1999,7 @@ class DatabaseManager {
         authorUsername: 'siswa.smp7a.002',
         authorKelas: 'VII-A SMP',
         authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bunga%20Pertiwi&backgroundColor=ec4899',
+        authorIsVerified: true,
         mediaType: 'photo',
         mediaUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=1000',
         caption: 'Membaca buku baru di perpustakaan digital Tamvesta 📖✨',
@@ -2022,6 +2013,7 @@ class DatabaseManager {
         authorUsername: 'siswa.smp7a.003',
         authorKelas: 'VII-A SMP',
         authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Citra%20Dewi&backgroundColor=8b5cf6',
+        authorIsVerified: true,
         mediaType: 'photo',
         mediaUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1000',
         caption: 'Seru banget kuis matematika hari ini, dapet skor tinggi! 🎉',
@@ -2038,6 +2030,8 @@ class DatabaseManager {
     authorUsername: string;
     authorAvatar?: string;
     authorKelas?: string;
+    authorIsVerified?: boolean;
+    authorIsAlumni?: boolean;
     mediaType: 'photo' | 'video';
     mediaUrl: string;
     caption?: string;
@@ -2047,7 +2041,8 @@ class DatabaseManager {
     }
 
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+    // Far future expiration so it never expires: year 2099 (permanent story)
+    const expiresAt = '2099-12-31T23:59:59.999Z';
 
     const newStory: Story = {
       id: `story_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -2056,6 +2051,8 @@ class DatabaseManager {
       authorUsername: storyData.authorUsername,
       authorAvatar: storyData.authorAvatar,
       authorKelas: storyData.authorKelas,
+      authorIsVerified: !!storyData.authorIsVerified,
+      authorIsAlumni: !!storyData.authorIsAlumni,
       mediaType: storyData.mediaType,
       mediaUrl: storyData.mediaUrl,
       caption: storyData.caption?.trim(),
@@ -2603,6 +2600,16 @@ class DatabaseManager {
     const user = this.data.users.find((u) => u.id === userId);
     if (!user) throw new Error('Pengguna tidak ditemukan.');
     user.isVerified = !user.isVerified;
+    if (Array.isArray(this.data.posts)) {
+      this.data.posts.forEach((p) => {
+        if (p.authorId === userId) p.authorIsVerified = user.isVerified;
+      });
+    }
+    if (Array.isArray(this.data.stories)) {
+      this.data.stories.forEach((s) => {
+        if (s.authorId === userId) s.authorIsVerified = user.isVerified;
+      });
+    }
     this.save();
     return { isVerified: user.isVerified };
   }

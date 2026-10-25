@@ -207,10 +207,15 @@ app.post('/api/auth/login', async (req, res) => {
   });
 });
 
-// GET /api/auth/me
-app.get('/api/auth/me', authMiddleware, (req: AuthenticatedRequest, res) => {
+// GET /api/auth/me - Sinkronkan profil akun terbaru & centang biru
+app.get('/api/auth/me', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
+  const freshUser = req.user?.id ? db.findUserById(req.user.id) : null;
+  const targetUser = freshUser || req.user;
   const mustChange = false;
-  const sanitized = sanitizeUser(req.user);
+  const sanitized = sanitizeUser(targetUser);
   if (sanitized) sanitized.mustChangePassword = false;
   return res.json({
     user: sanitized,
@@ -1128,31 +1133,43 @@ app.get(['/api/users/profile/:username', '/api/users/:username/public-profile'],
 });
 
 // -------------------------------------------------------------
-// 8. STORIES ENDPOINTS (Kedaluwarsa Otomatis 24 Jam)
+// 8. STORIES ENDPOINTS (Permanent - Selamanya Tanpa Menghilang)
 // -------------------------------------------------------------
 
-// GET /api/stories - Ambil story aktif
+// GET /api/stories - Ambil seluruh story (tersinkron antar perangkat selamanya)
 app.get('/api/stories', optionalAuthMiddleware, async (req, res) => {
   try {
     await db.reloadFromGitHub();
   } catch (_) {}
   const stories = db.getStories();
-  return res.json(stories);
+  const enriched = stories.map((s) => {
+    const author = db.findUserById(s.authorId);
+    return {
+      ...s,
+      authorIsVerified: author ? !!author.isVerified : !!(s as any).authorIsVerified,
+      authorIsAlumni: author ? !!author.isAlumni : !!(s as any).authorIsAlumni,
+    };
+  });
+  return res.json(enriched);
 });
 
-// POST /api/stories - Buat story baru
+// POST /api/stories - Buat story baru (tersimpan permanen ke cloud)
 app.post('/api/stories', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const { mediaUrl, mediaType, caption } = req.body;
   if (!mediaUrl) {
     return res.status(400).json({ error: 'Media foto atau video untuk Story wajib diisi.' });
   }
 
+  const author = db.findUserById(req.user!.id) || req.user!;
+
   const newStory = db.createStory({
-    authorId: req.user!.id,
-    authorName: req.user!.name,
-    authorUsername: req.user!.username,
-    authorAvatar: req.user!.avatarUrl,
-    authorKelas: req.user!.kelas,
+    authorId: author.id,
+    authorName: author.name,
+    authorUsername: author.username,
+    authorAvatar: author.avatarUrl,
+    authorKelas: author.kelas,
+    authorIsVerified: !!author.isVerified,
+    authorIsAlumni: !!author.isAlumni,
     mediaType: mediaType === 'video' ? 'video' : 'photo',
     mediaUrl,
     caption,
@@ -1455,9 +1472,12 @@ app.delete('/api/admin/teachers/:id', authMiddleware, requireRole(['admin']), (r
   return res.json({ message: 'Akun guru berhasil dihapus dari sistem' });
 });
 
-app.patch('/api/admin/users/:id/verified', authMiddleware, requireRole(['admin']), (req, res) => {
+app.patch('/api/admin/users/:id/verified', authMiddleware, requireRole(['admin']), async (req, res) => {
   try {
     const result = db.toggleVerifiedBadge(req.params.id);
+    try {
+      await db.saveAsync();
+    } catch (_) {}
     return res.json({ message: 'Status centang biru berhasil diubah', isVerified: result.isVerified });
   } catch (e: any) {
     return res.status(400).json({ error: e.message });

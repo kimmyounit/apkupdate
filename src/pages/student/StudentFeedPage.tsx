@@ -60,12 +60,13 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   onOpenArticles,
   onOpenGames,
 }) => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [posts, setPosts] = useState<StudentPost[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
   // Modals
@@ -124,15 +125,41 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
     const onFocus = () => loadFeedData(true);
     window.addEventListener('focus', onFocus);
 
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, []);
+    // Sinyal langsung dari Admin Dashboard (Centang Biru & Perubahan Data)
+    try {
+      const channel = new BroadcastChannel('tamvesta_admin_sync');
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'REFRESH_ALL' || event.data?.userId === user?.id) {
+          refreshUser();
+          loadFeedData(true);
+        }
+      };
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('focus', onFocus);
+        try { channel.close(); } catch (_) {}
+      };
+    } catch (_) {
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('focus', onFocus);
+      };
+    }
+  }, [user?.id]);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    loadFeedData();
+    try {
+      await Promise.allSettled([
+        refreshUser(),
+        loadFeedData(false),
+      ]);
+      setRefreshNotice('Sinyal Admin Terhubung! Status & Feed berhasil disegarkan.');
+      setTimeout(() => setRefreshNotice(null), 3500);
+    } catch (_) {
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleLike = async (postId: string) => {
@@ -297,8 +324,18 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             </div>
           </div>
 
-          {/* Right Header Actions: Notification Bell */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Right Header Actions: Refresh Sinyal Admin & Notification Bell */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 text-xs font-bold disabled:opacity-50"
+              title="Segarkan sinyal dari admin dashboard, centang biru, dan feed terbaru"
+            >
+              <RefreshCw className={`w-4 h-4 text-emerald-300 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{refreshing ? 'Menyinkron...' : 'Segarkan Sinyal'}</span>
+            </button>
+
             <button
               onClick={() => setIsNotificationsOpen(true)}
               className="relative p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95"
@@ -313,6 +350,17 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Signal Toast Notice */}
+        {refreshNotice && (
+          <div className="mt-3 p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-xl text-emerald-100 text-xs font-bold flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+              <span>{refreshNotice}</span>
+            </div>
+            <button onClick={() => setRefreshNotice(null)} className="text-emerald-200 hover:text-white">✕</button>
+          </div>
+        )}
 
         {/* Quick Hub Navigation: Pengumuman, Mapel, Perpustakaan, Permainan, Artikel */}
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-4 pt-3 border-t border-white/10 text-white text-xs font-bold">
@@ -525,10 +573,11 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-700 font-bold transition disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-emerald-700 font-bold transition disabled:opacity-50 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 shadow-xs"
+          title="Segarkan sinyal dari admin dashboard dan muat feed terbaru"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
-          <span>Segarkan Feed</span>
+          <span>{refreshing ? 'Menyinkronkan...' : 'Segarkan Feed & Sinyal Admin'}</span>
         </button>
       </div>
 

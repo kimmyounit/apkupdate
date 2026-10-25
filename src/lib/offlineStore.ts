@@ -949,15 +949,13 @@ export const offlineStore = {
     };
   },
 
-  // Stories
+  // Stories (Permanen Selamanya Tanpa Menghilang)
   getStories(): Story[] {
     const db = loadDB();
-    const now = Date.now();
-    let validStories = (db.stories || []).filter(
-      (s) => new Date(s.expiresAt).getTime() > now
-    );
+    if (!Array.isArray(db.stories)) db.stories = [];
+    let validStories = db.stories;
     if (validStories.length === 0) {
-      const expires = new Date(now + 24 * 60 * 60 * 1000).toISOString();
+      const expires = '2099-12-31T23:59:59.999Z';
       validStories = [
         {
           id: 'story_seed_1',
@@ -966,10 +964,11 @@ export const offlineStore = {
           authorUsername: 'margaretha.h',
           authorKelas: 'Kepala Sekolah SD',
           authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256',
+          authorIsVerified: true,
           mediaType: 'photo',
           mediaUrl: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=1000',
           caption: 'Semangat belajar anak-anak Tamansiswa Batam pagi ini! 🌅📚',
-          createdAt: new Date(now - 15 * 60 * 1000).toISOString(),
+          createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
           expiresAt: expires,
         },
         {
@@ -979,10 +978,11 @@ export const offlineStore = {
           authorUsername: 'siswa.smp7a.002',
           authorKelas: 'VII-A SMP',
           authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bunga%20Pertiwi&backgroundColor=ec4899',
+          authorIsVerified: true,
           mediaType: 'photo',
           mediaUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=1000',
           caption: 'Membaca buku baru di perpustakaan digital Tamvesta 📖✨',
-          createdAt: new Date(now - 10 * 60 * 1000).toISOString(),
+          createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
           expiresAt: expires,
         },
         {
@@ -992,10 +992,11 @@ export const offlineStore = {
           authorUsername: 'siswa.smp7a.003',
           authorKelas: 'VII-A SMP',
           authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Citra%20Dewi&backgroundColor=8b5cf6',
+          authorIsVerified: true,
           mediaType: 'photo',
           mediaUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1000',
           caption: 'Seru banget kuis matematika hari ini, dapet skor tinggi! 🎉',
-          createdAt: new Date(now - 5 * 60 * 1000).toISOString(),
+          createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
           expiresAt: expires,
         }
       ];
@@ -1011,7 +1012,7 @@ export const offlineStore = {
     if (!user) throw new Error('Login diperlukan');
 
     const now = new Date();
-    const expires = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const expires = '2099-12-31T23:59:59.999Z';
 
     const newStory: Story = {
       id: 'story_' + Date.now(),
@@ -1020,11 +1021,13 @@ export const offlineStore = {
       authorUsername: user.username,
       authorAvatar: user.avatarUrl,
       authorKelas: user.kelas || '',
+      authorIsVerified: !!user.isVerified,
+      authorIsAlumni: !!user.isAlumni,
       mediaUrl: data.mediaUrl,
       mediaType: data.mediaType ?? 'none',
       caption: data.caption,
       createdAt: now.toISOString(),
-      expiresAt: expires.toISOString(),
+      expiresAt: expires,
     };
 
     db.stories = [newStory, ...(db.stories || [])];
@@ -1812,6 +1815,16 @@ export const offlineStore = {
     const user = db.users.find((u) => u.id === userId);
     if (!user) throw new Error('Pengguna tidak ditemukan.');
     user.isVerified = !user.isVerified;
+    if (Array.isArray(db.posts)) {
+      db.posts.forEach((p) => {
+        if (p.authorId === userId) p.authorIsVerified = user.isVerified;
+      });
+    }
+    if (Array.isArray(db.stories)) {
+      db.stories.forEach((s) => {
+        if (s.authorId === userId) s.authorIsVerified = user.isVerified;
+      });
+    }
     saveDB(db);
     return { isVerified: user.isVerified };
   },

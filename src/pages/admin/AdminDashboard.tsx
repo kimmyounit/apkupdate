@@ -327,6 +327,8 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setStaffList((prev) =>
         prev.map((s) => (s.id === userId ? { ...s, isVerified: res.isVerified } : s))
       );
+      // Kirim sinyal sinkronisasi ke seluruh aplikasi & perangkat
+      notifyMultiDeviceSync();
     } catch (err: any) {
       alert(err.message || 'Gagal mengubah status verifikasi centang biru.');
     }

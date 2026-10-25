@@ -438,6 +438,21 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                         <span>Siswa Terverifikasi</span>
                       </span>
                     )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await refreshUser();
+                          const fresh = await api.getMe();
+                          if (fresh?.user) setCurrentUser(fresh.user);
+                        } catch (_) {}
+                      }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-700 border border-slate-200 transition shadow-xs"
+                      title="Segarkan sinyal dari admin dashboard"
+                    >
+                      <RefreshCw className="w-2.5 h-2.5 text-blue-600" />
+                      <span>Segarkan Sinyal</span>
+                    </button>
                   </div>
                   {currentUser.gender && (
                     <p className="text-xs text-slate-500">{currentUser.gender}</p>

@@ -32,12 +32,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const res = await api.getMe();
-      setUser(res.user);
-      setMustChangePassword(res.mustChangePassword);
-    } catch (err) {
+      if (res?.user) {
+        setUser(res.user);
+        setMustChangePassword(!!res.mustChangePassword);
+      }
+    } catch (err: any) {
       console.warn('Failed to restore session:', err);
-      removeStoredToken();
-      setUser(null);
+      // Hanya hapus token jika respon server jelas 401 Unauthorized
+      if (err?.status === 401 || err?.message?.includes('401') || err?.message?.includes('kadaluarsa')) {
+        removeStoredToken();
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -45,7 +50,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     refreshUser();
-  }, []);
+
+    // Sinyal sinkronisasi otomatis dari Admin Dashboard
+    try {
+      const channel = new BroadcastChannel('tamvesta_admin_sync');
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'REFRESH_ALL' || event.data?.userId === user?.id) {
+          refreshUser();
+        }
+      };
+      return () => {
+        try {
+          channel.close();
+        } catch (_) {}
+      };
+    } catch (_) {}
+  }, [user?.id]);
 
   const login = async (username: string, password: string) => {
     const res = await api.login({ username, password });
