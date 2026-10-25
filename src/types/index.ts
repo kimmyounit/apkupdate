@@ -407,3 +407,9 @@ export interface AppNotification {
   deletedBy: string[];
   createdAt: string;
 }
+
+// -------------------------------------------------------------
+// MENU PERMAINAN (WHO'S THE SPY & MAFIA)
+// -------------------------------------------------------------
+export * from './game.ts';
+

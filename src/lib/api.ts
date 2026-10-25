@@ -21,7 +21,21 @@ import type {
   Story,
   PersonalNote,
   AppNotification,
+  GameRoom,
+  GamePlayer,
+  GameType,
+  SpySettings,
+  MafiaSettings,
 } from '../types/index.ts';
+import {
+  createGameRoom,
+  joinOrReconnectRoom,
+  startSpyGame,
+  startMafiaGame,
+  evaluateSpyVoting,
+  evaluateMafiaNight,
+  evaluateMafiaVoting,
+} from './gameEngine.ts';
 
 const TOKEN_KEY = 'tamvesta_auth_token';
 const SERVER_URL_KEY = 'tamvesta_server_url';
@@ -1505,4 +1519,466 @@ export const api = {
       return { message: 'Laporan bulanan berhasil dikirimkan ke Pemimpin & Kepala Sekolah.', report };
     }
   },
+
+  // =============================================================
+  // MULTIPLAYER GAMES API: WHO'S THE SPY & MAFIA
+  // =============================================================
+
+  getGameRooms: async () => {
+    try {
+      const res = await tryServerRequest<{ rooms: GameRoom[] }>('/api/games/rooms');
+      if (res?.rooms && Array.isArray(res.rooms)) {
+        res.rooms.forEach((r) => offlineStore.saveGameRoom(r));
+        return res.rooms;
+      }
+      return offlineStore.getGameRooms();
+    } catch (_) {
+      return offlineStore.getGameRooms();
+    }
+  },
+
+  createGameRoom: async (gameType: GameType, spySettings?: Partial<SpySettings>, mafiaSettings?: Partial<MafiaSettings>) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>('/api/games/rooms', {
+        method: 'POST',
+        body: JSON.stringify({ gameType, spySettings, mafiaSettings }),
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const me = offlineStore.getCurrentUser();
+      if (!me) throw new Error('Pengguna belum login.');
+      const room = createGameRoom(me, gameType, spySettings, mafiaSettings);
+      offlineStore.saveGameRoom(room);
+      return room;
+    }
+  },
+
+  getGameRoom: async (code: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}`);
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      return local;
+    }
+  },
+
+  joinGameRoom: async (code: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom; player: GamePlayer }>(`/api/games/rooms/${encodeURIComponent(code)}/join`, {
+        method: 'POST',
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const me = offlineStore.getCurrentUser();
+      if (!me) throw new Error('Pengguna belum login.');
+      const result = joinOrReconnectRoom(local, me);
+      offlineStore.saveGameRoom(result.room);
+      return result;
+    }
+  },
+
+  toggleGameReady: async (code: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/ready`, {
+        method: 'POST',
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const me = offlineStore.getCurrentUser();
+      if (!me) throw new Error('Pengguna belum login.');
+      const cleanU = me.username.toLowerCase();
+      const p = local.players.find((pl) => pl.userId === me.id || pl.username.toLowerCase() === cleanU);
+      if (p) p.isReady = !p.isReady;
+      offlineStore.saveGameRoom(local);
+      return local;
+    }
+  },
+
+  updateGameSettings: async (code: string, settings: { spySettings?: Partial<SpySettings>; mafiaSettings?: Partial<MafiaSettings> }) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/settings`, {
+        method: 'POST',
+        body: JSON.stringify(settings),
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      if (settings.spySettings) local.spySettings = { ...local.spySettings, ...settings.spySettings };
+      if (settings.mafiaSettings) local.mafiaSettings = { ...local.mafiaSettings, ...settings.mafiaSettings };
+      offlineStore.saveGameRoom(local);
+      return local;
+    }
+  },
+
+  startGame: async (code: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/start`, {
+        method: 'POST',
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const started = local.gameType === 'spy' ? startSpyGame(local) : startMafiaGame(local);
+      offlineStore.saveGameRoom(started);
+      return started;
+    }
+  },
+
+  advanceGamePhase: async (code: string, targetPhase: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/next-phase`, {
+        method: 'POST',
+        body: JSON.stringify({ targetPhase }),
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const now = Date.now();
+      if (local.gameType === 'spy') {
+        if (targetPhase === 'clues') {
+          local.phase = 'clues';
+          local.activeCluePlayerIndex = 0;
+          local.phaseDurationSeconds = local.spySettings.clueDuration || 30;
+          local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+        } else if (targetPhase === 'next_clue') {
+          const alive = local.players.filter((p) => p.isAlive && !p.isSpectator);
+          const nextIdx = (local.activeCluePlayerIndex || 0) + 1;
+          if (nextIdx < alive.length) {
+            local.activeCluePlayerIndex = nextIdx;
+            local.phaseDurationSeconds = local.spySettings.clueDuration || 30;
+            local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+          } else {
+            local.phase = 'discussion';
+            local.phaseDurationSeconds = local.spySettings.discussionDuration || 60;
+            local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+          }
+        } else if (targetPhase === 'discussion') {
+          local.phase = 'discussion';
+          local.phaseDurationSeconds = local.spySettings.discussionDuration || 60;
+          local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+        } else if (targetPhase === 'voting') {
+          local.phase = 'voting';
+          local.votes = {};
+          local.phaseDurationSeconds = local.spySettings.votingDuration || 30;
+          local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+        } else if (targetPhase === 'evaluate_vote') {
+          const ev = evaluateSpyVoting(local);
+          offlineStore.saveGameRoom(ev);
+          return ev;
+        } else if (targetPhase === 'next_round') {
+          local.round = (local.round || 1) + 1;
+          local.phase = 'clues';
+          local.activeCluePlayerIndex = 0;
+          local.votes = {};
+          local.phaseDurationSeconds = local.spySettings.clueDuration || 30;
+          local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+        }
+      } else if (local.gameType === 'mafia') {
+        if (targetPhase === 'night') {
+          local.phase = 'night';
+          local.nightActions = { mafiaVotes: {}, doctorTargetId: null, detectiveTargetId: null, detectiveResult: null };
+          local.nightVictimId = null;
+          local.savedByDoctor = false;
+          local.phaseDurationSeconds = local.mafiaSettings.nightDuration || 30;
+          local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+        } else if (targetPhase === 'evaluate_night') {
+          const ev = evaluateMafiaNight(local);
+          offlineStore.saveGameRoom(ev);
+          return ev;
+        } else if (targetPhase === 'discussion') {
+          local.phase = 'discussion';
+          local.phaseDurationSeconds = local.mafiaSettings.discussionDuration || 60;
+          local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+        } else if (targetPhase === 'voting') {
+          local.phase = 'voting';
+          local.votes = {};
+          local.phaseDurationSeconds = local.mafiaSettings.votingDuration || 30;
+          local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+        } else if (targetPhase === 'evaluate_vote') {
+          const ev = evaluateMafiaVoting(local);
+          offlineStore.saveGameRoom(ev);
+          return ev;
+        } else if (targetPhase === 'next_round') {
+          local.round = (local.round || 1) + 1;
+          local.phase = 'night';
+          local.nightActions = { mafiaVotes: {}, doctorTargetId: null, detectiveTargetId: null, detectiveResult: null };
+          local.nightVictimId = null;
+          local.savedByDoctor = false;
+          local.phaseDurationSeconds = local.mafiaSettings.nightDuration || 30;
+          local.phaseEndTime = now + local.phaseDurationSeconds * 1000;
+        }
+      }
+      offlineStore.saveGameRoom(local);
+      return local;
+    }
+  },
+
+  castGameVote: async (code: string, targetPlayerId: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/vote`, {
+        method: 'POST',
+        body: JSON.stringify({ targetPlayerId }),
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const me = offlineStore.getCurrentUser();
+      if (!me) throw new Error('Pengguna belum login.');
+      const cleanU = me.username.toLowerCase();
+      const voter = local.players.find((p) => p.userId === me.id || p.username.toLowerCase() === cleanU);
+      if (!voter || !voter.isAlive || voter.isSpectator) throw new Error('Tidak dapat memberikan suara.');
+      if (!local.votes) local.votes = {};
+      local.votes[voter.id] = targetPlayerId;
+      voter.voteTargetId = targetPlayerId;
+
+      const alive = local.players.filter((p) => p.isAlive && !p.isSpectator);
+      const allVoted = alive.length > 0 && alive.every((p) => Boolean(local.votes?.[p.id]));
+      if (allVoted) {
+        const ev = local.gameType === 'spy' ? evaluateSpyVoting(local) : evaluateMafiaVoting(local);
+        offlineStore.saveGameRoom(ev);
+        return ev;
+      }
+      offlineStore.saveGameRoom(local);
+      return local;
+    }
+  },
+
+  submitSpyGuess: async (code: string, guess: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/spy-guess`, {
+        method: 'POST',
+        body: JSON.stringify({ guess }),
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const me = offlineStore.getCurrentUser();
+      const cleanGuess = (guess || '').trim().toLowerCase();
+      const actual = (local.civilianWord || '').trim().toLowerCase();
+      const isCorrect = cleanGuess === actual || (cleanGuess.length >= 4 && actual.includes(cleanGuess));
+      local.spyGuessResult = { guess, isCorrect, spyName: me?.name || 'Imposter' };
+      local.status = 'ended';
+      local.phase = 'ended';
+      if (isCorrect) {
+        local.winner = 'spies';
+        local.winReason = `Tebakan Imposter Benar! Imposter berhasil menebak kata: "${local.civilianWord}"!`;
+      } else {
+        local.winner = 'civilians';
+        local.winReason = `Tebakan Imposter Salah ("${guess}"). Kata sebenarnya: "${local.civilianWord}".`;
+      }
+      offlineStore.saveGameRoom(local);
+      return local;
+    }
+  },
+
+  submitMafiaNightAction: async (code: string, actionType: 'mafia_kill' | 'doctor_heal' | 'detective_inspect', targetPlayerId: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/night-action`, {
+        method: 'POST',
+        body: JSON.stringify({ actionType, targetPlayerId }),
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const me = offlineStore.getCurrentUser();
+      const cleanU = me?.username.toLowerCase() || '';
+      const player = local.players.find((p) => p.userId === me?.id || p.username.toLowerCase() === cleanU);
+      if (!player) throw new Error('Pemain tidak ditemukan.');
+      if (!local.nightActions) local.nightActions = {};
+
+      if (actionType === 'mafia_kill') {
+        if (!local.nightActions.mafiaVotes) local.nightActions.mafiaVotes = {};
+        local.nightActions.mafiaVotes[player.id] = targetPlayerId;
+        player.nightTargetId = targetPlayerId;
+      } else if (actionType === 'doctor_heal') {
+        local.nightActions.doctorTargetId = targetPlayerId;
+        player.nightTargetId = targetPlayerId;
+      } else if (actionType === 'detective_inspect') {
+        local.nightActions.detectiveTargetId = targetPlayerId;
+        player.nightTargetId = targetPlayerId;
+        const targetP = local.players.find((p) => p.id === targetPlayerId);
+        if (targetP) {
+          local.nightActions.detectiveResult = {
+            targetId: targetP.id,
+            targetName: targetP.name,
+            isMafia: targetP.role === 'mafia',
+          };
+        }
+      }
+
+      const aliveMafia = local.players.filter((p) => p.isAlive && p.role === 'mafia');
+      const aliveDoc = local.players.filter((p) => p.isAlive && p.role === 'doctor');
+      const aliveDet = local.players.filter((p) => p.isAlive && p.role === 'detective');
+
+      const mafiaDone = aliveMafia.length === 0 || aliveMafia.every((m) => Boolean(local.nightActions?.mafiaVotes?.[m.id]));
+      const docDone = aliveDoc.length === 0 || Boolean(local.nightActions?.doctorTargetId);
+      const detDone = aliveDet.length === 0 || Boolean(local.nightActions?.detectiveTargetId);
+
+      if (mafiaDone && docDone && detDone) {
+        const ev = evaluateMafiaNight(local);
+        offlineStore.saveGameRoom(ev);
+        return ev;
+      }
+      offlineStore.saveGameRoom(local);
+      return local;
+    }
+  },
+
+  sendGameChat: async (code: string, text: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom; message: any }>(`/api/games/rooms/${encodeURIComponent(code)}/chat`, {
+        method: 'POST',
+        body: JSON.stringify({ text }),
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const me = offlineStore.getCurrentUser();
+      const now = Date.now();
+      const msg = {
+        id: `msg_${now}_${Math.random().toString(36).substring(2, 6)}`,
+        senderId: me?.id || 'unknown',
+        senderName: me?.name || 'Siswa',
+        senderUsername: me?.username || 'user',
+        text: text.trim(),
+        timestamp: now,
+        isSystem: false,
+      };
+      if (!local.chatMessages) local.chatMessages = [];
+      local.chatMessages.push(msg);
+      offlineStore.saveGameRoom(local);
+      return { room: local, message: msg };
+    }
+  },
+
+  restartGame: async (code: string) => {
+    try {
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/restart`, {
+        method: 'POST',
+      });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      local.status = 'waiting';
+      local.phase = 'lobby';
+      local.round = 1;
+      local.winner = null;
+      local.winReason = undefined;
+      local.civilianWord = undefined;
+      local.spyWord = undefined;
+      local.spyGuessResult = null;
+      local.nightActions = undefined;
+      local.nightVictimId = null;
+      local.savedByDoctor = false;
+      local.lastEliminatedPlayerId = null;
+      local.votes = {};
+      local.voteTally = {};
+      local.players = local.players.map((p) => ({
+        ...p,
+        isReady: false,
+        isAlive: true,
+        isSpectator: false,
+        role: undefined,
+        secretWord: undefined,
+        voteTargetId: null,
+        nightTargetId: null,
+      }));
+      offlineStore.saveGameRoom(local);
+      return local;
+    }
+  },
+
+  leaveGameRoom: async (code: string) => {
+    try {
+      await tryServerRequest(`/api/games/rooms/${encodeURIComponent(code)}/leave`, {
+        method: 'POST',
+      });
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (local) {
+        const me = offlineStore.getCurrentUser();
+        const cleanU = me?.username.toLowerCase() || '';
+        local.players = local.players.filter((p) => p.userId !== me?.id && p.username.toLowerCase() !== cleanU);
+        if (local.players.length === 0) {
+          offlineStore.deleteGameRoom(code);
+        } else {
+          if (local.hostId === me?.id || local.hostUsername.toLowerCase() === cleanU) {
+            local.players[0].isHost = true;
+            local.hostId = local.players[0].userId;
+            local.hostUsername = local.players[0].username;
+          }
+          offlineStore.saveGameRoom(local);
+        }
+      }
+    }
+  },
 };
+
+export const gameApi = {
+  createGameRoom: api.createGameRoom,
+  getGameRooms: api.getGameRooms,
+  getGameRoom: api.getGameRoom,
+  joinGameRoom: api.joinGameRoom,
+  toggleGameReady: api.toggleGameReady,
+  updateGameSettings: api.updateGameSettings,
+  startGame: api.startGame,
+  advanceGamePhase: api.advanceGamePhase,
+  castGameVote: api.castGameVote,
+  submitSpyGuess: api.submitSpyGuess,
+  submitMafiaNightAction: api.submitMafiaNightAction,
+  sendGameChat: api.sendGameChat,
+  restartGame: api.restartGame,
+  leaveGameRoom: api.leaveGameRoom,
+};
+
+export { offlineStore };

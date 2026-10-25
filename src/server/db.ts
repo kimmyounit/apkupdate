@@ -62,6 +62,7 @@ export interface DatabaseSchema {
   tuDocuments: TuDocument[];
   tuChatMessages: TuChatMessage[];
   tuMonthlyReports?: any[];
+  gameRooms?: any[];
   deletedUserIds?: string[];
   deletedPostIds?: string[];
 }
@@ -587,6 +588,7 @@ class DatabaseManager {
           tuDocuments: parsed.tuDocuments || [],
           tuChatMessages: parsed.tuChatMessages || [],
           tuMonthlyReports: parsed.tuMonthlyReports || [],
+          gameRooms: parsed.gameRooms || [],
         };
       }
     } catch (err) {
@@ -2384,6 +2386,48 @@ class DatabaseManager {
     this.data.tuMonthlyReports.unshift(newReport);
     this.save();
     return newReport;
+  }
+
+  getGameRooms(): any[] {
+    if (!Array.isArray(this.data.gameRooms)) this.data.gameRooms = [];
+    return this.data.gameRooms;
+  }
+
+  getGameRoomByCode(code: string): any | null {
+    if (!Array.isArray(this.data.gameRooms)) this.data.gameRooms = [];
+    const clean = (code || '').toUpperCase().trim();
+    return this.data.gameRooms.find((r: any) => r.code?.toUpperCase() === clean) || null;
+  }
+
+  saveGameRoom(room: any): any {
+    if (!Array.isArray(this.data.gameRooms)) this.data.gameRooms = [];
+    const clean = (room.code || '').toUpperCase().trim();
+    const idx = this.data.gameRooms.findIndex(
+      (r: any) => r.id === room.id || r.code?.toUpperCase() === clean
+    );
+    const updated = { ...room, updatedAt: Date.now() };
+    if (idx !== -1) {
+      this.data.gameRooms[idx] = updated;
+    } else {
+      this.data.gameRooms.unshift(updated);
+    }
+    // Bersihkan room yang lebih lama dari 12 jam
+    const cutoff = Date.now() - 12 * 60 * 60 * 1000;
+    this.data.gameRooms = this.data.gameRooms.filter((r: any) => (r.createdAt || 0) > cutoff);
+    this.save();
+    return updated;
+  }
+
+  deleteGameRoom(code: string): boolean {
+    if (!Array.isArray(this.data.gameRooms)) return false;
+    const clean = (code || '').toUpperCase().trim();
+    const prevLen = this.data.gameRooms.length;
+    this.data.gameRooms = this.data.gameRooms.filter((r: any) => r.code?.toUpperCase() !== clean);
+    if (this.data.gameRooms.length !== prevLen) {
+      this.save();
+      return true;
+    }
+    return false;
   }
 }
 

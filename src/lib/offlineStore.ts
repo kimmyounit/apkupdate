@@ -15,8 +15,10 @@ import type {
   PersonalNote,
   AppNotification,
 } from '../types/index.ts';
+import type { GameRoom } from '../types/game.ts';
 
 const DB_KEY = 'tamvesta_standalone_db_v2';
+const GAME_ROOMS_KEY = 'tamvesta_game_rooms_v1';
 const CURRENT_USER_KEY = 'tamvesta_offline_current_user_id';
 const PASSWORDS_KEY = 'tamvesta_offline_passwords';
 const PERMANENT_AVATARS_KEY = 'tamvesta_permanent_avatars_v1';
@@ -1612,5 +1614,68 @@ export const offlineStore = {
     student.isAlumni = !student.isAlumni;
     saveDB(db);
     return { isAlumni: student.isAlumni };
+  },
+
+  // --- MULTIPLAYER GAME ROOMS STORE ---
+  getGameRooms(): GameRoom[] {
+    try {
+      const raw = localStorage.getItem(GAME_ROOMS_KEY);
+      if (!raw) return [];
+      return JSON.parse(raw);
+    } catch (_) {
+      return [];
+    }
+  },
+
+  getGameRoom(code: string): GameRoom | null {
+    const rooms = this.getGameRooms();
+    const clean = (code || '').toUpperCase().trim();
+    return rooms.find((r) => r.code?.toUpperCase() === clean) || null;
+  },
+
+  saveGameRoom(room: GameRoom): GameRoom {
+    try {
+      const rooms = this.getGameRooms();
+      const clean = (room.code || '').toUpperCase().trim();
+      const idx = rooms.findIndex((r) => r.id === room.id || r.code?.toUpperCase() === clean);
+      const updated = { ...room, updatedAt: Date.now() };
+
+      if (idx !== -1) {
+        rooms[idx] = updated;
+      } else {
+        rooms.unshift(updated);
+      }
+
+      // Hapus room lebih lama dari 12 jam
+      const cutoff = Date.now() - 12 * 60 * 60 * 1000;
+      const filtered = rooms.filter((r) => (r.createdAt || 0) > cutoff);
+      localStorage.setItem(GAME_ROOMS_KEY, JSON.stringify(filtered));
+
+      // Broadcast sync ke tab/jendela lain
+      try {
+        const channel = new BroadcastChannel('tamvesta_game_sync');
+        channel.postMessage({ type: 'ROOM_UPDATED', roomCode: room.code, timestamp: Date.now() });
+        channel.close();
+      } catch (_) {}
+
+      return updated;
+    } catch (_) {
+      return room;
+    }
+  },
+
+  deleteGameRoom(code: string) {
+    try {
+      const rooms = this.getGameRooms();
+      const clean = (code || '').toUpperCase().trim();
+      const filtered = rooms.filter((r) => r.code?.toUpperCase() !== clean);
+      localStorage.setItem(GAME_ROOMS_KEY, JSON.stringify(filtered));
+
+      try {
+        const channel = new BroadcastChannel('tamvesta_game_sync');
+        channel.postMessage({ type: 'ROOM_DELETED', roomCode: code, timestamp: Date.now() });
+        channel.close();
+      } catch (_) {}
+    } catch (_) {}
   },
 };

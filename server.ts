@@ -9,6 +9,15 @@ import {
   requireRole,
   type AuthenticatedRequest,
 } from './src/server/auth.ts';
+import {
+  createGameRoom,
+  joinOrReconnectRoom,
+  startSpyGame,
+  startMafiaGame,
+  evaluateSpyVoting,
+  evaluateMafiaNight,
+  evaluateMafiaVoting,
+} from './src/lib/gameEngine.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1359,6 +1368,434 @@ app.patch('/api/admin/students/:id/alumni', authMiddleware, requireRole(['admin'
   } catch (e: any) {
     return res.status(400).json({ error: e.message });
   }
+});
+
+// -------------------------------------------------------------
+// MULTIPLAYER GAME ENDPOINTS: WHO'S THE SPY & MAFIA
+// -------------------------------------------------------------
+
+// Ambil semua daftar room yang sedang aktif/menunggu
+app.get('/api/games/rooms', authMiddleware, (_req: AuthenticatedRequest, res) => {
+  try {
+    const rooms = db.getGameRooms();
+    res.json({ rooms });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Buat room baru
+app.post('/api/games/rooms', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { gameType, spySettings, mafiaSettings } = req.body;
+    if (gameType !== 'spy' && gameType !== 'mafia') {
+      return res.status(400).json({ error: 'Jenis permainan tidak valid.' });
+    }
+    const room = createGameRoom(req.user, gameType, spySettings, mafiaSettings);
+    db.saveGameRoom(room);
+    return res.status(201).json({ room });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Gagal membuat room permainan.' });
+  }
+});
+
+// Ambil status room berdasarkan kode room
+app.get('/api/games/rooms/:code', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) {
+    return res.status(404).json({ error: 'Room permainan tidak ditemukan. Periksa kode room kembali.' });
+  }
+  return res.json({ room });
+});
+
+// Bergabung atau Reconnect ke Room
+app.post('/api/games/rooms/:code/join', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) {
+    return res.status(404).json({ error: 'Room permainan tidak ditemukan.' });
+  }
+  const result = joinOrReconnectRoom(room, req.user);
+  db.saveGameRoom(result.room);
+  return res.json({ room: result.room, player: result.player });
+});
+
+// Toggle Status Siap Pemain
+app.post('/api/games/rooms/:code/ready', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+
+  const cleanU = req.user.username.toLowerCase();
+  const player = room.players.find((p: any) => p.userId === req.user.id || p.username.toLowerCase() === cleanU);
+  if (!player) return res.status(403).json({ error: 'Anda belum bergabung dalam room ini.' });
+
+  player.isReady = !player.isReady;
+  db.saveGameRoom(room);
+  return res.json({ room });
+});
+
+// Update Pengaturan Room (Hanya Host)
+app.post('/api/games/rooms/:code/settings', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+    return res.status(403).json({ error: 'Hanya host yang dapat mengubah pengaturan room.' });
+  }
+
+  const { spySettings, mafiaSettings } = req.body;
+  if (spySettings) room.spySettings = { ...room.spySettings, ...spySettings };
+  if (mafiaSettings) room.mafiaSettings = { ...room.mafiaSettings, ...mafiaSettings };
+
+  db.saveGameRoom(room);
+  return res.json({ room });
+});
+
+// Mulai Permainan (Hanya Host)
+app.post('/api/games/rooms/:code/start', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+    return res.status(403).json({ error: 'Hanya host yang dapat memulai permainan.' });
+  }
+
+  try {
+    let startedRoom: any;
+    if (room.gameType === 'spy') {
+      startedRoom = startSpyGame(room);
+    } else {
+      startedRoom = startMafiaGame(room);
+    }
+    db.saveGameRoom(startedRoom);
+    return res.json({ room: startedRoom });
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+// Pergantian Fase / Evaluasi Otomatis
+app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+
+  const { targetPhase } = req.body;
+  const now = Date.now();
+
+  if (room.gameType === 'spy') {
+    if (targetPhase === 'clues') {
+      room.phase = 'clues';
+      room.activeCluePlayerIndex = 0;
+      room.phaseDurationSeconds = room.spySettings.clueDuration || 30;
+      room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+    } else if (targetPhase === 'next_clue') {
+      const alivePlayers = room.players.filter((p: any) => p.isAlive && !p.isSpectator);
+      const nextIdx = (room.activeCluePlayerIndex || 0) + 1;
+      if (nextIdx < alivePlayers.length) {
+        room.activeCluePlayerIndex = nextIdx;
+        room.phaseDurationSeconds = room.spySettings.clueDuration || 30;
+        room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+      } else {
+        // Semua sudah memberi petunjuk -> Masuk ke Diskusi
+        room.phase = 'discussion';
+        room.phaseDurationSeconds = room.spySettings.discussionDuration || 60;
+        room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+      }
+    } else if (targetPhase === 'discussion') {
+      room.phase = 'discussion';
+      room.phaseDurationSeconds = room.spySettings.discussionDuration || 60;
+      room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+    } else if (targetPhase === 'voting') {
+      room.phase = 'voting';
+      room.votes = {};
+      room.phaseDurationSeconds = room.spySettings.votingDuration || 30;
+      room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+    } else if (targetPhase === 'evaluate_vote') {
+      const evaluated = evaluateSpyVoting(room);
+      db.saveGameRoom(evaluated);
+      return res.json({ room: evaluated });
+    } else if (targetPhase === 'next_round') {
+      room.round = (room.round || 1) + 1;
+      room.phase = 'clues';
+      room.activeCluePlayerIndex = 0;
+      room.votes = {};
+      room.phaseDurationSeconds = room.spySettings.clueDuration || 30;
+      room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+    }
+  } else if (room.gameType === 'mafia') {
+    if (targetPhase === 'night') {
+      room.phase = 'night';
+      room.nightActions = { mafiaVotes: {}, doctorTargetId: null, detectiveTargetId: null, detectiveResult: null };
+      room.nightVictimId = null;
+      room.savedByDoctor = false;
+      room.phaseDurationSeconds = room.mafiaSettings.nightDuration || 30;
+      room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+    } else if (targetPhase === 'evaluate_night') {
+      const evaluated = evaluateMafiaNight(room);
+      db.saveGameRoom(evaluated);
+      return res.json({ room: evaluated });
+    } else if (targetPhase === 'discussion') {
+      room.phase = 'discussion';
+      room.phaseDurationSeconds = room.mafiaSettings.discussionDuration || 60;
+      room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+    } else if (targetPhase === 'voting') {
+      room.phase = 'voting';
+      room.votes = {};
+      room.phaseDurationSeconds = room.mafiaSettings.votingDuration || 30;
+      room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+    } else if (targetPhase === 'evaluate_vote') {
+      const evaluated = evaluateMafiaVoting(room);
+      db.saveGameRoom(evaluated);
+      return res.json({ room: evaluated });
+    } else if (targetPhase === 'next_round') {
+      room.round = (room.round || 1) + 1;
+      room.phase = 'night';
+      room.nightActions = { mafiaVotes: {}, doctorTargetId: null, detectiveTargetId: null, detectiveResult: null };
+      room.nightVictimId = null;
+      room.savedByDoctor = false;
+      room.phaseDurationSeconds = room.mafiaSettings.nightDuration || 30;
+      room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
+    }
+  }
+
+  db.saveGameRoom(room);
+  return res.json({ room });
+});
+
+// Memberikan Suara Voting (Spy & Mafia)
+app.post('/api/games/rooms/:code/vote', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+
+  const cleanU = req.user.username.toLowerCase();
+  const voter = room.players.find((p: any) => p.userId === req.user.id || p.username.toLowerCase() === cleanU);
+  if (!voter || !voter.isAlive || voter.isSpectator) {
+    return res.status(403).json({ error: 'Hanya pemain aktif yang masih hidup yang dapat memberikan suara.' });
+  }
+
+  const { targetPlayerId } = req.body;
+  if (!room.votes) room.votes = {};
+  room.votes[voter.id] = targetPlayerId;
+  voter.voteTargetId = targetPlayerId;
+
+  // Cek apakah seluruh pemain hidup telah memberikan suara
+  const alivePlayers = room.players.filter((p: any) => p.isAlive && !p.isSpectator);
+  const allVoted = alivePlayers.length > 0 && alivePlayers.every((p: any) => Boolean(room.votes[p.id]));
+
+  if (allVoted) {
+    let evaluated: any;
+    if (room.gameType === 'spy') {
+      evaluated = evaluateSpyVoting(room);
+    } else {
+      evaluated = evaluateMafiaVoting(room);
+    }
+    db.saveGameRoom(evaluated);
+    return res.json({ room: evaluated });
+  }
+
+  db.saveGameRoom(room);
+  return res.json({ room });
+});
+
+// Imposter Tebak Kata (Who's the Spy)
+app.post('/api/games/rooms/:code/spy-guess', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+
+  const { guess } = req.body;
+  const cleanGuess = (guess || '').trim().toLowerCase();
+  const actualWord = (room.civilianWord || '').trim().toLowerCase();
+
+  const isCorrect = cleanGuess === actualWord || (cleanGuess.length >= 4 && actualWord.includes(cleanGuess));
+
+  room.spyGuessResult = {
+    guess,
+    isCorrect,
+    spyName: req.user.name,
+  };
+  room.status = 'ended';
+  room.phase = 'ended';
+
+  if (isCorrect) {
+    room.winner = 'spies';
+    room.winReason = `Tebakan Imposter Benar! Imposter (${req.user.name}) berhasil menebak kata pemain biasa: "${room.civilianWord}"!`;
+  } else {
+    room.winner = 'civilians';
+    room.winReason = `Tebakan Imposter Salah ("${guess}"). Kata sebenarnya adalah "${room.civilianWord}". Kemenangan mutlak untuk Pemain Biasa!`;
+  }
+
+  db.saveGameRoom(room);
+  return res.json({ room });
+});
+
+// Aksi Malam Mafia (Mafia, Dokter, Detektif)
+app.post('/api/games/rooms/:code/night-action', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+
+  const cleanU = req.user.username.toLowerCase();
+  const player = room.players.find((p: any) => p.userId === req.user.id || p.username.toLowerCase() === cleanU);
+  if (!player || !player.isAlive || player.isSpectator) {
+    return res.status(403).json({ error: 'Hanya peran aktif yang dapat melakukan aksi malam.' });
+  }
+
+  const { actionType, targetPlayerId } = req.body;
+  if (!room.nightActions) room.nightActions = {};
+
+  if (actionType === 'mafia_kill') {
+    if (player.role !== 'mafia') return res.status(403).json({ error: 'Hanya Mafia yang dapat memilih target eliminasi.' });
+    if (!room.nightActions.mafiaVotes) room.nightActions.mafiaVotes = {};
+    room.nightActions.mafiaVotes[player.id] = targetPlayerId;
+    player.nightTargetId = targetPlayerId;
+  } else if (actionType === 'doctor_heal') {
+    if (player.role !== 'doctor') return res.status(403).json({ error: 'Hanya Dokter yang dapat memilih pasien untuk dilindungi.' });
+    room.nightActions.doctorTargetId = targetPlayerId;
+    player.nightTargetId = targetPlayerId;
+  } else if (actionType === 'detective_inspect') {
+    if (player.role !== 'detective') return res.status(403).json({ error: 'Hanya Detektif yang dapat memeriksa pemain.' });
+    room.nightActions.detectiveTargetId = targetPlayerId;
+    player.nightTargetId = targetPlayerId;
+    const targetP = room.players.find((p: any) => p.id === targetPlayerId);
+    if (targetP) {
+      room.nightActions.detectiveResult = {
+        targetId: targetP.id,
+        targetName: targetP.name,
+        isMafia: targetP.role === 'mafia',
+      };
+    }
+  }
+
+  // Cek apakah semua peran penting yang masih hidup telah bertindak
+  const aliveMafia = room.players.filter((p: any) => p.isAlive && p.role === 'mafia');
+  const aliveDoctor = room.players.filter((p: any) => p.isAlive && p.role === 'doctor');
+  const aliveDetective = room.players.filter((p: any) => p.isAlive && p.role === 'detective');
+
+  const mafiaDone = aliveMafia.length === 0 || aliveMafia.every((m: any) => Boolean(room.nightActions?.mafiaVotes?.[m.id]));
+  const doctorDone = aliveDoctor.length === 0 || Boolean(room.nightActions?.doctorTargetId);
+  const detectiveDone = aliveDetective.length === 0 || Boolean(room.nightActions?.detectiveTargetId);
+
+  if (mafiaDone && doctorDone && detectiveDone) {
+    const evaluated = evaluateMafiaNight(room);
+    db.saveGameRoom(evaluated);
+    return res.json({ room: evaluated });
+  }
+
+  db.saveGameRoom(room);
+  return res.json({ room });
+});
+
+// Kirim Pesan Chat Room
+app.post('/api/games/rooms/:code/chat', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+
+  const { text } = req.body;
+  if (!text || !text.trim()) return res.status(400).json({ error: 'Pesan chat tidak boleh kosong.' });
+
+  const now = Date.now();
+  const newMsg = {
+    id: `msg_${now}_${Math.random().toString(36).substring(2, 6)}`,
+    senderId: req.user.id,
+    senderName: req.user.name,
+    senderUsername: req.user.username,
+    text: text.trim(),
+    timestamp: now,
+    isSystem: false,
+  };
+
+  if (!room.chatMessages) room.chatMessages = [];
+  room.chatMessages.push(newMsg);
+  if (room.chatMessages.length > 60) {
+    room.chatMessages = room.chatMessages.slice(-60);
+  }
+
+  db.saveGameRoom(room);
+  return res.json({ room, message: newMsg });
+});
+
+// Mulai Ulang Permainan (Restart Room ke Lobby)
+app.post('/api/games/rooms/:code/restart', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+    return res.status(403).json({ error: 'Hanya host yang dapat me-restart room permainan.' });
+  }
+
+  const now = Date.now();
+  room.status = 'waiting';
+  room.phase = 'lobby';
+  room.round = 1;
+  room.winner = null;
+  room.winReason = undefined;
+  room.civilianWord = undefined;
+  room.spyWord = undefined;
+  room.spyGuessResult = null;
+  room.nightActions = undefined;
+  room.nightVictimId = null;
+  room.savedByDoctor = false;
+  room.lastEliminatedPlayerId = null;
+  room.votes = {};
+  room.voteTally = {};
+
+  room.players = room.players.map((p: any) => ({
+    ...p,
+    isReady: false,
+    isAlive: true,
+    isSpectator: false,
+    role: undefined,
+    secretWord: undefined,
+    voteTargetId: null,
+    nightTargetId: null,
+    eliminatedAtRound: undefined,
+    eliminationReason: undefined,
+  }));
+
+  if (!room.chatMessages) room.chatMessages = [];
+  room.chatMessages.push({
+    id: `msg_restart_${now}`,
+    senderId: 'system',
+    senderName: 'Sistem TAMVESTA',
+    senderUsername: 'system',
+    text: 'Permainan telah di-restart! Silakan klik Siap untuk memulai putaran baru.',
+    timestamp: now,
+    isSystem: true,
+  });
+
+  db.saveGameRoom(room);
+  return res.json({ room });
+});
+
+// Tinggalkan Room
+app.post('/api/games/rooms/:code/leave', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.json({ message: 'Room tidak ada.' });
+
+  const cleanU = req.user.username.toLowerCase();
+  room.players = room.players.filter((p: any) => p.userId !== req.user.id && p.username.toLowerCase() !== cleanU);
+
+  if (room.players.length === 0) {
+    db.deleteGameRoom(room.code);
+    return res.json({ message: 'Room dihapus karena semua pemain keluar.' });
+  }
+
+  // Jika host keluar, alihkan host ke pemain pertama yang tersisa
+  if (room.hostId === req.user.id || room.hostUsername.toLowerCase() === cleanU) {
+    room.players[0].isHost = true;
+    room.hostId = room.players[0].userId;
+    room.hostUsername = room.players[0].username;
+  }
+
+  const now = Date.now();
+  if (!room.chatMessages) room.chatMessages = [];
+  room.chatMessages.push({
+    id: `msg_leave_${now}`,
+    senderId: 'system',
+    senderName: 'Sistem TAMVESTA',
+    senderUsername: 'system',
+    text: `${req.user.name} meninggalkan room permainan.`,
+    timestamp: now,
+    isSystem: true,
+  });
+
+  db.saveGameRoom(room);
+  return res.json({ room });
 });
 
 

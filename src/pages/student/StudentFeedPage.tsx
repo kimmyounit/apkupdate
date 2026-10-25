@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   GraduationCap,
   Maximize2,
+  Gamepad2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -46,6 +47,7 @@ interface StudentFeedPageProps {
   onOpenQr?: () => void;
   onOpenProfile?: () => void;
   onOpenArticles?: () => void;
+  onOpenGames?: () => void;
 }
 
 export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
@@ -56,6 +58,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   onOpenQr,
   onOpenProfile,
   onOpenArticles,
+  onOpenGames,
 }) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<StudentPost[]>([]);
@@ -311,8 +314,8 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
           </div>
         </div>
 
-        {/* Quick Hub Navigation: Pengumuman, Mapel, Perpustakaan */}
-        <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/10 text-white text-xs font-bold">
+        {/* Quick Hub Navigation: Pengumuman, Mapel, Perpustakaan, Permainan, Artikel */}
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-4 pt-3 border-t border-white/10 text-white text-xs font-bold">
           <button
             onClick={onOpenAnnouncements}
             className="flex items-center justify-center gap-1.5 py-2 px-2 bg-white/10 hover:bg-white/20 rounded-xl transition"
@@ -335,11 +338,54 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             <span className="truncate">Perpustakaan</span>
           </button>
           <button
+            onClick={onOpenGames}
+            className="flex items-center justify-center gap-1.5 py-2 px-2 bg-purple-500/30 hover:bg-purple-500/40 text-purple-200 border border-purple-400/40 rounded-xl transition font-black shadow-sm"
+          >
+            <Gamepad2 className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
+            <span className="truncate">Permainan</span>
+          </button>
+          <button
             onClick={onOpenArticles}
             className="flex items-center justify-center gap-1.5 py-2 px-2 bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-300/30 rounded-xl transition font-semibold"
           >
             <BookOpen className="w-3.5 h-3.5 text-amber-300" />
             <span className="truncate">Artikel Guru</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Featured Banner: Permainan Siswa (Who's the Spy & Mafia) */}
+      <div
+        onClick={onOpenGames}
+        className="cursor-pointer group relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-4 border border-indigo-800/40 hover:border-indigo-500/60 transition shadow-lg text-white"
+      >
+        <div className="flex items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+              <Gamepad2 className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
+                  Permainan Siswa: Who's the Spy & Mafia
+                </span>
+                <span className="text-[10px] bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 px-2 py-0.2 rounded-full font-bold">
+                  Multiplayer
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Mainkan bersama teman saat jam istirahat atau jam kosong!
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenGames && onOpenGames();
+            }}
+            className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow whitespace-nowrap"
+          >
+            Mainkan
           </button>
         </div>
       </div>

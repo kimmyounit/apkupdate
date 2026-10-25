@@ -10,11 +10,12 @@ import { ProfilePage } from '../profile/ProfilePage.tsx';
 import { AnnouncementsPage } from './AnnouncementsPage.tsx';
 import { SubjectsPage } from './SubjectsPage.tsx';
 import { LibraryPage } from './LibraryPage.tsx';
+import { GamesPage } from '../games/GamesPage.tsx';
 import { StudentContactModal } from '../../components/StudentContactModal.tsx';
 import { playQuizExitAlertSound } from '../../lib/audio.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
-export type StudentViewTab = StudentNavTab | 'announcements' | 'subjects' | 'library';
+export type StudentViewTab = StudentNavTab | 'announcements' | 'subjects' | 'library' | 'games';
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -33,8 +34,27 @@ export const StudentDashboard: React.FC = () => {
   });
 
   const isNavTab = (tab: StudentViewTab): tab is StudentNavTab => {
-    return ['home', 'articles', 'quiz', 'archive', 'qr', 'profile'].includes(tab);
+    return ['home', 'articles', 'quiz', 'archive', 'games', 'qr', 'profile'].includes(tab);
   };
+
+  React.useEffect(() => {
+    const handleNavEvent = (e: any) => {
+      const tab = e.detail;
+      if (tab === 'permainan' || tab === 'games') {
+        setActiveTab('games');
+      } else if (tab === 'mapel') {
+        setActiveTab('subjects');
+      } else if (tab === 'perpustakaan') {
+        setActiveTab('library');
+      } else if (tab === 'pengumuman') {
+        setActiveTab('announcements');
+      } else if (tab === 'quiz') {
+        setActiveTab('quiz');
+      }
+    };
+    window.addEventListener('tamvesta_navigate', handleNavEvent);
+    return () => window.removeEventListener('tamvesta_navigate', handleNavEvent);
+  }, []);
 
   const handleTabChange = (tab: StudentNavTab) => {
     if (isQuizActive) {
@@ -76,7 +96,12 @@ export const StudentDashboard: React.FC = () => {
             onOpenQr={() => setActiveTab('qr')}
             onOpenProfile={() => setActiveTab('profile')}
             onOpenArticles={() => setActiveTab('articles')}
+            onOpenGames={() => setActiveTab('games')}
           />
+        )}
+
+        {activeTab === 'games' && (
+          <GamesPage onBack={() => setActiveTab('home')} />
         )}
 
         {activeTab === 'articles' && (

@@ -14,6 +14,7 @@ import {
   Bell,
   HelpCircle,
   UserCheck,
+  Gamepad2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { StudentProfileModal } from './StudentProfileModal.tsx';
@@ -53,6 +54,9 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
       setMobileMenuOpen(false);
       return;
     }
+    try {
+      window.dispatchEvent(new CustomEvent('tamvesta_navigate', { detail: tab }));
+    } catch (_) {}
     if (onNavigate) onNavigate(tab);
     setMobileMenuOpen(false);
   };
@@ -141,6 +145,18 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
                 >
                   <HelpCircle className="w-4 h-4" />
                   <span>Kuis & Ujian (Token)</span>
+                </button>
+
+                <button
+                  onClick={() => handleNav('permainan')}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition ${
+                    currentTab === 'permainan'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Gamepad2 className="w-4 h-4" />
+                  <span>Permainan</span>
                 </button>
               </>
             )}
@@ -333,6 +349,16 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
               >
                 <HelpCircle className="w-4 h-4" />
                 <span>4. Halaman Quiz (Dengan Token)</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('permainan')}
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                  currentTab === 'permainan' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Gamepad2 className="w-4 h-4" />
+                <span>5. Halaman Permainan (Spy & Mafia)</span>
               </button>
             </>
           )}
