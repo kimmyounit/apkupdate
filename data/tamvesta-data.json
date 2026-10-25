@@ -29,7 +29,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
       "createdAt": "2026-10-24T08:22:46.353Z",
-      "updatedAt": "2026-10-25T09:18:50.875Z",
+      "updatedAt": "2026-10-25T09:18:51.666Z",
       "password": "BungaBaru123",
       "phone": "081234567890",
       "email": "bunga.pertiwi@gmail.com",
@@ -743,6 +743,24 @@
   "attendanceRecords": [],
   "passwordResetRequests": [
     {
+      "id": "pr_1792919931412",
+      "ticketNumber": "TKT-693159",
+      "userId": "user_siswa_siswa_smp7a_002",
+      "username": "siswa.smp7a.002",
+      "name": "Bunga Pertiwi",
+      "kelas": "VII-A SMP",
+      "role": "siswa",
+      "reason": "Ganti sandi baru",
+      "status": "approved",
+      "newPasswordHash": "41592875a768054049432a0b6008104961c20386e5bea413793c92596e49f8070754ebfc97f988b4a96c90a19a245eceb7cb647cce92cc38b3bb5e69abc2e71b",
+      "newSalt": "007b15300a9b4ee9648275828b00a750",
+      "newPassword": "BungaSakti2026!",
+      "createdAt": "2026-10-25T09:18:51.412Z",
+      "processedAt": "2026-10-25T09:18:51.657Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "ACC Sandi Baru Bunga"
+    },
+    {
       "id": "pr_1792917912367",
       "ticketNumber": "TKT-518981",
       "userId": "user_siswa_siswa_smp7a_002",
@@ -779,6 +797,30 @@
   "stories": [],
   "notes": [],
   "notifications": [
+    {
+      "id": "notif_1792919931666_lcccz",
+      "title": "Pengajuan Ganti Sandi Disetujui",
+      "message": "Pengajuan ganti sandi Anda (Tiket: TKT-693159) telah DISETUJUI oleh Admin. Silakan masuk menggunakan kata sandi baru.",
+      "type": "security",
+      "isImportant": false,
+      "linkType": "none",
+      "targetUserId": "user_siswa_siswa_smp7a_002",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-25T09:18:51.666Z"
+    },
+    {
+      "id": "notif_1792919931412_d9q79",
+      "title": "Pengajuan Ganti Sandi Baru",
+      "message": "Bunga Pertiwi (VII-A SMP) mengajukan ganti sandi (Tiket: TKT-693159).",
+      "type": "security",
+      "isImportant": false,
+      "linkType": "none",
+      "targetRole": "admin",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-25T09:18:51.412Z"
+    },
     {
       "id": "notif_1792919930876_79z7v",
       "title": "Pengajuan Ganti Sandi Disetujui",
