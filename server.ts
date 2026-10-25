@@ -508,16 +508,6 @@ app.post('/api/admin/staff/:id/reset-initial', authMiddleware, requireRole(['adm
     initialPassword: result.initialPassword,
   });
 });
-  const { id } = req.params;
-  const result = db.resetStaffPasswordToInitial(id);
-  if (!result.success) {
-    return res.status(400).json({ error: result.error });
-  }
-  return res.json({
-    message: `Password berhasil dikembalikan ke password awal (${result.initialPassword}).`,
-    initialPassword: result.initialPassword,
-  });
-});
 
 // -------------------------------------------------------------
 // 3. MATA PELAJARAN (SUBJECTS)
