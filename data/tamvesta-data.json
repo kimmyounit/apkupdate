@@ -29,8 +29,11 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
       "createdAt": "2026-10-24T08:22:46.353Z",
-      "updatedAt": "2026-10-24T08:22:46.353Z",
-      "password": "Siswa7A002"
+      "updatedAt": "2026-10-25T08:24:54.562Z",
+      "password": "Siswa7A002",
+      "bio": "Siswa SMP Tamansiswa Batam",
+      "phone": "081234567890",
+      "email": "bunga.pertiwi@gmail.com"
     },
     {
       "id": "user_siswa_siswa_smp7a_003",
@@ -738,7 +741,21 @@
   "attendanceEvents": [],
   "attendanceRecords": [],
   "passwordResetRequests": [],
-  "posts": [],
+  "posts": [
+    {
+      "id": "post_1792916695729_49qnk",
+      "authorId": "user_siswa_siswa_smp7a_002",
+      "authorName": "Bunga Pertiwi",
+      "authorUsername": "siswa.smp7a.002",
+      "authorKelas": "VII-A SMP",
+      "authorAvatar": "",
+      "caption": "Halo teman-teman Tamvesta! Belajar bersama menyenangkan.",
+      "mediaType": "none",
+      "likes": [],
+      "comments": [],
+      "createdAt": "2026-10-25T08:24:55.729Z"
+    }
+  ],
   "stories": [],
   "notes": [],
   "notifications": [],
