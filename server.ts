@@ -133,15 +133,12 @@ app.post('/api/auth/login', async (req, res) => {
   const rawUsername = String(username).trim();
   const cleanUsername = rawUsername.toLowerCase().replace(/^@+/, '');
   const rawPassword = String(password).trim();
-  let user = db.findUserByUsername(cleanUsername, rawPassword) || db.findUserByUsername(rawUsername, rawPassword);
+  // Reload latest database from GitHub for real-time sync across devices
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
 
-  // If user is not found in memory, reload latest database from GitHub (cross-device sync)
-  if (!user) {
-    try {
-      await db.reloadFromGitHub();
-      user = db.findUserByUsername(cleanUsername, rawPassword) || db.findUserByUsername(rawUsername, rawPassword);
-    } catch (_) {}
-  }
+  let user = db.findUserByUsername(cleanUsername, rawPassword) || db.findUserByUsername(rawUsername, rawPassword);
 
   if (!user) {
     return res.status(401).json({ error: 'Username atau password tidak ditemukan.' });
@@ -157,25 +154,42 @@ app.post('/api/auth/login', async (req, res) => {
   const inputPassLower = inputPass.toLowerCase();
   const initPass = (user.initialPassword || '').trim();
   const userPass = (user.password || '').trim();
-  const isPassChanged = Boolean((user as any).passwordChanged || (user.password && user.password !== 'SiswaTamvesta123' && user.password !== user.initialPassword));
+  const isPassChanged = Boolean((user as any).passwordChanged);
 
   let isValid = false;
-  if (initPass && (inputPass === initPass || inputPassLower === initPass.toLowerCase())) {
-    isValid = true;
-  } else if (userPass && (inputPass === userPass || inputPassLower === userPass.toLowerCase())) {
-    isValid = true;
-  } else if (user.passwordHash && user.salt && (verifyPassword(inputPass, user.passwordHash, user.salt, user.initialPassword) || verifyPassword(inputPassLower, user.passwordHash, user.salt, user.initialPassword))) {
-    isValid = true;
-  } else if (!isPassChanged && user.role === 'siswa' && inputPassLower === 'siswatamvesta123') {
-    isValid = true;
-  } else if ((user.role === 'admin' || user.username === 'TAMANSISWA') && (inputPass === 'TAMVESTA123' || inputPassLower === 'tamvesta123')) {
-    isValid = true;
-  } else if (user.role === 'tata_usaha' && (inputPass === 'Tamvesta!H2605' || inputPassLower === 'tamvesta!h2605' || inputPassLower === 'tamvesta123')) {
-    isValid = true;
-  } else if (user.username === 'margaretha.h' && (inputPass === 'Tamvesta!M2603' || inputPassLower === 'tamvesta!m2603' || inputPassLower === 'tamvesta123')) {
-    isValid = true;
-  } else if (user.role !== 'siswa' && inputPassLower === 'tamvesta123') {
-    isValid = true;
+
+  if (isPassChanged) {
+    // Siswa/user telah resmi ganti kata sandi -> HANYA password baru yang berlaku!
+    // Password awal/pertama TIDAK BOLEH lagi digunakan
+    if (userPass && (inputPass === userPass || inputPassLower === userPass.toLowerCase())) {
+      isValid = true;
+    } else if (user.passwordHash && user.salt && (verifyPassword(inputPass, user.passwordHash, user.salt) || verifyPassword(inputPassLower, user.passwordHash, user.salt))) {
+      isValid = true;
+    }
+  } else {
+    // Belum pernah ganti sandi -> boleh pakai sandi awal atau bawaan
+    if (initPass && (inputPass === initPass || inputPassLower === initPass.toLowerCase())) {
+      isValid = true;
+    } else if (userPass && (inputPass === userPass || inputPassLower === userPass.toLowerCase())) {
+      isValid = true;
+    } else if (user.passwordHash && user.salt && (verifyPassword(inputPass, user.passwordHash, user.salt, user.initialPassword) || verifyPassword(inputPassLower, user.passwordHash, user.salt, user.initialPassword))) {
+      isValid = true;
+    } else if (user.role === 'siswa' && inputPassLower === 'siswatamvesta123') {
+      isValid = true;
+    }
+  }
+
+  // Khusus staf / admin fallback jika belum ganti sandi
+  if (!isValid) {
+    if ((user.role === 'admin' || user.username === 'TAMANSISWA') && (inputPass === 'TAMVESTA123' || inputPassLower === 'tamvesta123')) {
+      isValid = true;
+    } else if (user.role === 'tata_usaha' && !isPassChanged && (inputPass === 'Tamvesta!H2605' || inputPassLower === 'tamvesta!h2605' || inputPassLower === 'tamvesta123')) {
+      isValid = true;
+    } else if (user.username === 'margaretha.h' && !isPassChanged && (inputPass === 'Tamvesta!M2603' || inputPassLower === 'tamvesta!m2603' || inputPassLower === 'tamvesta123')) {
+      isValid = true;
+    } else if (user.role !== 'siswa' && !isPassChanged && inputPassLower === 'tamvesta123') {
+      isValid = true;
+    }
   }
   if (!isValid) {
     return res.status(401).json({ error: 'Username atau password tidak sesuai.' });

@@ -747,7 +747,14 @@ class DatabaseManager {
   }
 
   public async saveAsync(): Promise<void> {
-    this.save();
+    this.saveDataDirect(this.data);
+    if (process.env.VERCEL) {
+      try {
+        await this.syncToGitHub(this.data);
+      } catch (err) {
+        console.warn('[DB] saveAsync syncToGitHub failed:', err);
+      }
+    }
   }
 
   // --- Users & Authentication ---
