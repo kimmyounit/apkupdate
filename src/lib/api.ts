@@ -181,6 +181,20 @@ export const api = {
     return null;
   },
 
+  // Bulk sync local tickets to cloud server
+  syncLocalTicketsToServer: async () => {
+    try {
+      const localTickets = offlineStore.getPasswordResetRequests();
+      if (Array.isArray(localTickets) && localTickets.length > 0) {
+        return await tryServerRequest<{ count: number }>('/api/student/tickets/sync-multiple', {
+          method: 'POST',
+          body: JSON.stringify({ tickets: localTickets }),
+        });
+      }
+    } catch (_) {}
+    return null;
+  },
+
   // Auth
   registerStudent: async (data: { name: string; username: string; password: string; confirmPassword?: string; gender: 'Laki-laki' | 'Perempuan'; kelas: string }) => {
     try {

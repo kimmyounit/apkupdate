@@ -2136,6 +2136,10 @@ class DatabaseManager {
     return newNotif;
   }
 
+  addNotification(data: any): AppNotification {
+    return this.createNotification(data);
+  }
+
   // -------------------------------------------------------------
   // ARTIKEL GURU & METODE PEMBELAJARAN
   // -------------------------------------------------------------

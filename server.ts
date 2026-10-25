@@ -289,6 +289,19 @@ app.get('/api/student/tickets', authMiddleware, async (req: AuthenticatedRequest
   return res.json(safe);
 });
 
+// POST /api/student/tickets/sync-multiple (Sinkronisasi tiket lokal ke server)
+app.post('/api/student/tickets/sync-multiple', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const { tickets } = req.body;
+  if (!Array.isArray(tickets)) {
+    return res.status(400).json({ error: 'Data tiket harus berupa array.' });
+  }
+  const result = db.syncMultipleTickets(tickets);
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ message: 'Tiket berhasil disinkronkan', ...result });
+});
+
 // GET /api/admin/password-reset-requests (Admin only)
 app.get('/api/admin/password-reset-requests', authMiddleware, requireRole(['admin', 'kepala_sekolah']), async (req, res) => {
   try {
