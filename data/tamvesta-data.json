@@ -7,8 +7,8 @@
       "role": "admin",
       "jabatan": "Administrator Utama TAMVESTA",
       "initialPassword": "TAMVESTA123",
-      "passwordHash": "25064f7886326117c6b3ce623eca262d1ed8b94faef6466f9d15ad8a4ee77e21316b8f522015afd18a86ca60f07420473ca5a2bb034665008eb862c29e6ccc83",
-      "salt": "1c0129138788552a4480074bf6e58df5",
+      "passwordHash": "212fcf36e369e180b7db386f1db7dfea0e731e518f822692f5bee27316c91271313961b1eaef6a12e7754c0b0fed0368ac79dd443a4e7ab63ace0d95e1c4cc48",
+      "salt": "ec84954ab872dd6f069d1a6d35ad54e9",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_admin_tamansiswa:785efa956b468c8f",
@@ -22,19 +22,18 @@
       "role": "siswa",
       "kelas": "VII-A SMP",
       "gender": "Perempuan",
-      "initialPassword": "BungaBaru123",
-      "passwordHash": "dfac6cdadcd942367b213d896292beefecd679ca173fa2254be7f43577baec79aaad98ee060679f21dfc9a483ad0c255313570d2de247b5b194f41b73107e23f",
-      "salt": "74e3e27276868a01b89db48080b8ed99",
+      "initialPassword": "Siswa7A002",
+      "passwordHash": "ecf000a1f3f71f553369e71389a4ef281d77a7899521c5c1cba2013a5e552a84249139cc3603a8a110589db062b9b3645b3a955906506754ebaa385c7a85179c",
+      "salt": "319cb080d8075f5c285297a01674fb70",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
       "createdAt": "2026-10-24T08:22:46.353Z",
-      "updatedAt": "2026-10-25T09:18:51.666Z",
-      "password": "BungaBaru123",
+      "updatedAt": "2026-10-24T08:22:46.353Z",
+      "password": "Siswa7A002",
       "phone": "081234567890",
       "email": "bunga.pertiwi@gmail.com",
-      "bio": "Siswa SMP Tamansiswa Batam",
-      "passwordChanged": true
+      "bio": "Siswa SMP Tamansiswa Batam"
     },
     {
       "id": "user_siswa_siswa_smp7a_003",
@@ -516,8 +515,8 @@
       "role": "admin",
       "jabatan": "Operator Dapodik Sekolah",
       "initialPassword": "Tamvesta!B2604",
-      "passwordHash": "25064f7886326117c6b3ce623eca262d1ed8b94faef6466f9d15ad8a4ee77e21316b8f522015afd18a86ca60f07420473ca5a2bb034665008eb862c29e6ccc83",
-      "salt": "1c0129138788552a4480074bf6e58df5",
+      "passwordHash": "212fcf36e369e180b7db386f1db7dfea0e731e518f822692f5bee27316c91271313961b1eaef6a12e7754c0b0fed0368ac79dd443a4e7ab63ace0d95e1c4cc48",
+      "salt": "ec84954ab872dd6f069d1a6d35ad54e9",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
@@ -743,24 +742,6 @@
   "attendanceRecords": [],
   "passwordResetRequests": [
     {
-      "id": "pr_1792919931412",
-      "ticketNumber": "TKT-693159",
-      "userId": "user_siswa_siswa_smp7a_002",
-      "username": "siswa.smp7a.002",
-      "name": "Bunga Pertiwi",
-      "kelas": "VII-A SMP",
-      "role": "siswa",
-      "reason": "Ganti sandi baru",
-      "status": "approved",
-      "newPasswordHash": "41592875a768054049432a0b6008104961c20386e5bea413793c92596e49f8070754ebfc97f988b4a96c90a19a245eceb7cb647cce92cc38b3bb5e69abc2e71b",
-      "newSalt": "007b15300a9b4ee9648275828b00a750",
-      "newPassword": "BungaSakti2026!",
-      "createdAt": "2026-10-25T09:18:51.412Z",
-      "processedAt": "2026-10-25T09:18:51.657Z",
-      "processedBy": "Administrator Tamansiswa Batam",
-      "adminNote": "ACC Sandi Baru Bunga"
-    },
-    {
       "id": "pr_1792917912367",
       "ticketNumber": "TKT-518981",
       "userId": "user_siswa_siswa_smp7a_002",
@@ -769,14 +750,11 @@
       "kelas": "VII-A SMP",
       "role": "siswa",
       "reason": "Lupa sandi lama",
-      "status": "approved",
+      "status": "pending",
       "newPasswordHash": "dfac6cdadcd942367b213d896292beefecd679ca173fa2254be7f43577baec79aaad98ee060679f21dfc9a483ad0c255313570d2de247b5b194f41b73107e23f",
       "newSalt": "74e3e27276868a01b89db48080b8ed99",
       "newPassword": "BungaBaru123",
-      "createdAt": "2026-10-25T08:45:12.367Z",
-      "processedAt": "2026-10-25T09:18:50.868Z",
-      "processedBy": "Administrator Tamansiswa Batam",
-      "adminNote": "Disetujui Admin Tamansiswa"
+      "createdAt": "2026-10-25T08:45:12.367Z"
     }
   ],
   "posts": [
@@ -796,44 +774,7 @@
   ],
   "stories": [],
   "notes": [],
-  "notifications": [
-    {
-      "id": "notif_1792919931666_lcccz",
-      "title": "Pengajuan Ganti Sandi Disetujui",
-      "message": "Pengajuan ganti sandi Anda (Tiket: TKT-693159) telah DISETUJUI oleh Admin. Silakan masuk menggunakan kata sandi baru.",
-      "type": "security",
-      "isImportant": false,
-      "linkType": "none",
-      "targetUserId": "user_siswa_siswa_smp7a_002",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-25T09:18:51.666Z"
-    },
-    {
-      "id": "notif_1792919931412_d9q79",
-      "title": "Pengajuan Ganti Sandi Baru",
-      "message": "Bunga Pertiwi (VII-A SMP) mengajukan ganti sandi (Tiket: TKT-693159).",
-      "type": "security",
-      "isImportant": false,
-      "linkType": "none",
-      "targetRole": "admin",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-25T09:18:51.412Z"
-    },
-    {
-      "id": "notif_1792919930876_79z7v",
-      "title": "Pengajuan Ganti Sandi Disetujui",
-      "message": "Pengajuan ganti sandi Anda (Tiket: TKT-518981) telah DISETUJUI oleh Admin. Silakan masuk menggunakan kata sandi baru.",
-      "type": "security",
-      "isImportant": false,
-      "linkType": "none",
-      "targetUserId": "user_siswa_siswa_smp7a_002",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-25T09:18:50.876Z"
-    }
-  ],
+  "notifications": [],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
@@ -841,5 +782,9 @@
   "tuDocuments": [],
   "tuChatMessages": [],
   "tuMonthlyReports": [],
-  "gameRooms": []
+  "gameRooms": [],
+  "deletedUserIds": [
+    "user_siswa_siswa_smp7a_001",
+    "siswa.smp7a.001"
+  ]
 }
