@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { db, verifyPassword, generateRandomQuizToken } from './src/server/db.ts';
+import { db, verifyPassword, generateRandomQuizToken, OFFICIAL_STAFF_LIST, OFFICIAL_STUDENT_LIST } from './src/server/db.ts';
 import {
   createSessionToken,
   authMiddleware,
@@ -173,38 +173,31 @@ app.post('/api/auth/login', async (req, res) => {
       isValid = true;
     }
   } else {
-    // Belum pernah ganti sandi -> boleh pakai sandi awal atau bawaan
+    // Belum pernah ganti sandi -> HANYA sandi awal resmi yang berlaku
     if (initPass && (inputPass === initPass || inputPassLower === initPass.toLowerCase())) {
       isValid = true;
     } else if (userPass && (inputPass === userPass || inputPassLower === userPass.toLowerCase())) {
       isValid = true;
     } else if (user.passwordHash && user.salt && (verifyPassword(inputPass, user.passwordHash, user.salt, user.initialPassword) || verifyPassword(inputPassLower, user.passwordHash, user.salt, user.initialPassword))) {
       isValid = true;
-    } else if (user.role === 'siswa' && (inputPassLower === 'siswatamvesta123' || inputPassLower === 'siswa123')) {
-      isValid = true;
     }
   }
 
-  // Khusus staf / admin / siswa fallback kredensial
+  // Khusus Kredensial Resmi Dokumen (Admin Utama & Daftar Staf/Siswa Resmi)
   if (!isValid) {
-    if ((user.role === 'admin' || user.username === 'TAMANSISWA') && (inputPass === 'TAMVESTA123' || inputPassLower === 'tamvesta123')) {
+    if ((user.role === 'admin' || user.username.toUpperCase() === 'TAMANSISWA') && (inputPass === 'TAMVESTA123' || inputPassLower === 'tamvesta123')) {
       isValid = true;
-    } else if (user.username === 'bambang.kepsek' && (inputPass === 'BambangKepsek123' || inputPassLower === 'bambangkepsek123' || inputPass === 'Tamvesta!B2601' || inputPassLower === 'tamvesta!b2601' || inputPassLower === 'tamvesta123')) {
-      isValid = true;
-    } else if (user.username === 'bambang.operator' && (inputPass === 'Tamvesta!B2604' || inputPassLower === 'tamvesta!b2604' || inputPassLower === 'tamvesta123')) {
-      isValid = true;
-    } else if (user.username === 'titus.yayasan' && !isPassChanged && (inputPass === 'Tamvesta!T2602' || inputPassLower === 'tamvesta!t2602' || inputPassLower === 'tamvesta123')) {
-      isValid = true;
-    } else if (user.role === 'tata_usaha' && !isPassChanged && (inputPass === 'Tamvesta!H2605' || inputPassLower === 'tamvesta!h2605' || inputPassLower === 'tamvesta123')) {
-      isValid = true;
-    } else if (user.username === 'margaretha.h' && !isPassChanged && (inputPass === 'Tamvesta!M2603' || inputPassLower === 'tamvesta!m2603' || inputPassLower === 'tamvesta123')) {
-      isValid = true;
-    } else if (user.role === 'guru' && !isPassChanged && (inputPassLower === 'gurutamvesta123' || inputPassLower === 'guru123' || inputPassLower === 'tamvesta123')) {
-      isValid = true;
-    } else if (user.role === 'siswa' && !isPassChanged && (inputPassLower === 'siswatamvesta123' || inputPassLower === 'siswa123')) {
-      isValid = true;
-    } else if (user.role !== 'siswa' && !isPassChanged && inputPassLower === 'tamvesta123') {
-      isValid = true;
+    } else if (!isPassChanged) {
+      // Periksa kecocokan dengan sandi awal staf resmi dokumen
+      const staffPreset = OFFICIAL_STAFF_LIST.find((s) => s.username.toLowerCase() === cleanUsername);
+      if (staffPreset && (inputPass === staffPreset.initialPassword || inputPassLower === staffPreset.initialPassword.toLowerCase())) {
+        isValid = true;
+      }
+      // Periksa kecocokan dengan sandi awal siswa resmi dokumen
+      const studentPreset = OFFICIAL_STUDENT_LIST.find((s) => s.username.toLowerCase() === cleanUsername);
+      if (studentPreset && (inputPass === studentPreset.initialPassword || inputPassLower === studentPreset.initialPassword.toLowerCase())) {
+        isValid = true;
+      }
     }
   }
   if (!isValid) {

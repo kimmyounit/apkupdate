@@ -521,7 +521,7 @@ export const api = {
   },
 
   createStudent: async (studentData: Partial<User> & { password?: string }) => {
-    const rawPass = (studentData.password || 'SiswaTamvesta123').trim();
+    const rawPass = (studentData.password || ('Siswa' + Math.floor(100000 + Math.random() * 900000))).trim();
     const studentPayload = {
       ...studentData,
       password: rawPass,
@@ -615,7 +615,7 @@ export const api = {
         method: 'POST',
       });
     } catch (_) {
-      return { message: 'Kata sandi awal berhasil disetel ulang.', initialPassword: 'GuruTamvesta123' };
+      return { message: 'Kata sandi awal berhasil disetel ulang.', initialPassword: '(Sandi awal resmi)' };
     }
   },
 

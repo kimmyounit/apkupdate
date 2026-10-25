@@ -687,9 +687,9 @@ class DatabaseManager {
     return initial;
   }
 
-  public resetToClean(clearDemoStudents = true) {
+  public resetToClean(resetUsers = true) {
     const initial = getInitialData();
-    if (clearDemoStudents) {
+    if (resetUsers) {
       this.data.users = initial.users;
     }
     this.data.subjects = [];
@@ -969,7 +969,9 @@ class DatabaseManager {
         });
         updated++;
       } else {
-        const pass = hashPassword(incoming.initialPassword || (incoming as any).password || 'SiswaTamvesta123');
+        const generatedPass = 'Siswa' + Math.floor(100000 + Math.random() * 900000);
+        const resolvedPass = incoming.initialPassword || (incoming as any).password || generatedPass;
+        const pass = hashPassword(resolvedPass);
         const newUser: User = {
           ...incoming,
           id: incoming.id || ('stu_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
@@ -978,8 +980,8 @@ class DatabaseManager {
           role: incoming.role || 'siswa',
           gender: incoming.gender || 'Laki-laki',
           kelas: incoming.kelas || 'Kelas 7',
-          initialPassword: incoming.initialPassword || (incoming as any).password || 'SiswaTamvesta123',
-          password: incoming.password || incoming.initialPassword || 'SiswaTamvesta123',
+          initialPassword: resolvedPass,
+          password: incoming.password || resolvedPass,
           passwordHash: pass.hash,
           salt: pass.salt,
           mustChangePassword: false,
@@ -2433,7 +2435,7 @@ class DatabaseManager {
     const existing = this.data.users.find((u) => u.username.toLowerCase() === data.username.toLowerCase());
     if (existing) throw new Error('Username guru sudah digunakan.');
 
-    const initialPassword = data.password || 'GuruTamvesta123';
+    const initialPassword = data.password?.trim() || ('Tamvesta!G' + Math.floor(1000 + Math.random() * 9000));
     const pass = hashPassword(initialPassword);
     const newTeacher: User = {
       id: `user_teacher_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,

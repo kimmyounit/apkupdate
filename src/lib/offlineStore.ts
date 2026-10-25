@@ -221,12 +221,27 @@ function getStoredPasswords(): Record<string, string> {
 
   const defaults: Record<string, string> = {
     'TAMANSISWA': 'TAMVESTA123',
-    'haliza.tu': 'Tamvesta!H2605',
+    'bambang.kepsek': 'Tamvesta!B2601',
+    'titus.yayasan': 'Tamvesta!T2602',
     'margaretha.h': 'Tamvesta!M2603',
     'margaretha': 'Tamvesta!M2603',
+    'bambang.operator': 'Tamvesta!B2604',
+    'haliza.tu': 'Tamvesta!H2605',
     'haliza.admin': 'Tamvesta!H2605',
     'haliza': 'Tamvesta!H2605',
     'tata.usaha': 'Tamvesta!H2605',
+    'maidarlis': 'Tamvesta!M2606',
+    'fatimah': 'Tamvesta!F2607',
+    'endang.daryanti': 'Tamvesta!E2608',
+    'kristina.manurung': 'Tamvesta!K2609',
+    'nia.damayanti': 'Tamvesta!N2610',
+    'nelly.silitonga': 'Tamvesta!N2611',
+    'dina.nurziana': 'Tamvesta!D2612',
+    'nur.aini': 'Tamvesta!N2613',
+    'siska.permatasari': 'Tamvesta!S2614',
+    'risky': 'Tamvesta!R2615',
+    'masni': 'Tamvesta!M2616',
+    'angga.satpam': 'Tamvesta!A2617',
   };
 
   if (Array.isArray((defaultData as any).users)) {
@@ -298,7 +313,7 @@ export const offlineStore = {
     const idx = db.users.findIndex(
       (u) => u.id === serverStudent.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanUsername
     );
-    const initialPass = password || serverStudent.initialPassword || (serverStudent as any).password || 'SiswaTamvesta123';
+    const initialPass = password || serverStudent.initialPassword || (serverStudent as any).password || '';
     const studentToSave: User = {
       ...serverStudent,
       username: cleanUsername,
@@ -528,37 +543,49 @@ export const offlineStore = {
     const userStoredPass = passwords[cleanUsername] || passwords[user.username] || passwords[`@${cleanUsername}`] || (user as any).password;
     const isPasswordChanged = Boolean((user as any).passwordChanged);
 
-    const candidatePasswords = [
-      userStoredPass,
-      user.initialPassword,
-      (user as any).password,
-      passwords[user.username],
-      passwords[user.username.toLowerCase()],
-      passwords[cleanUsername],
-      passwords[`@${cleanUsername}`],
-      // Role default fallback passwords
-      user.role === 'admin' ? 'TAMVESTA123' : null,
-      user.role === 'tata_usaha' ? 'Tamvesta!H2605' : null,
-      user.role === 'guru' ? 'GuruTamvesta123' : null,
-      user.role === 'guru' ? 'tamvesta123' : null,
-      user.role === 'guru' ? 'guru123' : null,
-      user.role === 'siswa' ? 'SiswaTamvesta123' : null,
-      user.role === 'siswa' ? 'siswatamvesta123' : null,
-      user.role === 'siswa' ? 'siswa123' : null,
-      user.username === 'bambang.kepsek' ? 'Tamvesta!B2601' : null,
-      user.username === 'bambang.kepsek' ? 'BambangKepsek123' : null,
-      user.username === 'titus.yayasan' ? 'Tamvesta!T2602' : null,
-      user.username === 'bambang.operator' ? 'Tamvesta!B2604' : null,
-      (user.username === 'margaretha.h' || (user.name || '').toLowerCase().includes('margaretha')) ? 'Tamvesta!M2603' : null,
-    ].filter(Boolean);
+    let isMatch = false;
+    if (isPasswordChanged) {
+      // Hanya sandi yang baru diubah yang berlaku
+      const changedPass = userStoredPass || passwords[cleanUsername] || passwords[user.username];
+      if (changedPass && (changedPass === inputPass || changedPass.toLowerCase() === inputPass.toLowerCase())) {
+        isMatch = true;
+      }
+    } else {
+      const candidatePasswords = [
+        userStoredPass,
+        user.initialPassword,
+        (user as any).password,
+        passwords[user.username],
+        passwords[user.username.toLowerCase()],
+        passwords[cleanUsername],
+        passwords[`@${cleanUsername}`],
+        // Sandi awal resmi dokumen staf & admin
+        (user.role === 'admin' || user.username === 'TAMANSISWA') ? 'TAMVESTA123' : null,
+        user.username === 'bambang.kepsek' ? 'Tamvesta!B2601' : null,
+        user.username === 'titus.yayasan' ? 'Tamvesta!T2602' : null,
+        (user.username === 'margaretha.h' || (user.name || '').toLowerCase().includes('margaretha')) ? 'Tamvesta!M2603' : null,
+        user.username === 'bambang.operator' ? 'Tamvesta!B2604' : null,
+        user.role === 'tata_usaha' || user.username === 'haliza.tu' ? 'Tamvesta!H2605' : null,
+        user.username === 'maidarlis' ? 'Tamvesta!M2606' : null,
+        user.username === 'fatimah' ? 'Tamvesta!F2607' : null,
+        user.username === 'endang.daryanti' ? 'Tamvesta!E2608' : null,
+        user.username === 'kristina.manurung' ? 'Tamvesta!K2609' : null,
+        user.username === 'nia.damayanti' ? 'Tamvesta!N2610' : null,
+        user.username === 'nelly.silitonga' ? 'Tamvesta!N2611' : null,
+        user.username === 'dina.nurziana' ? 'Tamvesta!D2612' : null,
+        user.username === 'nur.aini' ? 'Tamvesta!N2613' : null,
+        user.username === 'siska.permatasari' ? 'Tamvesta!S2614' : null,
+        user.username === 'risky' ? 'Tamvesta!R2615' : null,
+        user.username === 'masni' ? 'Tamvesta!M2616' : null,
+        user.username === 'angga.satpam' ? 'Tamvesta!A2617' : null,
+      ].filter(Boolean);
 
-    const isMatch = candidatePasswords.some((p) => {
-      if (!p) return false;
-      const pTrim = String(p).trim();
-      return pTrim === inputPass || pTrim.toLowerCase() === inputPass.toLowerCase();
-    }) || (user.role === 'siswa' && (inputPass.toLowerCase() === 'siswatamvesta123' || inputPass.toLowerCase() === 'siswa123'))
-       || ((user.role === 'admin' || user.username === 'TAMANSISWA') && inputPass.toLowerCase() === 'tamvesta123')
-       || (user.role !== 'siswa' && inputPass.toLowerCase() === 'tamvesta123');
+      isMatch = candidatePasswords.some((p) => {
+        if (!p) return false;
+        const pTrim = String(p).trim();
+        return pTrim === inputPass || pTrim.toLowerCase() === inputPass.toLowerCase();
+      }) || ((user.role === 'admin' || user.username === 'TAMANSISWA') && inputPass.toLowerCase() === 'tamvesta123');
+    }
 
     if (!isMatch) {
       throw new Error('Username atau kata sandi tidak valid');
@@ -660,7 +687,7 @@ export const offlineStore = {
     if (!user) throw new Error('Pengguna tidak ditemukan');
 
     const passwords = getStoredPasswords();
-    const currentPass = passwords[user.username] || passwords[user.username.toLowerCase()] || user.initialPassword || (user as any).password || (user.role === 'admin' ? 'TAMVESTA123' : user.role === 'guru' ? 'GuruTamvesta123' : 'Siswa7A001');
+    const currentPass = passwords[user.username] || passwords[user.username.toLowerCase()] || user.initialPassword || (user as any).password || (user.role === 'admin' ? 'TAMVESTA123' : '');
 
     if (oldPass !== currentPass) {
       throw new Error('Kata sandi saat ini salah');
@@ -1482,7 +1509,7 @@ export const offlineStore = {
     const existing = db.users.find((u) => (u.username || '').toLowerCase().replace(/^@+/, '') === username);
     if (existing) throw new Error('Username siswa sudah digunakan.');
 
-    const initialPassword = studentData.password?.trim() || 'SiswaTamvesta123';
+    const initialPassword = studentData.password?.trim() || ('Siswa' + Math.floor(100000 + Math.random() * 900000));
     const kelas = studentData.kelas?.trim() || 'Kelas 7';
     const gender = studentData.gender || 'Laki-laki';
     const user: User = {
@@ -1663,7 +1690,7 @@ export const offlineStore = {
     const existing = db.users.find((u) => u.username.toLowerCase() === data.username.toLowerCase());
     if (existing) throw new Error('Username guru sudah digunakan.');
 
-    const initialPassword = data.password || 'GuruTamvesta123';
+    const initialPassword = data.password?.trim() || ('Tamvesta!G' + Math.floor(1000 + Math.random() * 9000));
     const newTeacher: User = {
       id: `user_teacher_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       username: data.username.trim().toLowerCase(),
