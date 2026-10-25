@@ -19,6 +19,37 @@ import type {
 const DB_KEY = 'tamvesta_standalone_db_v2';
 const CURRENT_USER_KEY = 'tamvesta_offline_current_user_id';
 const PASSWORDS_KEY = 'tamvesta_offline_passwords';
+const PERMANENT_AVATARS_KEY = 'tamvesta_permanent_avatars_v1';
+
+export function getPermanentAvatar(userId: string, username?: string): string | null {
+  try {
+    const raw = localStorage.getItem(PERMANENT_AVATARS_KEY);
+    if (!raw) return null;
+    const map = JSON.parse(raw);
+    if (userId && map[userId]) return map[userId];
+    if (username) {
+      const clean = username.toLowerCase().replace(/^@+/, '');
+      if (map[clean]) return map[clean];
+    }
+  } catch (_) {}
+  return null;
+}
+
+export function savePermanentAvatar(userId: string, username: string | undefined, avatarUrl: string) {
+  if (!avatarUrl) return;
+  try {
+    let map: Record<string, string> = {};
+    const raw = localStorage.getItem(PERMANENT_AVATARS_KEY);
+    if (raw) map = JSON.parse(raw);
+    if (userId) map[userId] = avatarUrl;
+    if (username) {
+      const clean = username.toLowerCase().replace(/^@+/, '');
+      map[clean] = avatarUrl;
+    }
+    localStorage.setItem(PERMANENT_AVATARS_KEY, JSON.stringify(map));
+  } catch (_) {}
+}
+
 
 interface StandaloneDB {
   users: User[];
@@ -95,6 +126,16 @@ function loadDB(): StandaloneDB {
   if (!Array.isArray(db.users)) db.users = [];
   if (!Array.isArray(db.notifications)) db.notifications = [];
   if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
+
+    // Pastikan foto profil yang pernah disimpan selamanya tidak hilang
+  if (Array.isArray(db.users)) {
+    db.users.forEach((u) => {
+      const perm = getPermanentAvatar(u.id, u.username);
+      if (perm) {
+        u.avatarUrl = perm;
+      }
+    });
+  }
 
   return db;
 }
@@ -185,10 +226,14 @@ export const offlineStore = {
     const idx = db.users.findIndex(
       (u) => u.id === user.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanUser
     );
+    const perm = getPermanentAvatar(user.id, user.username) || (idx >= 0 ? db.users[idx].avatarUrl : null);
+    const finalAvatar = user.avatarUrl && !user.avatarUrl.includes('dicebear.com') ? user.avatarUrl : (perm || user.avatarUrl);
+    const userToSave = { ...user, avatarUrl: finalAvatar };
+    if (finalAvatar) savePermanentAvatar(user.id, user.username, finalAvatar);
     if (idx >= 0) {
-      db.users[idx] = { ...db.users[idx], ...user };
+      db.users[idx] = { ...db.users[idx], ...userToSave };
     } else {
-      db.users.push(user);
+      db.users.push(userToSave);
     }
     saveDB(db);
   },
@@ -378,7 +423,10 @@ export const offlineStore = {
     const target = db.users.find((u) => u.id === user.id);
     if (!target) throw new Error('Pengguna tidak ditemukan');
 
-    if (data.avatarUrl !== undefined) target.avatarUrl = data.avatarUrl;
+    if (data.avatarUrl !== undefined) {
+      target.avatarUrl = data.avatarUrl;
+      savePermanentAvatar(target.id, target.username, data.avatarUrl);
+    }
     if (data.bio !== undefined) target.bio = data.bio;
     if (data.phone !== undefined) target.phone = data.phone;
     if (data.email !== undefined) target.email = data.email;

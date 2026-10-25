@@ -28,6 +28,9 @@ import type { User } from '../types/index.ts';
 import { api, setStoredToken } from '../lib/api.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { ImageLightboxModal } from './ImageLightboxModal.tsx';
+import { PhotoCropModal } from './PhotoCropModal.tsx';
+import { PRESET_AVATARS } from '../constants/presetAvatars.ts';
+import { Camera, Image as ImageIcon, Smile, Sparkles as SparklesIcon } from 'lucide-react';
 import { VerifiedBadge } from './VerifiedBadge.tsx';
 
 interface Props {
@@ -39,6 +42,10 @@ interface Props {
 export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen, onClose }) => {
   const { refreshUser } = useAuth();
   const [currentUser, setCurrentUser] = useState<User>(initialUser);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
+  const [updatingPhoto, setUpdatingPhoto] = useState(false);
+  const [photoSuccessMsg, setPhotoSuccessMsg] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'qr' | 'settings'>('qr');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
@@ -124,6 +131,57 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
 
   const handlePrint = () => {
     window.print();
+  };
+
+  // File selection for profile photo
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      alert('Ukuran file maksimal 20MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setTempImageForCrop(reader.result as string);
+      setIsCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Save cropped photo
+  const handleCropSave = async (croppedDataUrl: string) => {
+    setIsCropModalOpen(false);
+    setUpdatingPhoto(true);
+    try {
+      await api.updateProfile({ avatarUrl: croppedDataUrl });
+      setCurrentUser((prev) => ({ ...prev, avatarUrl: croppedDataUrl }));
+      await refreshUser();
+      setPhotoSuccessMsg('Foto profil berhasil diganti & tersimpan selamanya!');
+      setTimeout(() => setPhotoSuccessMsg(null), 4000);
+    } catch (err: any) {
+      alert(err.message || 'Gagal menyimpan foto profil.');
+    } finally {
+      setUpdatingPhoto(false);
+      setTempImageForCrop(null);
+    }
+  };
+
+  // Change to preset avatar
+  const handleSelectPresetAvatar = async (avatarUrl: string, avatarName: string) => {
+    setUpdatingPhoto(true);
+    try {
+      await api.updateProfile({ avatarUrl });
+      setCurrentUser((prev) => ({ ...prev, avatarUrl }));
+      await refreshUser();
+      setPhotoSuccessMsg(`Foto profil diubah ke "${avatarName}" & tersimpan selamanya!`);
+      setTimeout(() => setPhotoSuccessMsg(null), 4000);
+    } catch (err: any) {
+      alert(err.message || 'Gagal mengubah foto profil.');
+    } finally {
+      setUpdatingPhoto(false);
+    }
   };
 
   // 1. Update Username
@@ -280,30 +338,43 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
 
               {/* Student Info & Photo */}
               <div className="flex flex-col sm:flex-row items-center gap-4 mb-4 text-left">
-                <div
-                  className="relative shrink-0 cursor-zoom-in group"
-                  onClick={() =>
-                    setLightboxImage(
-                      currentUser.avatarUrl ||
-                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=0284c7`
-                    )
-                  }
-                  title="Klik untuk memperbesar foto profil"
-                >
-                  <img
-                    src={
-                      currentUser.avatarUrl ||
-                      `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=0284c7`
+                <div className="relative shrink-0 group">
+                  <div
+                    onClick={() =>
+                      setLightboxImage(
+                        currentUser.avatarUrl ||
+                          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=0284c7`
+                      )
                     }
-                    alt={currentUser.name}
-                    className="w-18 h-18 rounded-2xl object-cover border-2 border-emerald-500 shadow-md bg-slate-100 group-hover:scale-105 transition"
-                  />
-                  <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center">
-                    <Shield className="w-3 h-3 text-white" />
-                  </span>
-                  <div className="absolute inset-0 bg-black/20 rounded-2xl opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                    <ZoomIn className="w-4 h-4 text-white" />
+                    className="cursor-zoom-in"
+                    title="Klik untuk memperbesar foto profil"
+                  >
+                    <img
+                      src={
+                        currentUser.avatarUrl ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=0284c7`
+                      }
+                      alt={currentUser.name}
+                      className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-500 shadow-md bg-slate-100 group-hover:scale-105 transition"
+                    />
+                    <div className="absolute inset-0 bg-black/20 rounded-2xl opacity-0 group-hover:opacity-100 transition flex items-center justify-center pointer-events-none">
+                      <ZoomIn className="w-4 h-4 text-white" />
+                    </div>
                   </div>
+
+                  {/* Tombol Ganti Foto Kamera */}
+                  <label
+                    className="absolute -bottom-1.5 -right-1.5 p-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md cursor-pointer transition active:scale-90 flex items-center justify-center border-2 border-white z-10"
+                    title="Ganti Foto Profil (Bisa diganti kapan saja jika bosan)"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoSelect}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
                 <div className="flex-1 space-y-1 w-full text-center sm:text-left">
                   <h3 className="font-black text-slate-900 text-base leading-tight flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
@@ -401,6 +472,90 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
         {/* TAB 2: PENGATURAN AKUN SESUAI KETENTUAN SISTEM REVISI 5 */}
         {activeTab === 'settings' && (
           <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+            {/* Foto Profil & Pilihan Avatar Keren (Selamanya Tidak Menghilang & Bisa Diganti Kapan Saja) */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50/80 to-teal-50/50 border border-emerald-200/90 space-y-3.5 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-600 text-white">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-800">Foto Profil Akun</h4>
+                    <p className="text-[10px] text-slate-500">Tersimpan permanen & dapat diganti kapan saja</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span>Permanen Selamanya</span>
+                </span>
+              </div>
+
+              {photoSuccessMsg && (
+                <div className="p-3 bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2 animate-in zoom-in-95">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{photoSuccessMsg}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-4 bg-white/90 p-3 rounded-xl border border-emerald-100">
+                <img
+                  src={
+                    currentUser.avatarUrl ||
+                    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=0284c7`
+                  }
+                  alt={currentUser.name}
+                  className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-500 shadow-sm shrink-0 bg-slate-100"
+                />
+                <div className="space-y-1.5 flex-1">
+                  <p className="text-xs font-bold text-slate-800 leading-tight">
+                    Foto saat ini aktif di kartu siswa, barcode, dan portal sekolah.
+                  </p>
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer transition active:scale-95 shadow-xs">
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>{updatingPhoto ? 'Memproses...' : 'Ganti Foto dari HP / Laptop'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoSelect}
+                      disabled={updatingPhoto}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Pilihan Avatar Keren (Jika Bosan) */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                    <Smile className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Bosan? Pilih Avatar Keren Instan:</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400">1x klik untuk ganti</span>
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {PRESET_AVATARS.map((av) => (
+                    <button
+                      key={av.id}
+                      type="button"
+                      onClick={() => handleSelectPresetAvatar(av.url, av.name)}
+                      disabled={updatingPhoto}
+                      className="group relative flex flex-col items-center p-1.5 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-400 transition active:scale-90 text-center"
+                      title={`Ganti ke avatar ${av.name}`}
+                    >
+                      <img
+                        src={av.url}
+                        alt={av.name}
+                        className="w-10 h-10 rounded-lg object-cover mb-1 border border-slate-100 group-hover:scale-105 transition"
+                      />
+                      <span className="text-[9px] font-bold text-slate-600 group-hover:text-emerald-700 truncate w-full block">
+                        {av.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
             {/* 1. Nama Lengkap (Terkunci / Read-Only untuk Siswa) */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
               <div className="flex items-center justify-between">

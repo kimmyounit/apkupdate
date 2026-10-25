@@ -21,6 +21,8 @@ import {
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../lib/api.ts';
 import { PhotoCropModal } from '../../components/PhotoCropModal.tsx';
+import { PRESET_AVATARS } from '../../constants/presetAvatars.ts';
+import { Smile } from 'lucide-react';
 import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
 import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
 import type { StudentPost } from '../../types/index.ts';
@@ -334,6 +336,50 @@ export const ProfilePage: React.FC = () => {
                 {user.isVerified && <VerifiedBadge size="lg" />}
               </h1>
               <p className="text-xs text-slate-500 font-mono">@{user.username}</p>
+            </div>
+
+            {/* Preset Avatars for Instant Switch */}
+            <div className="pt-2 border-t border-slate-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                  <Smile className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Bosan dengan foto saat ini? Pilih Avatar Keren Instan:</span>
+                </span>
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  ✓ Tersimpan Selamanya
+                </span>
+              </div>
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                {PRESET_AVATARS.map((av) => (
+                  <button
+                    key={av.id}
+                    type="button"
+                    onClick={async () => {
+                      setUpdatingPhoto(true);
+                      try {
+                        await api.updateProfile({ avatarUrl: av.url });
+                        await refreshUser();
+                      } catch (err: any) {
+                        alert(err.message || 'Gagal mengubah foto profil.');
+                      } finally {
+                        setUpdatingPhoto(false);
+                      }
+                    }}
+                    disabled={updatingPhoto}
+                    className="group relative flex flex-col items-center p-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-400 transition active:scale-95 text-center"
+                    title={`Ganti ke avatar ${av.name}`}
+                  >
+                    <img
+                      src={av.url}
+                      alt={av.name}
+                      className="w-11 h-11 rounded-lg object-cover mb-1 border border-slate-100 group-hover:scale-105 transition"
+                    />
+                    <span className="text-[9px] font-bold text-slate-600 group-hover:text-emerald-700 truncate w-full block">
+                      {av.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Bio Section */}
