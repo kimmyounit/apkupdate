@@ -20,6 +20,7 @@ const DB_KEY = 'tamvesta_standalone_db_v2';
 const CURRENT_USER_KEY = 'tamvesta_offline_current_user_id';
 const PASSWORDS_KEY = 'tamvesta_offline_passwords';
 const PERMANENT_AVATARS_KEY = 'tamvesta_permanent_avatars_v1';
+const PERMANENT_BIOS_KEY = 'tamvesta_permanent_bios_v1';
 
 export function getPermanentAvatar(userId: string, username?: string): string | null {
   try {
@@ -47,6 +48,35 @@ export function savePermanentAvatar(userId: string, username: string | undefined
       map[clean] = avatarUrl;
     }
     localStorage.setItem(PERMANENT_AVATARS_KEY, JSON.stringify(map));
+  } catch (_) {}
+}
+
+export function getPermanentBio(userId: string, username?: string): string | null {
+  try {
+    const raw = localStorage.getItem(PERMANENT_BIOS_KEY);
+    if (!raw) return null;
+    const map = JSON.parse(raw);
+    if (userId && map[userId] !== undefined) return map[userId];
+    if (username) {
+      const clean = username.toLowerCase().replace(/^@+/, '');
+      if (map[clean] !== undefined) return map[clean];
+    }
+  } catch (_) {}
+  return null;
+}
+
+export function savePermanentBio(userId: string, username: string | undefined, bio: string) {
+  if (bio === undefined || bio === null) return;
+  try {
+    let map: Record<string, string> = {};
+    const raw = localStorage.getItem(PERMANENT_BIOS_KEY);
+    if (raw) map = JSON.parse(raw);
+    if (userId) map[userId] = bio;
+    if (username) {
+      const clean = username.toLowerCase().replace(/^@+/, '');
+      map[clean] = bio;
+    }
+    localStorage.setItem(PERMANENT_BIOS_KEY, JSON.stringify(map));
   } catch (_) {}
 }
 
@@ -127,12 +157,16 @@ function loadDB(): StandaloneDB {
   if (!Array.isArray(db.notifications)) db.notifications = [];
   if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
 
-    // Pastikan foto profil yang pernah disimpan selamanya tidak hilang
+  // Pastikan foto profil & bio yang pernah disimpan selamanya tidak hilang
   if (Array.isArray(db.users)) {
     db.users.forEach((u) => {
       const perm = getPermanentAvatar(u.id, u.username);
       if (perm) {
         u.avatarUrl = perm;
+      }
+      const permBio = getPermanentBio(u.id, u.username);
+      if (permBio !== null && permBio !== undefined) {
+        u.bio = permBio;
       }
     });
   }
@@ -228,8 +262,14 @@ export const offlineStore = {
     );
     const perm = getPermanentAvatar(user.id, user.username) || (idx >= 0 ? db.users[idx].avatarUrl : null);
     const finalAvatar = user.avatarUrl && !user.avatarUrl.includes('dicebear.com') ? user.avatarUrl : (perm || user.avatarUrl);
-    const userToSave = { ...user, avatarUrl: finalAvatar };
+    const permBio = getPermanentBio(user.id, user.username) || (idx >= 0 ? db.users[idx].bio : null);
+    const finalBio = user.bio && user.bio.trim() ? user.bio : (permBio || user.bio);
     if (finalAvatar) savePermanentAvatar(user.id, user.username, finalAvatar);
+    if (finalBio !== undefined && finalBio !== null) savePermanentBio(user.id, user.username, finalBio);
+    const existingUser = idx >= 0 ? db.users[idx] : null;
+    const finalPhone = user.phone || existingUser?.phone;
+    const finalEmail = user.email || existingUser?.email;
+    const userToSave = { ...user, avatarUrl: finalAvatar, bio: finalBio, phone: finalPhone, email: finalEmail };
     if (idx >= 0) {
       db.users[idx] = { ...db.users[idx], ...userToSave };
     } else {
@@ -374,16 +414,21 @@ export const offlineStore = {
 
     const passwords = getStoredPasswords();
     const cleanUsername = (user.username || '').toLowerCase().replace(/^@+/, '');
+    const userStoredPass = passwords[cleanUsername] || passwords[user.username] || passwords[`@${cleanUsername}`] || (user as any).password;
+    const isPasswordChanged = Boolean((user as any).passwordChanged || (userStoredPass && userStoredPass !== 'SiswaTamvesta123') || (user.initialPassword && user.initialPassword !== 'SiswaTamvesta123'));
+
     const candidatePasswords = [
+      userStoredPass,
       user.initialPassword,
       (user as any).password,
       passwords[user.username],
       passwords[user.username.toLowerCase()],
       passwords[cleanUsername],
       passwords[`@${cleanUsername}`],
-      user.role === 'admin' ? 'TAMVESTA123' : user.role === 'tata_usaha' ? 'Tamvesta!H2605' : user.role === 'guru' ? 'GuruTamvesta123' : 'SiswaTamvesta123',
-      'Tamvesta!H2605',
-      'TAMVESTA123',
+      // Jika siswa sudah mengganti sandi via tiket ACC admin, sandi awal SiswaTamvesta123 TIDAK BERLAKU LAGI
+      !isPasswordChanged ? (user.role === 'admin' ? 'TAMVESTA123' : user.role === 'tata_usaha' ? 'Tamvesta!H2605' : user.role === 'guru' ? 'GuruTamvesta123' : 'SiswaTamvesta123') : null,
+      user.role === 'tata_usaha' ? 'Tamvesta!H2605' : null,
+      user.role === 'admin' ? 'TAMVESTA123' : null,
     ].filter(Boolean);
 
     const isMatch = candidatePasswords.some((p) => {
@@ -427,9 +472,15 @@ export const offlineStore = {
       target.avatarUrl = data.avatarUrl;
       savePermanentAvatar(target.id, target.username, data.avatarUrl);
     }
-    if (data.bio !== undefined) target.bio = data.bio;
+    if (data.bio !== undefined) {
+      target.bio = data.bio;
+      savePermanentBio(target.id, target.username, data.bio);
+    }
     if (data.phone !== undefined) target.phone = data.phone;
     if (data.email !== undefined) target.email = data.email;
+    if (target.phone && target.email) {
+      target.contactInfoCompleted = true;
+    }
 
     // Update author avatar across user's posts & comments
     (db.posts || []).forEach((p) => {
@@ -1435,7 +1486,7 @@ export const offlineStore = {
   processPasswordResetRequest(id: string, status: 'approved' | 'rejected', adminNote?: string) {
     const db = loadDB();
     if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
-    const req = db.passwordResetRequests.find((r) => r.id === id);
+    const req = db.passwordResetRequests.find((r) => r.id === id || r.ticketNumber === id);
     if (!req) throw new Error('Tiket tidak ditemukan.');
     if (req.status !== 'pending') throw new Error('Tiket sudah diproses sebelumnya.');
     req.status = status;
@@ -1444,12 +1495,20 @@ export const offlineStore = {
     req.adminNote = adminNote || (status === 'approved' ? 'Disetujui' : 'Ditolak');
 
     if (status === 'approved' && req.newPassword) {
-      const user = db.users.find((u) => u.id === req.userId);
+      const user = db.users.find((u) =>
+        u.id === req.userId ||
+        (u.username && req.username && u.username.toLowerCase().replace(/^@+/, '') === req.username.toLowerCase().replace(/^@+/, ''))
+      );
       if (user) {
         user.password = req.newPassword;
         user.initialPassword = req.newPassword;
+        user.passwordChanged = true;
         user.mustChangePassword = false;
+        const cleanU = (user.username || '').toLowerCase().replace(/^@+/, '');
         savePassword(user.username, req.newPassword);
+        savePassword(cleanU, req.newPassword);
+        savePassword(`@${cleanU}`, req.newPassword);
+        savePassword(user.id, req.newPassword);
       }
     }
     saveDB(db);

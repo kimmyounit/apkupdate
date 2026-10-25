@@ -142,12 +142,13 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   const inputPass = String(password).trim();
+  const isPassChanged = Boolean((user as any).passwordChanged || (user.password && user.password !== 'SiswaTamvesta123') || (user.initialPassword && user.initialPassword !== 'SiswaTamvesta123'));
   const isValid =
     (user.initialPassword && inputPass === user.initialPassword.trim()) ||
     (user.password && inputPass === user.password.trim()) ||
     (user.role === 'siswa' && user.initialPassword && inputPass.toLowerCase() === user.initialPassword.trim().toLowerCase()) ||
     (user.role === 'siswa' && user.password && inputPass.toLowerCase() === user.password.trim().toLowerCase()) ||
-    (user.role === 'siswa' && inputPass.toLowerCase() === 'siswatamvesta123') ||
+    (!isPassChanged && user.role === 'siswa' && inputPass.toLowerCase() === 'siswatamvesta123') ||
     (user.passwordHash && user.salt && verifyPassword(inputPass, user.passwordHash, user.salt, user.initialPassword)) ||
     (user.passwordHash && user.salt && verifyPassword(inputPass.toLowerCase(), user.passwordHash, user.salt, user.initialPassword)) ||
     (user.role === 'tata_usaha' && (inputPass === 'Tamvesta!H2605' || inputPass === 'TAMVESTA123')) ||

@@ -10,14 +10,27 @@ import { ProfilePage } from '../profile/ProfilePage.tsx';
 import { AnnouncementsPage } from './AnnouncementsPage.tsx';
 import { SubjectsPage } from './SubjectsPage.tsx';
 import { LibraryPage } from './LibraryPage.tsx';
+import { StudentContactModal } from '../../components/StudentContactModal.tsx';
 import { playQuizExitAlertSound } from '../../lib/audio.ts';
+import { useAuth } from '../../context/AuthContext.tsx';
 
 export type StudentViewTab = StudentNavTab | 'announcements' | 'subjects' | 'library';
 
 export const StudentDashboard: React.FC = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<StudentViewTab>('home');
   const [isQuizActive, setIsQuizActive] = useState<boolean>(false);
   const [quizWarningNotice, setQuizWarningNotice] = useState<string | null>(null);
+
+  // Prompt contact info (Nomor HP & Gmail) saat pertama kali login jika belum terisi
+  const [showContactModal, setShowContactModal] = useState<boolean>(() => {
+    if (user?.role === 'siswa') {
+      const hasPhone = Boolean(user.phone && user.phone.trim().length >= 9);
+      const hasEmail = Boolean(user.email && user.email.includes('@'));
+      return !hasPhone || !hasEmail;
+    }
+    return false;
+  });
 
   const isNavTab = (tab: StudentViewTab): tab is StudentNavTab => {
     return ['home', 'articles', 'quiz', 'archive', 'qr', 'profile'].includes(tab);
@@ -45,6 +58,12 @@ export const StudentDashboard: React.FC = () => {
           <span className="text-xs sm:text-sm font-black leading-snug">{quizWarningNotice}</span>
         </div>
       )}
+
+      {/* Modal Kontak Informasi Siswa (Nomor HP & Gmail saat pertama login) */}
+      <StudentContactModal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+      />
 
       {/* SEPARATE PAGES ROUTER */}
       <div className="flex-1 pb-16">

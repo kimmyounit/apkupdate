@@ -60,7 +60,15 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
   const [updatingUsername, setUpdatingUsername] = useState(false);
   const [usernameMessage, setUsernameMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Bio States
+  const [bioText, setBioText] = useState(initialUser.bio || '');
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [savingBio, setSavingBio] = useState(false);
+  const [bioMessage, setBioMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   // Password Reset Request Ticket States
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('');
   const [resetReason, setResetReason] = useState('');
   const [submittingReset, setSubmittingReset] = useState(false);
   const [resetMessage, setResetMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -80,6 +88,23 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
     }
   };
 
+  const handleSaveBio = async () => {
+    setSavingBio(true);
+    setBioMessage(null);
+    try {
+      await api.updateProfile({ bio: bioText.trim() });
+      setCurrentUser((prev) => ({ ...prev, bio: bioText.trim() }));
+      await refreshUser();
+      setIsEditingBio(false);
+      setBioMessage({ type: 'success', text: 'Bio profil siswa berhasil disimpan permanen!' });
+      setTimeout(() => setBioMessage(null), 3500);
+    } catch (err: any) {
+      setBioMessage({ type: 'error', text: err.message || 'Gagal menyimpan bio profil.' });
+    } finally {
+      setSavingBio(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       loadTickets();
@@ -89,6 +114,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
   useEffect(() => {
     setCurrentUser(initialUser);
     setNewUsername(initialUser.username);
+    setBioText(initialUser.bio || '');
   }, [initialUser]);
 
   useEffect(() => {
@@ -227,6 +253,14 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
     e.preventDefault();
     setResetMessage(null);
 
+    if (!resetNewPassword || resetNewPassword.length < 6) {
+      setResetMessage({ type: 'error', text: 'Password baru minimal 6 karakter.' });
+      return;
+    }
+    if (resetNewPassword !== resetConfirmPassword) {
+      setResetMessage({ type: 'error', text: 'Password baru dan konfirmasi password tidak cocok.' });
+      return;
+    }
     if (!resetReason.trim()) {
       setResetMessage({ type: 'error', text: 'Silakan isi alasan pengajuan perubahan password.' });
       return;
@@ -234,11 +268,17 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
 
     setSubmittingReset(true);
     try {
-      const res = await api.requestPasswordReset({ username: '', reason: resetReason.trim() });
+      const res = await api.requestPasswordReset({
+        newPassword: resetNewPassword.trim(),
+        confirmPassword: resetConfirmPassword.trim(),
+        reason: resetReason.trim(),
+      });
       setResetMessage({
         type: 'success',
-        text: res.message || 'Permintaan berhasil diajukan ke Admin. Admin akan melakukan verifikasi sebelum memproses.',
+        text: res.message || 'Permintaan berhasil diajukan ke Admin. Saat Admin meng-ACC tiket di dashboard, password Anda akan resmi berubah.',
       });
+      setResetNewPassword('');
+      setResetConfirmPassword('');
       setResetReason('');
       await loadTickets();
     } catch (err: any) {
@@ -556,6 +596,81 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                 </div>
               </div>
             </div>
+
+            {/* Bio Profil Siswa (Disimpan Permanen) */}
+            <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Bio Siswa (Permanen)</span>
+                </div>
+                {!isEditingBio ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingBio(true)}
+                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline"
+                  >
+                    {currentUser.bio ? 'Ubah Bio' : '+ Tulis Bio'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingBio(false);
+                      setBioText(currentUser.bio || '');
+                    }}
+                    className="text-[11px] font-bold text-slate-500 hover:text-slate-800"
+                  >
+                    Batal
+                  </button>
+                )}
+              </div>
+
+              {bioMessage && (
+                <div
+                  className={`p-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+                    bioMessage.type === 'success'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-rose-50 text-rose-800 border border-rose-200'
+                  }`}
+                >
+                  {bioMessage.type === 'success' ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                  )}
+                  <span>{bioMessage.text}</span>
+                </div>
+              )}
+
+              {isEditingBio ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={bioText}
+                    onChange={(e) => setBioText(e.target.value.substring(0, 160))}
+                    placeholder="Tuliskan bio profil kamu (motto belajar, hobi, cita-cita)..."
+                    rows={3}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400">{bioText.length}/160 karakter</span>
+                    <button
+                      type="button"
+                      onClick={handleSaveBio}
+                      disabled={savingBio}
+                      className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    >
+                      {savingBio ? 'Menyimpan...' : 'Simpan Bio'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-600 italic bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed">
+                  "{currentUser.bio || 'Belum ada bio. Tambahkan bio singkat tentang dirimu!'}"
+                </p>
+              )}
+            </div>
+
             {/* 1. Nama Lengkap (Terkunci / Read-Only untuk Siswa) */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
               <div className="flex items-center justify-between">
@@ -675,20 +790,51 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
               )}
 
               {/* Formulir Pengajuan Tiket Perubahan Sandi ke Admin */}
-              <form onSubmit={handleSubmitResetRequest} className="space-y-2 pt-1">
-                <label className="block text-[11px] font-bold text-slate-700">
-                  Alasan Pengajuan Perubahan Password:
-                </label>
-                <textarea
-                  value={resetReason}
-                  onChange={(e) => setResetReason(e.target.value)}
-                  placeholder="Contoh: Lupa password akun / Permintaan perbaruan sandi berkala untuk keamanan..."
-                  rows={2}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800"
-                />
+              <form onSubmit={handleSubmitResetRequest} className="space-y-3 pt-1">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-slate-700">
+                    Kata Sandi Baru yang Diajukan *
+                  </label>
+                  <input
+                    type="password"
+                    value={resetNewPassword}
+                    onChange={(e) => setResetNewPassword(e.target.value)}
+                    placeholder="Minimal 6 karakter"
+                    required
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-slate-700">
+                    Ulangi Kata Sandi Baru *
+                  </label>
+                  <input
+                    type="password"
+                    value={resetConfirmPassword}
+                    onChange={(e) => setResetConfirmPassword(e.target.value)}
+                    placeholder="Ketik ulang sandi baru"
+                    required
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-slate-700">
+                    Alasan Pengajuan Perubahan Password:
+                  </label>
+                  <textarea
+                    value={resetReason}
+                    onChange={(e) => setResetReason(e.target.value)}
+                    placeholder="Contoh: Permintaan ganti sandi baru / Menjaga keamanan akun..."
+                    rows={2}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800"
+                  />
+                </div>
+
                 <button
                   type="submit"
-                  disabled={submittingReset || !resetReason.trim()}
+                  disabled={submittingReset || !resetNewPassword || !resetConfirmPassword}
                   className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 active:scale-98 shadow-sm"
                 >
                   {submittingReset ? (
@@ -696,7 +842,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                   ) : (
                     <>
                       <Send className="w-3.5 h-3.5" />
-                      <span>Ajukan Permintaan Perubahan Password ke Admin</span>
+                      <span>Ajukan Tiket Perubahan Sandi Baru ke Admin</span>
                     </>
                   )}
                 </button>

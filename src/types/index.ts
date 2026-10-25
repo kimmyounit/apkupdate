@@ -23,6 +23,8 @@ export interface User {
   bio?: string;
   phone?: string; // Nomor Telepon / WhatsApp
   email?: string; // Gmail / Email siswa
+  passwordChanged?: boolean; // True jika siswa sudah pernah mengganti kata sandi dari default
+  contactInfoCompleted?: boolean; // True jika siswa sudah melengkapi nomor HP & Gmail
   lastUsernameChange?: string; // Catatan waktu perubahan username terakhir (maksimal 1x per 30 hari)
   usernameChangeHistory?: { oldUsername: string; newUsername: string; changedAt: string }[];
   following?: string[]; // Daftar ID pengguna yang diikuti

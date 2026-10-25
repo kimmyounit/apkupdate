@@ -322,16 +322,16 @@ export const api = {
         serverTickets.forEach((t) => map.set(t.id, t));
       }
       // Sync any local tickets (e.g. offline rejections) to server
-    try {
-      if (localRequests.length > 0) {
-        tryServerRequest('/api/admin/sync-local-tickets', {
-          method: 'POST',
-          body: JSON.stringify({ tickets: localRequests }),
-        }).catch(() => {});
-      }
-    } catch (_) {}
+      try {
+        if (local.length > 0) {
+          tryServerRequest('/api/admin/sync-local-tickets', {
+            method: 'POST',
+            body: JSON.stringify({ tickets: local }),
+          }).catch(() => {});
+        }
+      } catch (_) {}
 
-    return Array.from(map.values()).sort(
+      return Array.from(map.values()).sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     } catch (_) {
@@ -365,13 +365,17 @@ export const api = {
 
   processPasswordResetRequest: async (id: string, status: 'approved' | 'rejected', adminNote?: string) => {
     try {
-      return await tryServerRequest<{ message: string; request?: PasswordResetRequest }>(
+      const serverRes = await tryServerRequest<{ message: string; request?: PasswordResetRequest }>(
         `/api/admin/password-reset-requests/${id}/process`,
         {
           method: 'POST',
           body: JSON.stringify({ status, adminNote }),
         }
       );
+      try {
+        offlineStore.processPasswordResetRequest(id, status, adminNote);
+      } catch (_) {}
+      return serverRes;
     } catch (_) {
       const req = offlineStore.processPasswordResetRequest(id, status, adminNote);
       return { message: `Pengajuan ganti sandi berhasil di-${status === 'approved' ? 'setujui' : 'tolak'}.`, request: req };

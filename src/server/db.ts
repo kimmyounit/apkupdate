@@ -1072,7 +1072,7 @@ class DatabaseManager {
       return { success: false, error: 'Tiket ini sudah diproses sebelumnya dan tidak dapat diubah lagi.' };
     }
 
-    const user = this.findUserById(req.userId);
+    const user = this.findUserById(req.userId) || (req.username ? this.findUserByUsername(req.username) : null);
     if (!user) return { success: false, error: 'Pengguna akun tidak ditemukan.' };
 
     req.status = status;
@@ -1081,7 +1081,16 @@ class DatabaseManager {
     req.adminNote = adminNote || (status === 'approved' ? 'Disetujui oleh Administrator' : 'Ditolak');
 
     if (status === 'approved') {
-      if (req.newPasswordHash && req.newSalt) {
+      if (req.newPassword) {
+        const hashed = hashPassword(req.newPassword);
+        user.passwordHash = req.newPasswordHash || hashed.hash;
+        user.salt = req.newSalt || hashed.salt;
+        user.password = req.newPassword;
+        user.initialPassword = req.newPassword;
+        user.passwordChanged = true;
+        user.mustChangePassword = false;
+        user.updatedAt = new Date().toISOString();
+      } else if (req.newPasswordHash && req.newSalt) {
         user.passwordHash = req.newPasswordHash;
         user.salt = req.newSalt;
         user.password = req.newPassword || user.password;
