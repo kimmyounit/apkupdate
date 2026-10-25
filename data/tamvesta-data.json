@@ -7,8 +7,8 @@
       "role": "admin",
       "jabatan": "Administrator Utama TAMVESTA",
       "initialPassword": "TAMVESTA123",
-      "passwordHash": "0492f652abe32876c521c786e0244ddf03b4a0d1ba4bec6e34401d7008be810bccef0bfec458a65537ec7be77a74b2a5310396abfc0d1f10135381cdc006be9e",
-      "salt": "294ca7d2f7854b28b4c99ecc711de523",
+      "passwordHash": "b53e315798155726079d49f769968cfa3c9555fb82cfddbc4ec0b1957cdf15b94d5010e46217dd9b0cb896743a10b82925933ac73ffac015d86fad42e50ee75f",
+      "salt": "5750a150a22fb6f6108d3fa478bea618",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_admin_tamansiswa:785efa956b468c8f",
@@ -512,8 +512,8 @@
       "role": "admin",
       "jabatan": "Operator Dapodik Sekolah",
       "initialPassword": "Tamvesta!B2604",
-      "passwordHash": "0492f652abe32876c521c786e0244ddf03b4a0d1ba4bec6e34401d7008be810bccef0bfec458a65537ec7be77a74b2a5310396abfc0d1f10135381cdc006be9e",
-      "salt": "294ca7d2f7854b28b4c99ecc711de523",
+      "passwordHash": "b53e315798155726079d49f769968cfa3c9555fb82cfddbc4ec0b1957cdf15b94d5010e46217dd9b0cb896743a10b82925933ac73ffac015d86fad42e50ee75f",
+      "salt": "5750a150a22fb6f6108d3fa478bea618",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
@@ -749,9 +749,5 @@
   "tuDocuments": [],
   "tuChatMessages": [],
   "tuMonthlyReports": [],
-  "gameRooms": [],
-  "deletedUserIds": [
-    "user_siswa_siswa_smp7a_001",
-    "siswa.smp7a.001"
-  ]
+  "gameRooms": []
 }
