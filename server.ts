@@ -6,6 +6,7 @@ import { db, verifyPassword, generateRandomQuizToken } from './src/server/db.ts'
 import {
   createSessionToken,
   authMiddleware,
+  optionalAuthMiddleware,
   requireRole,
   type AuthenticatedRequest,
 } from './src/server/auth.ts';
@@ -956,7 +957,7 @@ app.get('/api/attendance/export/:eventId', authMiddleware, requireRole(['admin',
 // -------------------------------------------------------------
 
 // GET /api/posts - Ambil daftar postingan siswa
-app.get('/api/posts', authMiddleware, async (req, res) => {
+app.get('/api/posts', optionalAuthMiddleware, async (req, res) => {
   try {
     await db.reloadFromGitHub();
   } catch (_) {}
@@ -1131,7 +1132,7 @@ app.get(['/api/users/profile/:username', '/api/users/:username/public-profile'],
 // -------------------------------------------------------------
 
 // GET /api/stories - Ambil story aktif
-app.get('/api/stories', authMiddleware, async (req, res) => {
+app.get('/api/stories', optionalAuthMiddleware, async (req, res) => {
   try {
     await db.reloadFromGitHub();
   } catch (_) {}

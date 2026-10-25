@@ -438,9 +438,19 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
           </div>
 
           {/* Friends' Stories */}
-          {stories
-            .filter((s) => s.authorId !== user?.id)
-            .map((story, idx) => (
+          {(() => {
+            const seen = new Set<string>();
+            const uniqueStories: Story[] = [];
+            stories
+              .filter((s) => s.authorId !== user?.id)
+              .forEach((s) => {
+                if (!seen.has(s.authorId)) {
+                  seen.add(s.authorId);
+                  uniqueStories.push(s);
+                }
+              });
+
+            return uniqueStories.map((story) => (
               <div
                 key={story.id}
                 onClick={() => {
@@ -450,7 +460,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                 }}
                 className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
               >
-                <div className="w-15 h-15 rounded-full p-0.5 bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 animate-in fade-in">
+                <div className="w-15 h-15 rounded-full p-0.5 bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 animate-in fade-in shadow-xs">
                   <div className="w-full h-full rounded-full overflow-hidden bg-white p-0.5">
                     <img
                       src={
@@ -464,11 +474,12 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                     />
                   </div>
                 </div>
-                <span className="text-[10px] font-medium text-slate-600 truncate max-w-[64px]">
+                <span className="text-[10px] font-semibold text-slate-700 truncate max-w-[64px]">
                   {story.authorName.split(' ')[0]}
                 </span>
               </div>
-            ))}
+            ));
+          })()}
         </div>
       </div>
 

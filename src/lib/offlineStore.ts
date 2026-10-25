@@ -703,6 +703,74 @@ export const offlineStore = {
   // Posts (Feed Siswa)
   getPosts(): StudentPost[] {
     const db = loadDB();
+    if (!Array.isArray(db.posts) || db.posts.length === 0) {
+      const now = Date.now();
+      db.posts = [
+        {
+          id: 'post_seed_1',
+          authorId: 'user_staff_bambang_kepsek',
+          authorName: 'ST Bambang Sapto Nugroho S.Pd',
+          authorUsername: 'bambang.kepsek',
+          authorKelas: 'Kepala Sekolah SMP',
+          authorRole: 'guru',
+          authorAvatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=256',
+          authorIsVerified: true,
+          authorIsAlumni: false,
+          caption: 'Salam dan Bahagia! Selamat datang seluruh siswa di ruang sosial media resmi TAMVESTA. Mari jadikan wadah ini sebagai sarana saling bertukar wawasan, karya seni, dan kegiatan positif sekolah Tamansiswa Batam. Tetap junjung tinggi nilai budi pekerti Ki Hadjar Dewantara! 🏫🙏',
+          mediaType: 'photo',
+          mediaUrl: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&q=80&w=1000',
+          mediaName: 'kegiatan_tamansiswa.jpg',
+          likes: ['user_staff_margaretha_h', 'user_siswa_siswa_smp7a_002', 'user_siswa_siswa_smp7a_003'],
+          comments: [
+            {
+              id: 'comm_1',
+              authorId: 'user_siswa_siswa_smp7a_002',
+              authorName: 'Bunga Pertiwi',
+              authorUsername: 'siswa.smp7a.002',
+              authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bunga%20Pertiwi&backgroundColor=ec4899',
+              content: 'Salam dan Bahagia Pak Bambang! Siap belajar dengan semangat hari ini 🙏✨',
+              createdAt: new Date(now - 30 * 60 * 1000).toISOString(),
+            }
+          ],
+          createdAt: new Date(now - 2 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          id: 'post_seed_2',
+          authorId: 'user_siswa_siswa_smp7a_002',
+          authorName: 'Bunga Pertiwi',
+          authorUsername: 'siswa.smp7a.002',
+          authorKelas: 'VII-A SMP',
+          authorRole: 'siswa',
+          authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bunga%20Pertiwi&backgroundColor=ec4899',
+          authorIsVerified: true,
+          authorIsAlumni: false,
+          caption: 'Belajar kelompok materi sains dan membaca buku digital di Tamvesta bareng teman-teman. Pembahasannya mudah dipahami! Jangan lupa ikutan quiz mingguan ya teman-teman 💡📚',
+          mediaType: 'photo',
+          mediaUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1000',
+          mediaName: 'belajar_kelompok.jpg',
+          likes: ['user_staff_bambang_kepsek', 'user_siswa_siswa_smp7a_003'],
+          comments: [],
+          createdAt: new Date(now - 1 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          id: 'post_seed_3',
+          authorId: 'user_siswa_siswa_smp7a_003',
+          authorName: 'Citra Dewi',
+          authorUsername: 'siswa.smp7a.003',
+          authorKelas: 'VII-A SMP',
+          authorRole: 'siswa',
+          authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Citra%20Dewi&backgroundColor=8b5cf6',
+          authorIsVerified: true,
+          authorIsAlumni: false,
+          caption: 'Waktu istirahat tadi seru banget main game "Who\'s the Spy" di menu Permainan bareng teman-teman sekelas! Impostornya pintar menyamar tapi akhirnya ketahuan juga haha 🕵️‍♂️🎮😂',
+          mediaType: 'none',
+          likes: ['user_siswa_siswa_smp7a_002'],
+          comments: [],
+          createdAt: new Date(now - 40 * 60 * 1000).toISOString(),
+        }
+      ];
+      saveDB(db);
+    }
     const users = db.users || [];
     return (db.posts || [])
       .map((p) => {
@@ -885,9 +953,56 @@ export const offlineStore = {
   getStories(): Story[] {
     const db = loadDB();
     const now = Date.now();
-    return (db.stories || []).filter(
+    let validStories = (db.stories || []).filter(
       (s) => new Date(s.expiresAt).getTime() > now
     );
+    if (validStories.length === 0) {
+      const expires = new Date(now + 24 * 60 * 60 * 1000).toISOString();
+      validStories = [
+        {
+          id: 'story_seed_1',
+          authorId: 'user_staff_margaretha_h',
+          authorName: 'Margaretha Hendriani',
+          authorUsername: 'margaretha.h',
+          authorKelas: 'Kepala Sekolah SD',
+          authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256',
+          mediaType: 'photo',
+          mediaUrl: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=1000',
+          caption: 'Semangat belajar anak-anak Tamansiswa Batam pagi ini! 🌅📚',
+          createdAt: new Date(now - 15 * 60 * 1000).toISOString(),
+          expiresAt: expires,
+        },
+        {
+          id: 'story_seed_2',
+          authorId: 'user_siswa_siswa_smp7a_002',
+          authorName: 'Bunga Pertiwi',
+          authorUsername: 'siswa.smp7a.002',
+          authorKelas: 'VII-A SMP',
+          authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bunga%20Pertiwi&backgroundColor=ec4899',
+          mediaType: 'photo',
+          mediaUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=1000',
+          caption: 'Membaca buku baru di perpustakaan digital Tamvesta 📖✨',
+          createdAt: new Date(now - 10 * 60 * 1000).toISOString(),
+          expiresAt: expires,
+        },
+        {
+          id: 'story_seed_3',
+          authorId: 'user_siswa_siswa_smp7a_003',
+          authorName: 'Citra Dewi',
+          authorUsername: 'siswa.smp7a.003',
+          authorKelas: 'VII-A SMP',
+          authorAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Citra%20Dewi&backgroundColor=8b5cf6',
+          mediaType: 'photo',
+          mediaUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1000',
+          caption: 'Seru banget kuis matematika hari ini, dapet skor tinggi! 🎉',
+          createdAt: new Date(now - 5 * 60 * 1000).toISOString(),
+          expiresAt: expires,
+        }
+      ];
+      db.stories = validStories;
+      saveDB(db);
+    }
+    return validStories;
   },
 
   createStory(data: { mediaUrl: string; mediaType: 'photo' | 'video'; caption?: string }): Story {

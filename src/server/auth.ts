@@ -78,6 +78,33 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   next();
 }
 
+export function optionalAuthMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  const token = authHeader.substring(7);
+  if (token.startsWith('offline_token_')) {
+    const offlineId = token.replace('offline_token_', '');
+    const user = db.findUserById(offlineId) || (offlineId.includes('admin') ? db.findUserByUsername('TAMANSISWA') : null);
+    if (user && user.isActive) {
+      req.user = user;
+      return next();
+    }
+  }
+
+  const userId = verifySessionToken(token);
+  if (userId) {
+    const user = db.findUserById(userId);
+    if (user && user.isActive) {
+      req.user = user;
+    }
+  }
+
+  next();
+}
+
 export function requireRole(allowedRoles: UserRole[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
