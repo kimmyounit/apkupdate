@@ -777,7 +777,20 @@
   ],
   "stories": [],
   "notes": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif_1792920962773_bnty1",
+      "title": "Pengajuan Ganti Sandi Ditolak",
+      "message": "Pengajuan ganti sandi Anda (Tiket: TKT-518981) DITOLAK oleh Admin. Alasan: byeee",
+      "type": "security",
+      "isImportant": false,
+      "linkType": "none",
+      "targetUserId": "user_siswa_siswa_smp7a_002",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-25T09:36:02.773Z"
+    }
+  ],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
