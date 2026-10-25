@@ -754,7 +754,10 @@
       "newPasswordHash": "dfac6cdadcd942367b213d896292beefecd679ca173fa2254be7f43577baec79aaad98ee060679f21dfc9a483ad0c255313570d2de247b5b194f41b73107e23f",
       "newSalt": "74e3e27276868a01b89db48080b8ed99",
       "newPassword": "BungaBaru123",
-      "createdAt": "2026-10-25T08:45:12.367Z"
+      "createdAt": "2026-10-25T08:45:12.367Z",
+      "processedAt": "2026-10-25T09:35:17.723Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "gatauj"
     }
   ],
   "posts": [
@@ -774,7 +777,20 @@
   ],
   "stories": [],
   "notes": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif_1792920917723_hjm6j",
+      "title": "Pengajuan Ganti Sandi Ditolak",
+      "message": "Pengajuan ganti sandi Anda (Tiket: TKT-518981) DITOLAK oleh Admin. Alasan: gatauj",
+      "type": "security",
+      "isImportant": false,
+      "linkType": "none",
+      "targetUserId": "user_siswa_siswa_smp7a_002",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-25T09:35:17.723Z"
+    }
+  ],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
