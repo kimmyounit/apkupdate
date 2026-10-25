@@ -29,11 +29,11 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
       "createdAt": "2026-10-24T08:22:46.353Z",
-      "updatedAt": "2026-10-25T08:24:54.562Z",
+      "updatedAt": "2026-10-24T08:22:46.353Z",
       "password": "Siswa7A002",
-      "bio": "Siswa SMP Tamansiswa Batam",
       "phone": "081234567890",
-      "email": "bunga.pertiwi@gmail.com"
+      "email": "bunga.pertiwi@gmail.com",
+      "bio": "Siswa SMP Tamansiswa Batam"
     },
     {
       "id": "user_siswa_siswa_smp7a_003",
@@ -766,9 +766,5 @@
   "tuDocuments": [],
   "tuChatMessages": [],
   "tuMonthlyReports": [],
-  "gameRooms": [],
-  "deletedUserIds": [
-    "user_siswa_siswa_smp7a_001",
-    "siswa.smp7a.001"
-  ]
+  "gameRooms": []
 }
