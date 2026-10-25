@@ -728,6 +728,24 @@
       "createdAt": "2026-10-24T08:22:47.082Z",
       "updatedAt": "2026-10-24T08:22:47.082Z",
       "password": "Tamvesta!A2617"
+    },
+    {
+      "id": "stu_1792914333775_edery",
+      "username": "chaterine",
+      "name": "Chaterine",
+      "role": "siswa",
+      "gender": "Perempuan",
+      "kelas": "Kelas 8",
+      "initialPassword": "123456",
+      "password": "123456",
+      "passwordHash": "2d924862b986e643ca352323ac43416d2aa09d264fac9ed63c21e29f9909533d2945a7c495f841c1311b911ed51aa6125ba62058b6f5fc0d25a3ce760f441b73",
+      "salt": "74ff6892949ee0474ad877bb37e1f7a5",
+      "mustChangePassword": false,
+      "isActive": true,
+      "qrToken": "TAMVESTA:STUDENT:stu_1792914333775_edery:b7eaf3e4867d5c8b",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Chaterine&backgroundColor=0284c7",
+      "createdAt": "2026-10-25T07:45:33.775Z",
+      "updatedAt": "2026-10-25T07:45:33.775Z"
     }
   ],
   "subjects": [],
