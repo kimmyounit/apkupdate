@@ -70,7 +70,7 @@ export const StudentDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col relative w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col relative">
       {/* Quiz Exit Attempt Alert Banner */}
       {quizWarningNotice && (
         <div className="fixed top-4 left-4 right-4 z-50 p-4 bg-rose-600 text-white rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-rose-300 animate-bounce">
@@ -86,7 +86,7 @@ export const StudentDashboard: React.FC = () => {
       />
 
       {/* SEPARATE PAGES ROUTER */}
-      <div className="flex-1 pb-16 w-full max-w-full overflow-x-hidden">
+      <div className="flex-1 pb-16">
         {activeTab === 'home' && (
           <StudentFeedPage
             onOpenAnnouncements={() => setActiveTab('announcements')}

@@ -399,7 +399,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   const myStories = stories.filter((s) => s.authorId === user?.id);
 
   return (
-    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-24 w-full max-w-full overflow-x-hidden">
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-24">
       {/* ------------------------------------------------------------- */}
       {/* 1. HEADER UTAMA: SELAMAT DATANG TAMVESTA & HELLO NAMA */}
       {/* ------------------------------------------------------------- */}
