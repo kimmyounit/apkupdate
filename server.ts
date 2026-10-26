@@ -1177,13 +1177,13 @@ app.put('/api/posts/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
 // POST /api/posts/:id/pin - Sematkan atau lepas sematan postingan (Pinned Feed)
 app.post('/api/posts/:id/pin', authMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
-    const isPrivileged = req.user!.role === 'admin' || req.user!.role === 'support' || req.user!.isDeveloper;
+    const isSupport = req.user!.role === 'support' || req.user!.isDeveloper || req.user!.username.toLowerCase() === 'tamvesta';
     const post = db.getPostById(req.params.id);
     if (!post) {
       return res.status(404).json({ error: 'Postingan tidak ditemukan.' });
     }
-    if (post.authorId !== req.user!.id && !isPrivileged) {
-      return res.status(403).json({ error: 'Hanya pemilik postingan atau Support/Admin yang dapat menyematkan feed ini.' });
+    if (!isSupport) {
+      return res.status(403).json({ error: 'Fitur sematkan postingan (pinned) hanya dapat digunakan oleh akun Support TAMVESTA.' });
     }
     const updated = db.togglePinPost(req.params.id);
     try {

@@ -94,7 +94,7 @@ export const StudentDashboard: React.FC = () => {
       />
 
       {/* SEPARATE PAGES ROUTER */}
-      <div className="flex-1 pb-16">
+      <div className="flex-1 pb-24 sm:pb-28">
         {activeTab === 'home' && (
           <StudentFeedPage
             onOpenAnnouncements={() => setActiveTab('announcements')}

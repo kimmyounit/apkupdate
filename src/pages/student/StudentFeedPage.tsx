@@ -412,7 +412,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   const myStories = stories.filter((s) => s.authorId === user?.id);
 
   return (
-    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-24">
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-32 sm:pb-36">
       {/* ------------------------------------------------------------- */}
       {/* 1. HEADER UTAMA: SELAMAT DATANG TAMVESTA & HELLO NAMA */}
       {/* ------------------------------------------------------------- */}
@@ -434,10 +434,10 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             </div>
 
             <div className="space-y-0.5 min-w-0">
-              <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-[10px] sm:text-xs font-black text-emerald-200 border border-white/15">
+              <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-[10px] sm:text-xs font-semibold text-emerald-200 border border-white/15">
                 Selamat Datang di TAMVESTA
               </span>
-              <h1 className="text-base sm:text-2xl font-black tracking-tight text-white leading-tight truncate flex items-center gap-1.5 flex-wrap">
+              <h1 className="text-sm sm:text-base font-bold tracking-tight text-white leading-tight truncate flex items-center gap-1.5 flex-wrap">
                 <span className="truncate">Hello!, {user?.name || 'Siswa'}</span>
                 {user?.isVerified && (
                   <VerifiedBadge
@@ -1004,8 +1004,8 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
 
                   {/* Actions: Follow / Pin / Edit / Delete / Moderasi */}
                   <div className="flex items-center gap-1">
-                    {/* Sematkan ke Profil (📌) untuk Pemilik Post, Akun Support / Admin */}
-                    {(isAuthor || user?.role === 'support' || user?.role === 'admin' || user?.isDeveloper) && (
+                    {/* Sematkan Postingan (📌) KHUSUS Akun Support TAMVESTA */}
+                    {(user?.role === 'support' || user?.username?.toLowerCase() === 'tamvesta' || user?.isDeveloper) && (
                       <button
                         type="button"
                         onClick={() => handleTogglePinPost(post.id)}
@@ -1014,7 +1014,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                             ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                             : 'hover:bg-slate-100 text-slate-400 hover:text-amber-600'
                         }`}
-                        title={post.isPinned ? 'Lepas Sematan Postingan' : 'Sematkan ke Profil (📌)'}
+                        title={post.isPinned ? 'Lepas Sematan Postingan' : 'Sematkan Postingan (Khusus Support)'}
                       >
                         <Pin className={`w-3.5 h-3.5 ${post.isPinned ? 'fill-amber-600 text-amber-600' : ''}`} />
                       </button>

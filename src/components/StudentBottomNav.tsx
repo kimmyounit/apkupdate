@@ -50,7 +50,8 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
   return (
     <nav
       aria-label="Student Navigation Bar"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] py-1 px-1"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] pt-2 pb-5 sm:pb-3 px-2 min-h-[68px] sm:min-h-[62px]"
+      style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom, 20px))' }}
     >
       <div className="max-w-md mx-auto flex items-center justify-around">
         {navItems.map((item) => {
@@ -61,7 +62,7 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-2xl transition-all duration-200 select-none relative group ${
+              className={`flex-1 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-2xl transition-all duration-200 select-none relative group ${
                 isActive
                   ? 'text-emerald-700 font-black'
                   : 'text-slate-500 hover:text-slate-800 font-medium'
@@ -69,12 +70,12 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
             >
               {/* Active Indicator Top Glow */}
               {isActive && (
-                <span className="absolute -top-1 w-6 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-xs" />
+                <span className="absolute -top-2 w-8 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-xs" />
               )}
 
               {/* Icon Container with subtle background when active */}
               <div
-                className={`w-8 h-6 flex items-center justify-center rounded-xl transition-all relative ${
+                className={`w-10 h-7 sm:w-11 sm:h-7.5 flex items-center justify-center rounded-xl transition-all relative ${
                   isActive
                     ? 'bg-emerald-100/90 text-emerald-700 scale-105 shadow-xs'
                     : isQuizActive
@@ -83,21 +84,21 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
                 }`}
               >
                 <Icon
-                  className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform ${
+                  className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-transform ${
                     isActive ? 'stroke-[2.5]' : 'stroke-2'
                   }`}
                 />
                 {isQuizActive && !isActive && (
                   <span className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 shadow-xs">
-                    <Lock className="w-2 h-2" />
+                    <Lock className="w-2.5 h-2.5" />
                   </span>
                 )}
               </div>
 
               {/* Label */}
               <span
-                className={`text-[9px] sm:text-[10px] tracking-tight mt-0.5 truncate ${
-                  isActive ? 'text-emerald-800 font-black' : 'text-slate-500'
+                className={`text-[10px] sm:text-[11px] tracking-tight mt-1 truncate ${
+                  isActive ? 'text-emerald-800 font-black' : 'text-slate-500 font-semibold'
                 }`}
               >
                 {item.label}

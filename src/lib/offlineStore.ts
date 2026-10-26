@@ -802,6 +802,11 @@ export const offlineStore = {
 
   togglePinPost(postId: string): StudentPost {
     const db = loadDB();
+    const curUser = this.getCurrentUser();
+    const isSupport = curUser?.role === 'support' || curUser?.isDeveloper || (curUser?.username || '').toLowerCase() === 'tamvesta';
+    if (!isSupport) {
+      throw new Error('Fitur sematkan postingan (pinned) hanya dapat digunakan oleh akun Support TAMVESTA.');
+    }
     if (!Array.isArray(db.posts)) db.posts = [];
     const post = db.posts.find((p) => p.id === postId);
     if (!post) throw new Error('Postingan tidak ditemukan.');
