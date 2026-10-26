@@ -64,7 +64,7 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
               onClick={() => onTabChange(item.id)}
               className={`flex-1 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-2xl transition-all duration-200 select-none relative group ${
                 isActive
-                  ? 'text-emerald-700 font-black'
+                  ? 'text-emerald-700 font-bold'
                   : 'text-slate-500 hover:text-slate-800 font-medium'
               }`}
             >
@@ -98,7 +98,7 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
               {/* Label */}
               <span
                 className={`text-[10px] sm:text-[11px] tracking-tight mt-1 truncate ${
-                  isActive ? 'text-emerald-800 font-black' : 'text-slate-500 font-semibold'
+                  isActive ? 'text-emerald-800 font-bold' : 'text-slate-500 font-medium'
                 }`}
               >
                 {item.label}

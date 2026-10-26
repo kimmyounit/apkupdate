@@ -482,7 +482,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                 <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 bg-white text-slate-800 rounded-3xl shadow-2xl border border-slate-200/90 z-50 p-2.5 space-y-1.5 animate-in fade-in slide-in-from-top-3 duration-150">
                   <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
                     <div>
-                      <p className="text-[11px] font-black text-slate-900">Menu TAMVESTA</p>
+                      <p className="text-[11px] font-bold text-slate-900">Menu TAMVESTA</p>
                       <p className="text-[10px] text-slate-400">@{user?.username} • {user?.kelas || 'Siswa'}</p>
                     </div>
                     <button
@@ -511,14 +511,14 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                         )}
                       </div>
                       <div>
-                        <span className="text-xs font-black block">Notifikasi Sekolah</span>
+                        <span className="text-xs font-bold block">Notifikasi Sekolah</span>
                         <span className="text-[10px] text-slate-400 block">
                           {unreadNotifCount > 0 ? `${unreadNotifCount} belum dibaca` : 'Lihat semua notifikasi'}
                         </span>
                       </div>
                     </div>
                     {unreadNotifCount > 0 ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-xs">
                         {unreadNotifCount}
                       </span>
                     ) : (
@@ -541,7 +541,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                         <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
                       </div>
                       <div>
-                        <span className="text-xs font-black block">Refresh Data</span>
+                        <span className="text-xs font-bold block">Refresh Data</span>
                         <span className="text-[10px] text-slate-400 block">
                           {refreshing ? 'Menyinkronkan data...' : 'Muat ulang & sinyal ke Admin'}
                         </span>
@@ -565,7 +565,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                         <User className="w-4 h-4" />
                       </div>
                       <div>
-                        <span className="text-xs font-black block">Akun & Profil</span>
+                        <span className="text-xs font-bold block">Akun & Profil</span>
                         <span className="text-[10px] text-slate-400 block">Biodata, foto & kelas</span>
                       </div>
                     </div>
@@ -587,7 +587,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                           <LogOut className="w-4 h-4" />
                         </div>
                         <div>
-                          <span className="text-xs font-black block text-rose-600">Keluar</span>
+                          <span className="text-xs font-bold block text-rose-600">Keluar</span>
                           <span className="text-[10px] text-rose-400 block">Keluar dari akun siswa</span>
                         </div>
                       </div>

@@ -59,7 +59,7 @@ export const SubjectsPage: React.FC<SubjectsPageProps> = ({ onBack }) => {
               <BookOpen className="w-3.5 h-3.5 text-amber-300" />
               <span>KURIKULUM & AKADEMIK SISWA</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Halaman Mata Pelajaran</h1>
+            <h1 className="text-base sm:text-lg font-bold tracking-tight">Halaman Mata Pelajaran</h1>
             <p className="text-xs sm:text-sm text-teal-100 max-w-xl">
               Daftar mata pelajaran aktif, modul kurikulum, jadwal pembelajaran, dan guru pengampu Perguruan Tamansiswa Batam.
             </p>

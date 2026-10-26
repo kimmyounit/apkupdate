@@ -487,7 +487,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
               <Sparkles className="w-3.5 h-3.5 animate-pulse" />
               <span>Menu Permainan Siswa TAMVESTA (Saat Jam Kosong)</span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+            <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">
               Arena Permainan Edukatif & Santai
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">

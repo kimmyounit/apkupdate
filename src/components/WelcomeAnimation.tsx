@@ -68,7 +68,7 @@ export const WelcomeAnimation: React.FC<WelcomeAnimationProps> = ({ name, onFini
             Selamat Datang di TAMVESTA
           </h2>
 
-          <p className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-300 bg-clip-text text-transparent leading-snug">
+          <p className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-300 bg-clip-text text-transparent leading-snug">
             Hello, {name || 'Siswa'}!
           </p>
 

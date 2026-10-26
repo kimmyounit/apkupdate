@@ -63,7 +63,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onBack }) => {
               <Library className="w-3.5 h-3.5 text-amber-300" />
               <span>PERPUSTAKAAN DIGITAL TAMANSISWA</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Halaman Perpustakaan Digital</h1>
+            <h1 className="text-base sm:text-lg font-bold tracking-tight">Halaman Perpustakaan Digital</h1>
             <p className="text-xs sm:text-sm text-cyan-100 max-w-xl">
               Koleksi buku digital sekolah, literatur sains, modul belajar interaktif, dan karya sastra Ki Hadjar Dewantara.
             </p>

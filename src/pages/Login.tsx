@@ -70,7 +70,7 @@ export const Login: React.FC = () => {
             />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
               TAMVESTA
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-emerald-400 tracking-wide uppercase">

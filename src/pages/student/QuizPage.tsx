@@ -631,7 +631,7 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChang
               <HelpCircle className="w-3.5 h-3.5 text-amber-300" />
               <span>PORTAL EVALUASI & QUIZ TERVERIFIKASI</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Halaman Quiz Siswa</h1>
+            <h1 className="text-base sm:text-lg font-bold tracking-tight">Halaman Quiz Siswa</h1>
             <p className="text-xs sm:text-sm text-blue-100 max-w-xl">
               Ikuti evaluasi pembelajaran dan uji pemahaman materi menggunakan token resmi yang dibagikan guru.
             </p>
@@ -650,7 +650,7 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChang
             <span className="text-xs font-extrabold tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 uppercase">
               SIAP UJI KEMAMPUANMU?
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
               Ruang Quiz & Evaluasi Belajar
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
