@@ -399,19 +399,19 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   const myStories = stories.filter((s) => s.authorId === user?.id);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5 space-y-5 pb-24">
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-24 w-full max-w-full overflow-x-hidden">
       {/* ------------------------------------------------------------- */}
       {/* 1. HEADER UTAMA: SELAMAT DATANG TAMVESTA & HELLO NAMA */}
       {/* ------------------------------------------------------------- */}
-      <div className="bg-gradient-to-r from-emerald-800 via-teal-800 to-cyan-900 rounded-3xl p-5 sm:p-6 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-emerald-800 via-teal-800 to-cyan-900 rounded-3xl p-4 sm:p-6 text-white shadow-xl relative overflow-hidden w-full">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {/* Mascot Avatar */}
             <div
               onClick={() => onOpenProfile && onOpenProfile()}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-2 border-emerald-400/40 shadow-md shrink-0 bg-slate-900 cursor-pointer hover:scale-105 transition"
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-2 border-emerald-400/40 shadow-md shrink-0 bg-slate-900 cursor-pointer hover:scale-105 transition"
             >
               <img
                 src={user?.avatarUrl || '/assets/tamvesta_mascot.jpg'}
@@ -420,29 +420,29 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
               />
             </div>
 
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 min-w-0">
               {/* Sambutan Selamat Datang di TAMVESTA dengan Garis Tiga tersemat */}
               <div
                 onClick={() => setIsSideMenuOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-[11px] sm:text-xs font-black text-emerald-200 border border-white/15 cursor-pointer transition active:scale-95 shadow-xs"
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-[10px] sm:text-xs font-black text-emerald-200 border border-white/15 cursor-pointer transition active:scale-95 shadow-xs"
                 title="Buka Menu Siswa"
               >
-                <Menu className="w-3.5 h-3.5 text-amber-300" />
-                <span>Selamat Datang di TAMVESTA</span>
+                <Menu className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-300 shrink-0" />
+                <span className="truncate">Selamat Datang di TAMVESTA</span>
               </div>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white leading-tight truncate max-w-[200px] sm:max-w-none flex items-center gap-1.5 flex-wrap">
-                <span>Hello!, {user?.name || 'Siswa'}</span>
+              <h1 className="text-base sm:text-2xl font-black tracking-tight text-white leading-tight truncate flex items-center gap-1.5 flex-wrap">
+                <span className="truncate">Hello!, {user?.name || 'Siswa'}</span>
                 {user?.isVerified && (
                   <VerifiedBadge
-                    size="md"
+                    size="sm"
                     isDeveloper={user?.role === 'support' || user?.isDeveloper || user?.username?.toLowerCase() === 'tamvesta'}
                   />
                 )}
               </h1>
-              <p className="text-[11px] text-teal-100 flex items-center gap-1.5">
-                <span>@{user?.username}</span>
+              <p className="text-[10px] sm:text-[11px] text-teal-100 flex items-center gap-1.5 truncate">
+                <span className="truncate">@{user?.username}</span>
                 <span>•</span>
-                <span className="font-semibold text-amber-300">{user?.kelas || 'Tamansiswa Batam'}</span>
+                <span className="font-semibold text-amber-300 truncate">{user?.kelas || 'Tamansiswa Batam'}</span>
               </p>
             </div>
           </div>
@@ -451,23 +451,25 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
         {/* ------------------------------------------------------------- */}
         {/* MENU 4 TOMBOL DI BAWAH TULISAN SAMBUTAN: Notifikasi, Refresh, Akun, Keluar */}
         {/* ------------------------------------------------------------- */}
-        <div className="grid grid-cols-4 gap-2 mt-4 pt-3.5 border-t border-white/15">
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mt-3.5 sm:mt-4 pt-3 border-t border-white/15 w-full">
           {/* 1. Notifikasi */}
           <button
             type="button"
             onClick={() => setIsNotificationsOpen(true)}
-            className="relative flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 group shadow-xs"
+            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 group shadow-xs min-w-0 w-full overflow-hidden"
             title="Lihat Notifikasi Sekolah"
           >
-            <div className="relative">
-              <Bell className="w-5 h-5 text-amber-300 group-hover:scale-110 transition" />
+            <div className="relative shrink-0">
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 group-hover:scale-110 transition" />
               {unreadNotifCount > 0 && (
-                <span className="absolute -top-1.5 -right-2 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px] font-black shadow-md animate-pulse">
+                <span className="absolute -top-1 -right-1.5 px-1 py-0.2 bg-rose-500 text-white rounded-full text-[8px] font-black shadow-md animate-pulse">
                   {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
                 </span>
               )}
             </div>
-            <span className="text-[11px] font-black tracking-tight">Notifikasi</span>
+            <span className="text-[10px] sm:text-[11px] font-black tracking-tight truncate w-full text-center block">
+              Notifikasi
+            </span>
           </button>
 
           {/* 2. Refresh (Terhubung ke Admin) */}
@@ -475,15 +477,15 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             type="button"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 disabled:opacity-60 group shadow-xs"
+            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 disabled:opacity-60 group shadow-xs min-w-0 w-full overflow-hidden"
             title="Muat ulang data & kirim sinyal ke Admin Dashboard"
           >
             <RefreshCw
-              className={`w-5 h-5 text-emerald-300 group-hover:rotate-180 transition duration-300 ${
+              className={`w-4 h-4 sm:w-5 sm:h-5 text-emerald-300 group-hover:rotate-180 transition duration-300 shrink-0 ${
                 refreshing ? 'animate-spin' : ''
               }`}
             />
-            <span className="text-[11px] font-black tracking-tight truncate max-w-full">
+            <span className="text-[10px] sm:text-[11px] font-black tracking-tight truncate w-full text-center block">
               {refreshing ? 'Menyinkron...' : 'Refresh'}
             </span>
           </button>
@@ -498,22 +500,26 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                 setSelectedProfileUsername(user?.username || null);
               }
             }}
-            className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 group shadow-xs"
+            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 group shadow-xs min-w-0 w-full overflow-hidden"
             title="Buka Profil & Akun Siswa"
           >
-            <User className="w-5 h-5 text-sky-300 group-hover:scale-110 transition" />
-            <span className="text-[11px] font-black tracking-tight">Akun</span>
+            <User className="w-4 h-4 sm:w-5 sm:h-5 text-sky-300 group-hover:scale-110 transition shrink-0" />
+            <span className="text-[10px] sm:text-[11px] font-black tracking-tight truncate w-full text-center block">
+              Akun
+            </span>
           </button>
 
           {/* 4. Keluar */}
           <button
             type="button"
             onClick={handleConfirmLogout}
-            className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-100 backdrop-blur-sm border border-rose-400/30 transition active:scale-95 group shadow-xs"
+            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-100 backdrop-blur-sm border border-rose-400/30 transition active:scale-95 group shadow-xs min-w-0 w-full overflow-hidden"
             title="Keluar dari Akun Siswa (Data tetap aman tersimpan)"
           >
-            <LogOut className="w-5 h-5 text-rose-300 group-hover:scale-110 transition" />
-            <span className="text-[11px] font-black tracking-tight text-rose-200">Keluar</span>
+            <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-rose-300 group-hover:scale-110 transition shrink-0" />
+            <span className="text-[10px] sm:text-[11px] font-black tracking-tight text-rose-200 truncate w-full text-center block">
+              Keluar
+            </span>
           </button>
         </div>
 

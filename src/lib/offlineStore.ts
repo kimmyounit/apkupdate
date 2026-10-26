@@ -242,6 +242,8 @@ function getStoredPasswords(): Record<string, string> {
     'risky': 'Tamvesta!R2615',
     'masni': 'Tamvesta!M2616',
     'angga.satpam': 'Tamvesta!A2617',
+    'Tamvesta': 'TAMVESTATAMSIS',
+    'tamvesta': 'TAMVESTATAMSIS',
   };
 
   if (Array.isArray((defaultData as any).users)) {
@@ -578,6 +580,7 @@ export const offlineStore = {
         user.username === 'risky' ? 'Tamvesta!R2615' : null,
         user.username === 'masni' ? 'Tamvesta!M2616' : null,
         user.username === 'angga.satpam' ? 'Tamvesta!A2617' : null,
+        (user.role === 'support' || user.username.toLowerCase() === 'tamvesta') ? 'TAMVESTATAMSIS' : null,
       ].filter(Boolean);
 
       isMatch = candidatePasswords.some((p) => {

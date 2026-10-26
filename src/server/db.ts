@@ -304,15 +304,15 @@ export function getInitialData(): DatabaseSchema {
   };
 
   // Akun Resmi Developer / Support TAMVESTA
-  const supportPass = hashPassword('Salamdanbahagia');
+  const supportPass = hashPassword('TAMVESTATAMSIS');
   const supportUser: User = {
     id: 'user_support_tamvesta',
     username: 'Tamvesta',
     name: 'Support TAMVESTA',
     role: 'support',
     jabatan: 'Developer Resmi TAMVESTA',
-    initialPassword: 'Salamdanbahagia',
-    password: 'Salamdanbahagia',
+    initialPassword: 'TAMVESTATAMSIS',
+    password: 'TAMVESTATAMSIS',
     passwordHash: supportPass.hash,
     salt: supportPass.salt,
     mustChangePassword: false,
@@ -684,7 +684,7 @@ class DatabaseManager {
 
           // Pastikan akun Support TAMVESTA terdaftar & memiliki centang kuning Developer
           const supportExisting = parsed.users.find((u: User) => u.username.toLowerCase() === 'tamvesta');
-          const supportPass = hashPassword('Salamdanbahagia');
+          const supportPass = hashPassword('TAMVESTATAMSIS');
           if (!supportExisting) {
             parsed.users.push({
               id: 'user_support_tamvesta',
@@ -692,8 +692,8 @@ class DatabaseManager {
               name: 'Support TAMVESTA',
               role: 'support',
               jabatan: 'Developer Resmi TAMVESTA',
-              initialPassword: 'Salamdanbahagia',
-              password: 'Salamdanbahagia',
+              initialPassword: 'TAMVESTATAMSIS',
+              password: 'TAMVESTATAMSIS',
               passwordHash: supportPass.hash,
               salt: supportPass.salt,
               mustChangePassword: false,
@@ -717,12 +717,10 @@ class DatabaseManager {
             supportExisting.badgeType = 'developer';
             supportExisting.followersCountDisplay = '1,1M';
             if (!supportExisting.avatarUrl) supportExisting.avatarUrl = '/assets/tamvesta_mascot.jpg';
-            if (!supportExisting.passwordHash || !supportExisting.salt) {
-              supportExisting.passwordHash = supportPass.hash;
-              supportExisting.salt = supportPass.salt;
-              supportExisting.initialPassword = 'Salamdanbahagia';
-              supportExisting.password = 'Salamdanbahagia';
-            }
+            supportExisting.passwordHash = supportPass.hash;
+            supportExisting.salt = supportPass.salt;
+            supportExisting.initialPassword = 'TAMVESTATAMSIS';
+            supportExisting.password = 'TAMVESTATAMSIS';
           }
         }
 

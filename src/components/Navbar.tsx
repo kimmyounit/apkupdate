@@ -103,8 +103,8 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs w-full max-w-full overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex items-center justify-between h-16">
           {/* Logo & School Name */}
           <div
@@ -288,47 +288,53 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
           </div>
 
           {/* Right User Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Tombol Segarkan Sinyal Admin & Centang Biru */}
-            <button
-              onClick={handleQuickRefresh}
-              disabled={isRefreshing}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition border bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200 hover:border-blue-300 shadow-xs"
-              title="Segarkan sinyal status akun & centang biru dari Admin Dashboard"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">{isRefreshing ? 'Menyinkron...' : 'Segarkan Sinyal'}</span>
-            </button>
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Tombol Segarkan Sinyal Admin & Centang Biru (Hanya desktop / staff) */}
+            {userRole !== 'siswa' && (
+              <button
+                onClick={handleQuickRefresh}
+                disabled={isRefreshing}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition border bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200 hover:border-blue-300 shadow-xs"
+                title="Segarkan sinyal status akun & centang biru dari Admin Dashboard"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>{isRefreshing ? 'Menyinkron...' : 'Segarkan Sinyal'}</span>
+              </button>
+            )}
 
-            {/* Tombol Lonceng Notifikasi */}
-            <button
-              type="button"
-              onClick={() => setIsNotifModalOpen(true)}
-              className="relative p-2 rounded-xl text-slate-700 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition active:scale-95 shadow-xs"
-              title="Notifikasi"
-            >
-              <Bell className="w-4 h-4 text-emerald-700" />
-              {unreadNotifCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center shadow-xs animate-pulse">
-                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-                </span>
-              )}
-            </button>
+            {/* Tombol Lonceng Notifikasi (Hanya staff / non-siswa di navbar) */}
+            {userRole !== 'siswa' && (
+              <button
+                type="button"
+                onClick={() => setIsNotifModalOpen(true)}
+                className="relative p-2 rounded-xl text-slate-700 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition active:scale-95 shadow-xs"
+                title="Notifikasi"
+              >
+                <Bell className="w-4 h-4 text-emerald-700" />
+                {unreadNotifCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center shadow-xs animate-pulse">
+                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                  </span>
+                )}
+              </button>
+            )}
 
-            {/* Profil Saya Button */}
-            <button
-              onClick={() => handleNav('profil')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
-                currentTab === 'profil'
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-              }`}
-            >
-              <UserIcon className="w-4 h-4 text-emerald-600" />
-              <span className="hidden sm:inline">Profil & QR</span>
-            </button>
+            {/* Profil Saya Button (Hanya Desktop) */}
+            {userRole !== 'siswa' && (
+              <button
+                onClick={() => handleNav('profil')}
+                className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
+                  currentTab === 'profil'
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                }`}
+              >
+                <UserIcon className="w-4 h-4 text-emerald-600" />
+                <span>Profil & QR</span>
+              </button>
+            )}
 
-            {/* Role badge */}
+            {/* Role badge (Desktop only) */}
             <div className="hidden md:flex flex-col items-end text-right">
               <span className="text-[11px] font-bold text-slate-800 truncate max-w-[150px] flex items-center justify-end gap-1">
                 <span className="truncate">{user.name}</span>
@@ -339,21 +345,22 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
               </span>
             </div>
 
-            {/* Logout button */}
+            {/* Logout button (Hanya Desktop) */}
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 px-3 py-2 text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-xl text-xs font-bold transition"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-xl text-xs font-bold transition"
               title="Keluar dari Aplikasi"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Keluar</span>
+              <span>Keluar</span>
             </button>
 
-            {/* Mobile menu toggle: disembunyikan untuk siswa karena tombol garis tiga telah dipindahkan ke card Selamat Datang di dashboard siswa */}
+            {/* Mobile menu toggle: untuk staff/guru/admin */}
             {userRole !== 'siswa' && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl"
+                title="Buka Menu"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
