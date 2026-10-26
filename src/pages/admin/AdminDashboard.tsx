@@ -82,6 +82,8 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   const [newStudentGender, setNewStudentGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
   const [studentKelasFilter, setStudentKelasFilter] = useState<string>('all');
   const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
+  const [isRefreshingStudents, setIsRefreshingStudents] = useState(false);
+  const [refreshStudentsNotice, setRefreshStudentsNotice] = useState<string | null>(null);
 
   // --- Student Contact Management State ---
   const [contactSearch, setContactSearch] = useState('');
@@ -959,6 +961,31 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     }
   };
 
+  const handleRefreshStudents = async () => {
+    setIsRefreshingStudents(true);
+    setRefreshStudentsNotice(null);
+    try {
+      try {
+        await api.syncPublicUsers();
+      } catch (_) {}
+      try {
+        await api.syncLocalUsersToServer();
+      } catch (_) {}
+      const updated = await api.getStudents();
+      if (Array.isArray(updated)) {
+        setStudents(updated);
+        notifyMultiDeviceSync();
+        setRefreshStudentsNotice(`Data akun siswa berhasil disegarkan! ${updated.length} siswa terdaftar.`);
+      }
+    } catch (err: any) {
+      console.warn('Gagal menyegarkan akun siswa:', err);
+      setRefreshStudentsNotice(err.message || 'Gagal menyegarkan akun siswa dari server.');
+    } finally {
+      setIsRefreshingStudents(false);
+      setTimeout(() => setRefreshStudentsNotice(null), 4000);
+    }
+  };
+
   const handleRefreshContacts = async () => {
     setIsRefreshingContacts(true);
     try {
@@ -1312,7 +1339,19 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       (studentCategoryFilter === 'siswa' && !s.isAlumni) ||
       (studentCategoryFilter === 'alumni' && !!s.isAlumni);
 
-    return matchesSearch && matchesCategory;
+    const matchesStatus =
+      studentStatusFilter === 'all' ||
+      (studentStatusFilter === 'active' && s.isActive !== false) ||
+      (studentStatusFilter === 'inactive' && s.isActive === false);
+
+    const matchesKelas =
+      studentKelasFilter === 'all' ||
+      (s.kelas && (s.kelas.toLowerCase() === studentKelasFilter.toLowerCase() ||
+        (studentKelasFilter.startsWith('Kelas ') && s.kelas.toLowerCase().includes(studentKelasFilter.toLowerCase())) ||
+        (s.kelas.toLowerCase().includes(studentKelasFilter.replace('Kelas ', '').toLowerCase()))
+      ));
+
+    return matchesSearch && matchesCategory && matchesStatus && matchesKelas;
   });
 
   const filteredStaff = staffList.filter((staff) => {
@@ -1505,16 +1544,29 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         <div className="space-y-6">
           {/* Registration Form Card */}
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-            <div className="border-b border-slate-100 pb-4 mb-6">
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
-                MENU KHUSUS PENDAFTARAN
-              </span>
-              <h2 className="text-xl font-black text-slate-900 mt-1">
-                Pendaftaran Akun Siswa Baru
-              </h2>
-              <p className="text-xs text-slate-500">
-                Formulir pendaftaran akun Siswa resmi. Data tersimpan permanen di database server dan siap digunakan login langsung.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 mb-6 gap-3">
+              <div>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
+                  MENU KHUSUS PENDAFTARAN
+                </span>
+                <h2 className="text-xl font-black text-slate-900 mt-1">
+                  Pendaftaran Akun Siswa Baru
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Formulir pendaftaran akun Siswa resmi. Data tersimpan permanen di database server dan siap digunakan login langsung.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleRefreshStudents}
+                disabled={isRefreshingStudents}
+                title="Segarkan data akun siswa dari server / device lain"
+                className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingStudents ? 'animate-spin' : ''}`} />
+                <span>{isRefreshingStudents ? 'Menyinkronkan...' : 'Segarkan Data Siswa'}</span>
+              </button>
             </div>
 
             {studentFormSuccess && (
@@ -1646,15 +1698,38 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Daftar Akun Siswa Terdaftar ({students.length})
-                </h3>
-                <p className="text-xs text-slate-500">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h3 className="text-base font-bold text-slate-900">
+                    Daftar Akun Siswa Terdaftar ({students.length})
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleRefreshStudents}
+                    disabled={isRefreshingStudents}
+                    title="Segarkan data akun siswa dari server / device lain"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-black shadow-2xs transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isRefreshingStudents ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshingStudents ? 'Menyinkronkan...' : 'Segarkan Data'}</span>
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
                   Kelola aktivasi akun, kategori Siswa/Alumni, centang biru, kartu QR siswa, dan reset password
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleRefreshStudents}
+                  disabled={isRefreshingStudents}
+                  title="Segarkan data akun siswa dari server / device lain"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-black shadow-xs transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isRefreshingStudents ? 'animate-spin' : ''}`} />
+                  <span>{isRefreshingStudents ? 'Menyinkron...' : 'Segarkan Akun'}</span>
+                </button>
+
                 {/* Search */}
                 <div className="relative w-full sm:w-56">
                   <input
@@ -1708,6 +1783,13 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                 </select>
               </div>
             </div>
+
+            {refreshStudentsNotice && (
+              <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{refreshStudentsNotice}</span>
+              </div>
+            )}
 
             <div className="overflow-x-auto rounded-2xl border border-slate-200">
               <table className="w-full text-left text-xs">
