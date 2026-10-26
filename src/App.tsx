@@ -158,7 +158,7 @@ function AppContent() {
               <TeacherDashboard onOpenScanner={() => setCurrentView('scanner')} />
             )}
 
-            {userRole === 'siswa' && <StudentDashboard />}
+            {(userRole === 'siswa' || userRole === 'support') && <StudentDashboard />}
 
             {userRole === 'panitia' && (
               <ScannerPage onBackToDashboard={() => setCurrentView('dashboard')} />
@@ -171,10 +171,6 @@ function AppContent() {
             )}
 
             {userRole === 'satpam' && <SatpamDashboard />}
-
-            {userRole === 'support' && (
-              <AdminDashboard onOpenScanner={() => setCurrentView('scanner')} />
-            )}
 
             {!['admin', 'guru', 'siswa', 'panitia', 'tata_usaha', 'kepala_sekolah', 'satpam', 'support'].includes(userRole) && (
               <StudentDashboard />

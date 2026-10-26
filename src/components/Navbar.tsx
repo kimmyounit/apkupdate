@@ -111,7 +111,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
         <div className="flex items-center justify-between h-16">
           {/* Logo & School Name */}
           <div
-            onClick={() => handleNav(userRole === 'siswa' ? 'mapel' : 'dashboard')}
+            onClick={() => handleNav((userRole === 'siswa' || userRole === 'support') ? 'mapel' : 'dashboard')}
             className="flex items-center gap-3 cursor-pointer group shrink-0"
           >
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform border border-emerald-600/30 bg-emerald-700 flex items-center justify-center">
@@ -141,7 +141,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
           {/* Desktop Center Navigation Links */}
           <div className="hidden lg:flex items-center gap-1.5">
-            {userRole === 'siswa' && (
+            {(userRole === 'siswa' || userRole === 'support') && (
               <>
                 <button
                   onClick={() => handleNav('mapel')}
@@ -437,7 +437,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
             <span>{isRefreshing ? 'Menyinkronkan Sinyal Admin...' : 'Segarkan Sinyal Admin & Centang Biru'}</span>
           </button>
 
-          {userRole === 'siswa' && (
+          {(userRole === 'siswa' || userRole === 'support') && (
             <>
               <button
                 onClick={() => handleNav('mapel')}
