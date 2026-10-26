@@ -84,6 +84,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
   const [isRefreshingStudents, setIsRefreshingStudents] = useState(false);
   const [refreshStudentsNotice, setRefreshStudentsNotice] = useState<string | null>(null);
+  const [lastStudentRefreshTime, setLastStudentRefreshTime] = useState<string | null>(null);
 
   // --- Student Contact Management State ---
   const [contactSearch, setContactSearch] = useState('');
@@ -964,25 +965,35 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   const handleRefreshStudents = async () => {
     setIsRefreshingStudents(true);
     setRefreshStudentsNotice(null);
+    const prevCount = students.length;
     try {
       try {
-        await api.syncPublicUsers();
+        await api.syncPublicUsers(true);
       } catch (_) {}
       try {
         await api.syncLocalUsersToServer();
       } catch (_) {}
-      const updated = await api.getStudents();
+      const updated = await api.getStudents(true);
       if (Array.isArray(updated)) {
         setStudents(updated);
         notifyMultiDeviceSync();
-        setRefreshStudentsNotice(`Data akun siswa berhasil disegarkan! ${updated.length} siswa terdaftar.`);
+        const diff = updated.length - prevCount;
+        const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setLastStudentRefreshTime(nowStr);
+        if (diff > 0) {
+          setRefreshStudentsNotice(`🎉 Ditemukan ${diff} akun siswa baru dari device lain! Total sekarang: ${updated.length} siswa.`);
+        } else if (diff < 0) {
+          setRefreshStudentsNotice(`🗑️ ${Math.abs(diff)} akun yang dihapus di device lain telah dibersihkan secara permanen. Total sekarang: ${updated.length} siswa.`);
+        } else {
+          setRefreshStudentsNotice(`✅ Data akun siswa mutakhir dan sinkron antar-perangkat (${updated.length} siswa terdaftar). Tidak ada penambahan akun baru dari device lain.`);
+        }
       }
     } catch (err: any) {
       console.warn('Gagal menyegarkan akun siswa:', err);
       setRefreshStudentsNotice(err.message || 'Gagal menyegarkan akun siswa dari server.');
     } finally {
       setIsRefreshingStudents(false);
-      setTimeout(() => setRefreshStudentsNotice(null), 4000);
+      setTimeout(() => setRefreshStudentsNotice(null), 7000);
     }
   };
 
@@ -1706,15 +1717,20 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                     type="button"
                     onClick={handleRefreshStudents}
                     disabled={isRefreshingStudents}
-                    title="Segarkan data akun siswa dari server / device lain"
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-black shadow-2xs transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                    title="Segarkan data untuk mengetahui apakah ada penambahan akun siswa baru di device lain"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs transition active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isRefreshingStudents ? 'animate-spin' : ''}`} />
-                    <span>{isRefreshingStudents ? 'Menyinkronkan...' : 'Segarkan Data'}</span>
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingStudents ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshingStudents ? 'Mengecek Server...' : 'Refresh Akun Siswa'}</span>
                   </button>
+                  {lastStudentRefreshTime && (
+                    <span className="text-[10px] text-slate-500 font-bold bg-slate-100 border border-slate-200 px-2 py-1 rounded-lg">
+                      Dicek pk {lastStudentRefreshTime}
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Kelola aktivasi akun, kategori Siswa/Alumni, centang biru, kartu QR siswa, dan reset password
+                <p className="text-xs text-slate-500 mt-1">
+                  Kelola aktivasi akun, kategori Siswa/Alumni, centang biru, kartu QR siswa, dan pantau penambahan akun dari device lain secara realtime.
                 </p>
               </div>
 
@@ -1723,11 +1739,11 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   type="button"
                   onClick={handleRefreshStudents}
                   disabled={isRefreshingStudents}
-                  title="Segarkan data akun siswa dari server / device lain"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-black shadow-xs transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                  title="Cek apakah ada penambahan atau perubahan akun siswa di device lain"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-black shadow-xs transition active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isRefreshingStudents ? 'animate-spin' : ''}`} />
-                  <span>{isRefreshingStudents ? 'Menyinkron...' : 'Segarkan Akun'}</span>
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingStudents ? 'animate-spin' : ''}`} />
+                  <span>{isRefreshingStudents ? 'Mengecek Device Lain...' : 'Cek Akun Baru di Device Lain'}</span>
                 </button>
 
                 {/* Search */}
@@ -1785,9 +1801,18 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
             </div>
 
             {refreshStudentsNotice && (
-              <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold animate-in fade-in">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>{refreshStudentsNotice}</span>
+              <div className="flex items-center justify-between gap-2 p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-300 text-emerald-900 rounded-2xl text-xs font-bold shadow-xs animate-in fade-in">
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{refreshStudentsNotice}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRefreshStudentsNotice(null)}
+                  className="px-2 py-0.5 hover:bg-emerald-200/60 rounded-lg text-emerald-800 text-[10px] font-bold transition"
+                >
+                  Tutup
+                </button>
               </div>
             )}
 

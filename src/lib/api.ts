@@ -168,9 +168,12 @@ async function tryServerRequest<T>(endpoint: string, options: RequestInit = {}):
 
 export const api = {
   // Pre-sync all public users from server for multi-device support
-  syncPublicUsers: async () => {
+  syncPublicUsers: async (forceRefresh = false) => {
     try {
-      const syncRes = await tryServerRequest<{ users: User[]; passwordResetRequests?: any[]; deletedUserIds?: string[] }>('/api/users/public-sync');
+      const endpoint = forceRefresh ? `/api/users/public-sync?_t=${Date.now()}` : '/api/users/public-sync';
+      const syncRes = await tryServerRequest<{ users: User[]; passwordResetRequests?: any[]; deletedUserIds?: string[] }>(endpoint, {
+        headers: forceRefresh ? { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } : undefined,
+      });
       if (Array.isArray(syncRes?.deletedUserIds) && syncRes.deletedUserIds.length > 0) {
         offlineStore.recordDeletedUserIds(syncRes.deletedUserIds);
       }
@@ -443,10 +446,13 @@ export const api = {
     }
   },
 
-  getStudents: async () => {
+  getStudents: async (forceRefresh = false) => {
     let serverStudents: User[] = [];
     try {
-      const resp = await tryServerRequest<any>('/api/admin/students?withDeleted=true');
+      const endpoint = forceRefresh ? `/api/admin/students?withDeleted=true&_t=${Date.now()}` : '/api/admin/students?withDeleted=true';
+      const resp = await tryServerRequest<any>(endpoint, {
+        headers: forceRefresh ? { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } : undefined,
+      });
       if (Array.isArray(resp)) {
         serverStudents = resp;
       } else if (resp && Array.isArray(resp.students)) {

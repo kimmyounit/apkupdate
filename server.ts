@@ -380,6 +380,7 @@ app.get('/api/admin/students', authMiddleware, requireRole(['admin', 'kepala_sek
   const students = db.getUsers().filter((u) => u.role === 'siswa');
   const deletedUserIds = db.getDeletedUserIds();
   res.setHeader('X-Deleted-User-Ids', JSON.stringify(deletedUserIds));
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   if (req.query.withDeleted === 'true' || req.query.detail === 'true') {
     return res.json({
       students: students.map(sanitizeUser),

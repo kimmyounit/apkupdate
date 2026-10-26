@@ -395,12 +395,14 @@ class DatabaseManager {
       let parsed: any = null;
       if (token) {
         // Coba muat dari branch data-sync terlebih dahulu
-        const urlSync = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json?ref=data-sync';
+        const urlSync = `https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json?ref=data-sync&_t=${Date.now()}`;
         const resSync = await fetch(urlSync, {
           headers: {
             Authorization: `Bearer ${token}`,
             'User-Agent': 'TAMVESTA-Cloud-Sync',
             Accept: 'application/vnd.github.v3+json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
           },
           signal: AbortSignal.timeout(5000),
         });
