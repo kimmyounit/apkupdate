@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LogOut,
   Key,
@@ -18,7 +18,9 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
+import { api } from '../lib/api.ts';
 import { StudentProfileModal } from './StudentProfileModal.tsx';
+import { NotificationsModal } from './NotificationsModal.tsx';
 import { VerifiedBadge } from './VerifiedBadge.tsx';
 
 interface Props {
@@ -30,7 +32,30 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
   const { user, logout, refreshUser } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const list = await api.getNotifications();
+      if (Array.isArray(list)) {
+        const unread = list.filter((n) => !n.isRead).length;
+        setUnreadNotifCount(unread);
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 20000);
+    const handleRefresh = () => fetchUnreadCount();
+    window.addEventListener('tamvesta_refresh_notifications', handleRefresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('tamvesta_refresh_notifications', handleRefresh);
+    };
+  }, []);
 
   const handleQuickRefresh = async () => {
     setIsRefreshing(true);
@@ -275,6 +300,21 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
               <span className="hidden sm:inline">{isRefreshing ? 'Menyinkron...' : 'Segarkan Sinyal'}</span>
             </button>
 
+            {/* Tombol Lonceng Notifikasi */}
+            <button
+              type="button"
+              onClick={() => setIsNotifModalOpen(true)}
+              className="relative p-2 rounded-xl text-slate-700 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition active:scale-95 shadow-xs"
+              title="Notifikasi"
+            >
+              <Bell className="w-4 h-4 text-emerald-700" />
+              {unreadNotifCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center shadow-xs animate-pulse">
+                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                </span>
+              )}
+            </button>
+
             {/* Profil Saya Button */}
             <button
               onClick={() => handleNav('profil')}
@@ -461,6 +501,24 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
           )}
 
           <button
+            onClick={() => {
+              setIsNotifModalOpen(true);
+              setMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+          >
+            <div className="flex items-center gap-2.5">
+              <Bell className="w-4 h-4 text-emerald-600" />
+              <span>Notifikasi Sekolah</span>
+            </div>
+            {unreadNotifCount > 0 && (
+              <span className="px-2 py-0.5 bg-rose-500 text-white rounded-full text-[10px] font-black">
+                {unreadNotifCount}
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => handleNav('profil')}
             className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
               currentTab === 'profil' ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-50'
@@ -477,6 +535,13 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
         user={user}
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
+      />
+
+      {/* Global Notifications Modal */}
+      <NotificationsModal
+        isOpen={isNotifModalOpen}
+        onClose={() => setIsNotifModalOpen(false)}
+        onRefreshUnreadCount={fetchUnreadCount}
       />
     </header>
   );

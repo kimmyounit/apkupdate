@@ -170,7 +170,10 @@ export const api = {
   // Pre-sync all public users from server for multi-device support
   syncPublicUsers: async () => {
     try {
-      const syncRes = await tryServerRequest<{ users: User[]; passwordResetRequests?: any[] }>('/api/users/public-sync');
+      const syncRes = await tryServerRequest<{ users: User[]; passwordResetRequests?: any[]; deletedUserIds?: string[] }>('/api/users/public-sync');
+      if (Array.isArray(syncRes?.deletedUserIds) && syncRes.deletedUserIds.length > 0) {
+        offlineStore.recordDeletedUserIds(syncRes.deletedUserIds);
+      }
       if (Array.isArray(syncRes?.users) && syncRes.users.length > 0) {
         offlineStore.mergeUsersFromServer(syncRes.users);
         if (Array.isArray(syncRes.passwordResetRequests)) {
@@ -256,7 +259,10 @@ export const api = {
       // User tidak ditemukan di lokal dan server — coba ambil semua users dari server
       // lalu merge ke localStorage dan coba login ulang (untuk HP baru / fresh install)
       try {
-        const syncRes = await tryServerRequest<{ users: User[] }>('/api/users/public-sync');
+        const syncRes = await tryServerRequest<{ users: User[]; deletedUserIds?: string[] }>('/api/users/public-sync');
+        if (Array.isArray(syncRes?.deletedUserIds) && syncRes.deletedUserIds.length > 0) {
+          offlineStore.recordDeletedUserIds(syncRes.deletedUserIds);
+        }
         if (Array.isArray(syncRes?.users) && syncRes.users.length > 0) {
           offlineStore.mergeUsersFromServer(syncRes.users);
           if (Array.isArray((syncRes as any).passwordResetRequests)) {
@@ -440,7 +446,15 @@ export const api = {
   getStudents: async () => {
     let serverStudents: User[] = [];
     try {
-      serverStudents = await tryServerRequest<User[]>('/api/admin/students');
+      const resp = await tryServerRequest<any>('/api/admin/students?withDeleted=true');
+      if (Array.isArray(resp)) {
+        serverStudents = resp;
+      } else if (resp && Array.isArray(resp.students)) {
+        serverStudents = resp.students;
+        if (Array.isArray(resp.deletedUserIds) && resp.deletedUserIds.length > 0) {
+          offlineStore.recordDeletedUserIds(resp.deletedUserIds);
+        }
+      }
     } catch (_) {
       serverStudents = [];
     }
@@ -452,7 +466,7 @@ export const api = {
     // 1. Put all local students first so newly created accounts are ALWAYS included immediately
     localStudents.forEach((ls) => {
       const cleanU = (ls.username || '').toLowerCase().replace(/^@+/, '');
-      if (!deletedIds.includes(ls.id) && !deletedIds.includes(cleanU)) {
+      if (!deletedIds.includes(ls.id) && !deletedIds.includes(cleanU) && !deletedIds.includes((ls.username || '').toLowerCase())) {
         const permAvatar = getPermanentAvatar(ls.id, ls.username);
         const permBio = getPermanentBio(ls.id, ls.username);
         studentMap.set(cleanU, {
@@ -467,7 +481,7 @@ export const api = {
     if (Array.isArray(serverStudents) && serverStudents.length > 0) {
       serverStudents.forEach((ss) => {
         const cleanU = (ss.username || '').toLowerCase().replace(/^@+/, '');
-        if (!deletedIds.includes(ss.id) && !deletedIds.includes(cleanU)) {
+        if (!deletedIds.includes(ss.id) && !deletedIds.includes(cleanU) && !deletedIds.includes((ss.username || '').toLowerCase())) {
           const existing = studentMap.get(cleanU);
           const permAvatar = getPermanentAvatar(ss.id, ss.username);
           const permBio = getPermanentBio(ss.id, ss.username);
@@ -950,14 +964,27 @@ export const api = {
     }
   },
 
-  addComment: async (postId: string, text: string) => {
+  addComment: async (
+    postId: string,
+    text: string,
+    replyData?: {
+      replyToCommentId?: string;
+      replyToUsername?: string;
+      replyToAuthorName?: string;
+      replyToAuthorId?: string;
+    }
+  ) => {
     try {
       return await tryServerRequest<PostComment>(`/api/posts/${postId}/comment`, {
         method: 'POST',
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({
+          text,
+          content: text,
+          ...replyData,
+        }),
       });
     } catch (_) {
-      return offlineStore.addComment(postId, text);
+      return offlineStore.addComment(postId, text, replyData);
     }
   },
 

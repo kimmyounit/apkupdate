@@ -821,7 +821,16 @@ export const offlineStore = {
     return { isLiked: !isLiked, likesCount: post.likes.length };
   },
 
-  addComment(postId: string, text: string) {
+  addComment(
+    postId: string,
+    text: string,
+    replyData?: {
+      replyToCommentId?: string;
+      replyToUsername?: string;
+      replyToAuthorName?: string;
+      replyToAuthorId?: string;
+    }
+  ) {
     const db = loadDB();
     const user = this.getCurrentUser();
     if (!user) throw new Error('Login diperlukan');
@@ -838,10 +847,46 @@ export const offlineStore = {
       authorUsername: user.username,
       authorAvatar: user.avatarUrl,
       content: text.trim(),
+      replyToCommentId: replyData?.replyToCommentId,
+      replyToUsername: replyData?.replyToUsername,
+      replyToAuthorName: replyData?.replyToAuthorName,
+      replyToAuthorId: replyData?.replyToAuthorId,
       createdAt: new Date().toISOString(),
     };
 
     post.comments.push(newComment);
+
+    // Kirim notifikasi lokal jika membalas komentar atau mengomentari postingan
+    if (!Array.isArray((db as any).notifications)) (db as any).notifications = [];
+    if (replyData?.replyToAuthorId && replyData.replyToAuthorId !== user.id) {
+      (db as any).notifications.unshift({
+        id: 'notif_' + Date.now() + '_rep',
+        title: 'Balasan Komentar',
+        message: `${user.name} (@${user.username}) membalas komentar Anda: "${text.trim().slice(0, 80)}"`,
+        type: 'social_reply',
+        linkType: 'post',
+        linkId: postId,
+        targetUserId: replyData.replyToAuthorId,
+        readBy: [],
+        deletedBy: [],
+        createdAt: new Date().toISOString(),
+      });
+    }
+    if (post.authorId !== user.id && post.authorId !== replyData?.replyToAuthorId) {
+      (db as any).notifications.unshift({
+        id: 'notif_' + Date.now() + '_com',
+        title: 'Komentar Baru di Postingan Anda',
+        message: `${user.name} (@${user.username}) mengomentari postingan Anda: "${text.trim().slice(0, 80)}"`,
+        type: 'social_comment',
+        linkType: 'post',
+        linkId: postId,
+        targetUserId: post.authorId,
+        readBy: [],
+        deletedBy: [],
+        createdAt: new Date().toISOString(),
+      });
+    }
+
     saveDB(db);
     return newComment;
   },
@@ -1201,7 +1246,15 @@ export const offlineStore = {
 
   // Admin
   getStudents(): User[] {
-    return (loadDB().users || []).filter((u) => u.role === 'siswa');
+    const db = loadDB();
+    const deletedIds: string[] = (db as any).deletedUserIds || [];
+    return (db.users || [])
+      .filter((u) => u.role === 'siswa')
+      .filter((u) => {
+        const uId = (u.id || '').toLowerCase();
+        const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
+        return !deletedIds.some((did) => did === uId || did === uName || did === (u.username || '').toLowerCase());
+      });
   },
 
   getStaff(): User[] {
@@ -1558,6 +1611,40 @@ export const offlineStore = {
       if (removedUser.username && !(db as any).deletedUserIds.includes(removedUser.username.toLowerCase())) {
         (db as any).deletedUserIds.push(removedUser.username.toLowerCase());
       }
+      saveDB(db);
+    }
+  },
+
+  recordDeletedUserIds(ids: string[]) {
+    if (!Array.isArray(ids) || ids.length === 0) return;
+    const db = loadDB();
+    (db as any).deletedUserIds = (db as any).deletedUserIds || [];
+    let changed = false;
+    ids.forEach((did) => {
+      if (!did) return;
+      const clean = did.toLowerCase().trim();
+      if (!(db as any).deletedUserIds.includes(clean)) {
+        (db as any).deletedUserIds.push(clean);
+        changed = true;
+      }
+    });
+
+    // Hapus akun yang cocok dari db.users secara permanen
+    const prevCount = (db.users || []).length;
+    db.users = (db.users || []).filter((u) => {
+      const uId = (u.id || '').toLowerCase();
+      const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
+      const isDel = (db as any).deletedUserIds.some(
+        (did: string) => did === uId || did === uName || did === (u.username || '').toLowerCase()
+      );
+      return !isDel;
+    });
+
+    if ((db.users || []).length !== prevCount) {
+      changed = true;
+    }
+
+    if (changed) {
       saveDB(db);
     }
   },

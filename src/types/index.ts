@@ -257,6 +257,10 @@ export interface PostComment {
   authorAvatar?: string;
   content: string;
   createdAt: string;
+  replyToCommentId?: string;
+  replyToUsername?: string;
+  replyToAuthorName?: string;
+  replyToAuthorId?: string;
 }
 
 export interface StudentPost {
@@ -396,9 +400,9 @@ export interface AppNotification {
   id: string;
   title: string;
   message: string;
-  type: 'announcement' | 'subject_change' | 'general' | 'tuition' | 'article';
+  type: 'announcement' | 'subject_change' | 'general' | 'tuition' | 'article' | 'social_reply' | 'social_comment';
   isImportant?: boolean;
-  linkType?: 'announcement' | 'subject' | 'quiz' | 'tuition' | 'article' | 'none';
+  linkType?: 'announcement' | 'subject' | 'quiz' | 'tuition' | 'article' | 'post' | 'none';
   linkId?: string;
   targetRole?: UserRole;
   targetClass?: string;

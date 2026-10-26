@@ -27,6 +27,8 @@ import {
   GraduationCap,
   Maximize2,
   Gamepad2,
+  Reply,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -85,6 +87,9 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
+  const [replyingTo, setReplyingTo] = useState<
+    Record<string, { commentId: string; authorName: string; authorUsername: string; authorId: string } | null>
+  >({});
 
   // Lightbox Zoom Image state
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
@@ -211,9 +216,19 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
     const text = commentInputs[postId]?.trim();
     if (!text || !user) return;
 
+    const currentReply = replyingTo[postId];
+    const replyData = currentReply
+      ? {
+          replyToCommentId: currentReply.commentId,
+          replyToUsername: currentReply.authorUsername,
+          replyToAuthorName: currentReply.authorName,
+          replyToAuthorId: currentReply.authorId,
+        }
+      : undefined;
+
     setSubmittingComment((prev) => ({ ...prev, [postId]: true }));
     try {
-      const newComment = await api.addComment(postId, text);
+      const newComment = await api.addComment(postId, text, replyData);
       setPosts((prev) =>
         prev.map((post) => {
           if (post.id !== postId) return post;
@@ -224,7 +239,11 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
         })
       );
       setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
+      setReplyingTo((prev) => ({ ...prev, [postId]: null }));
       setExpandedComments((prev) => ({ ...prev, [postId]: true }));
+      try {
+        window.dispatchEvent(new CustomEvent('tamvesta_refresh_notifications'));
+      } catch (_) {}
     } catch (err: any) {
       alert(err.message || 'Gagal mengirimkan komentar.');
     } finally {
@@ -849,14 +868,65 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                                   {formatRelativeTime(comment.createdAt)}
                                 </span>
                               </div>
+                              {/* Indikator Balasan */}
+                              {comment.replyToUsername && (
+                                <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md mt-1 border border-emerald-100">
+                                  <Reply className="w-3 h-3 text-emerald-600 shrink-0" />
+                                  <span>Membalas @{comment.replyToUsername}</span>
+                                </div>
+                              )}
+
                               <p className="text-slate-700 mt-1 leading-relaxed text-[11px]">
                                 {comment.content}
                               </p>
+
+                              {/* Tombol Balas */}
+                              <div className="mt-1 flex items-center justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setReplyingTo((prev) => ({
+                                      ...prev,
+                                      [post.id]: {
+                                        commentId: comment.id,
+                                        authorName: comment.authorName,
+                                        authorUsername: comment.authorUsername,
+                                        authorId: comment.authorId,
+                                      },
+                                    }));
+                                  }}
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 px-2 py-0.5 rounded-lg transition active:scale-95"
+                                  title={`Balas komentar ${comment.authorName}`}
+                                >
+                                  <Reply className="w-3 h-3" />
+                                  <span>Balas</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))
                       )}
                     </div>
+
+                    {/* Reply Banner */}
+                    {replyingTo[post.id] && (
+                      <div className="flex items-center justify-between px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 animate-in fade-in">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <Reply className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="text-[11px] truncate">
+                            Membalas <strong className="font-bold text-emerald-950">@{replyingTo[post.id]!.authorUsername}</strong> ({replyingTo[post.id]!.authorName})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setReplyingTo((prev) => ({ ...prev, [post.id]: null }))}
+                          className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition"
+                          title="Batalkan balasan"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
 
                     {/* Comment Input Box */}
                     <div className="flex items-center gap-2 pt-1">

@@ -10,6 +10,8 @@ import {
   BookOpen,
   HelpCircle,
   ChevronRight,
+  Reply,
+  MessageSquare,
 } from 'lucide-react';
 import { api } from '../lib/api.ts';
 import type { AppNotification } from '../types/index.ts';
@@ -102,6 +104,11 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
     } else if (notif.linkType === 'quiz') {
       onClose();
       if (onNavigateToQuiz) onNavigateToQuiz();
+    } else if (notif.linkType === 'post') {
+      onClose();
+      try {
+        window.dispatchEvent(new CustomEvent('tamvesta_navigate', { detail: 'feed' }));
+      } catch (_) {}
     }
   };
 
@@ -223,6 +230,10 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                         ? 'bg-amber-100 text-amber-700'
                         : notif.type === 'subject_change'
                         ? 'bg-blue-100 text-blue-700'
+                        : notif.type === 'social_reply'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : notif.type === 'social_comment'
+                        ? 'bg-teal-100 text-teal-700'
                         : 'bg-emerald-100 text-emerald-700'
                     }`}
                   >
@@ -230,6 +241,10 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                       <Megaphone className="w-4 h-4" />
                     ) : notif.type === 'subject_change' ? (
                       <BookOpen className="w-4 h-4" />
+                    ) : notif.type === 'social_reply' ? (
+                      <Reply className="w-4 h-4" />
+                    ) : notif.type === 'social_comment' ? (
+                      <MessageSquare className="w-4 h-4" />
                     ) : (
                       <Bell className="w-4 h-4" />
                     )}

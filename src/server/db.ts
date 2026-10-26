@@ -953,6 +953,10 @@ class DatabaseManager {
     incomingUsers.forEach((incoming) => {
       if (!incoming || !incoming.username) return;
       const cleanUn = (incoming.username || '').trim().toLowerCase().replace(/^@+/, '');
+      const isDeleted = (this.data.deletedUserIds || []).some(
+        (did) => did === incoming.id || did.toLowerCase() === cleanUn || did.toLowerCase() === (incoming.username || '').toLowerCase()
+      ) || cleanUn === 'siswa.smp7a.001' || (incoming.name || '').toLowerCase() === 'ahmad fauzi';
+      if (isDeleted) return; // Akun terhapus permanen tidak boleh dibangkitkan kembali
       const existing = this.data.users.find(
         (u) => u.id === incoming.id || (u.username || '').trim().toLowerCase().replace(/^@+/, '') === cleanUn
       );
@@ -1699,6 +1703,11 @@ class DatabaseManager {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
+  getPostById(id: string): StudentPost | undefined {
+    if (!Array.isArray(this.data.posts)) this.data.posts = [];
+    return this.data.posts.find((p) => p.id === id);
+  }
+
   addPost(payload: {
     authorId: string;
     authorName: string;
@@ -1783,6 +1792,10 @@ class DatabaseManager {
       authorUsername: string;
       authorAvatar?: string;
       content: string;
+      replyToCommentId?: string;
+      replyToUsername?: string;
+      replyToAuthorName?: string;
+      replyToAuthorId?: string;
     }
   ): PostComment | null {
     const post = this.data.posts.find((p) => p.id === postId);
@@ -1800,6 +1813,10 @@ class DatabaseManager {
       authorUsername: commentPayload.authorUsername,
       authorAvatar: commentPayload.authorAvatar,
       content: commentPayload.content.trim(),
+      replyToCommentId: commentPayload.replyToCommentId,
+      replyToUsername: commentPayload.replyToUsername,
+      replyToAuthorName: commentPayload.replyToAuthorName,
+      replyToAuthorId: commentPayload.replyToAuthorId,
       createdAt: new Date().toISOString(),
     };
 
@@ -2157,9 +2174,9 @@ class DatabaseManager {
   createNotification(data: {
     title: string;
     message: string;
-    type: 'announcement' | 'subject_change' | 'general';
+    type: 'announcement' | 'subject_change' | 'general' | 'tuition' | 'article' | 'social_reply' | 'social_comment';
     isImportant?: boolean;
-    linkType?: 'announcement' | 'subject' | 'quiz' | 'none';
+    linkType?: 'announcement' | 'subject' | 'quiz' | 'tuition' | 'article' | 'post' | 'none';
     linkId?: string;
     targetRole?: UserRole;
     targetClass?: string;
@@ -2494,9 +2511,21 @@ class DatabaseManager {
   deleteTeacherAccount(id: string): boolean {
     const idx = this.data.users.findIndex((u) => u.id === id);
     if (idx === -1) return false;
+    const removedUser = this.data.users[idx];
     this.data.users.splice(idx, 1);
+    this.data.deletedUserIds = this.data.deletedUserIds || [];
+    if (!this.data.deletedUserIds.includes(id)) {
+      this.data.deletedUserIds.push(id);
+    }
+    if (removedUser.username && !this.data.deletedUserIds.includes(removedUser.username.toLowerCase())) {
+      this.data.deletedUserIds.push(removedUser.username.toLowerCase());
+    }
     this.save();
     return true;
+  }
+
+  getDeletedUserIds(): string[] {
+    return Array.isArray(this.data.deletedUserIds) ? this.data.deletedUserIds : [];
   }
 
   toggleVerifiedBadge(userId: string): { isVerified: boolean } {

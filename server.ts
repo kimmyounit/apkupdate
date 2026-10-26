@@ -78,7 +78,8 @@ const handlePublicUserSync = async (_req: any, res: any) => {
       });
     const tickets = db.getPasswordResetRequests() || [];
     const safeTickets = tickets.map(({ newPasswordHash, newSalt, newPassword, ...rest }: any) => rest);
-    return res.json({ users: safeUsers, count: safeUsers.length, passwordResetRequests: safeTickets });
+    const deletedUserIds = db.getDeletedUserIds();
+    return res.json({ users: safeUsers, count: safeUsers.length, passwordResetRequests: safeTickets, deletedUserIds });
   } catch (err) {
     return res.status(500).json({ error: 'Gagal mengambil data users' });
   }
@@ -366,12 +367,25 @@ app.post('/api/admin/password-reset-requests/:id/process', authMiddleware, requi
 // 2. ADMIN: STUDENT REGISTRATION & MANAGEMENT
 // -------------------------------------------------------------
 
+// GET /api/users/deleted-ids (Daftar ID/username yang dihapus permanen untuk sinkronisasi multi-device)
+app.get('/api/users/deleted-ids', (_req, res) => {
+  return res.json({ deletedUserIds: db.getDeletedUserIds() });
+});
+
 // GET /api/admin/students
 app.get('/api/admin/students', authMiddleware, requireRole(['admin', 'kepala_sekolah']), async (req, res) => {
   try {
     await db.reloadFromGitHub();
   } catch (_) {}
   const students = db.getUsers().filter((u) => u.role === 'siswa');
+  const deletedUserIds = db.getDeletedUserIds();
+  res.setHeader('X-Deleted-User-Ids', JSON.stringify(deletedUserIds));
+  if (req.query.withDeleted === 'true' || req.query.detail === 'true') {
+    return res.json({
+      students: students.map(sanitizeUser),
+      deletedUserIds,
+    });
+  }
   return res.json(students.map(sanitizeUser));
 });
 
@@ -1062,12 +1076,14 @@ app.post('/api/posts/:id/like', authMiddleware, async (req: AuthenticatedRequest
   return res.json({ success: true, ...result });
 });
 
-// POST /api/posts/:id/comments & /api/posts/:id/comment - Tambah komentar
+// POST /api/posts/:id/comments & /api/posts/:id/comment - Tambah komentar / balasan
 app.post(['/api/posts/:id/comments', '/api/posts/:id/comment'], authMiddleware, async (req: AuthenticatedRequest, res) => {
   const commentText = req.body.content || req.body.text;
   if (!commentText || !commentText.trim()) {
     return res.status(400).json({ error: 'Isi komentar tidak boleh kosong.' });
   }
+
+  const { replyToCommentId, replyToUsername, replyToAuthorName, replyToAuthorId } = req.body;
 
   const comment = db.addCommentToPost(req.params.id, {
     authorId: req.user!.id,
@@ -1075,11 +1091,44 @@ app.post(['/api/posts/:id/comments', '/api/posts/:id/comment'], authMiddleware, 
     authorUsername: req.user!.username,
     authorAvatar: req.user!.avatarUrl,
     content: commentText.trim(),
+    replyToCommentId,
+    replyToUsername,
+    replyToAuthorName,
+    replyToAuthorId,
   });
 
   if (!comment) {
     return res.status(404).json({ error: 'Postingan tidak ditemukan.' });
   }
+
+  // Notifikasi 1: Jika ini balasan ke komentar seseorang, kirim notifikasi langsung ke user yang dibalas
+  if (replyToAuthorId && replyToAuthorId !== req.user!.id) {
+    try {
+      db.createNotification({
+        title: 'Balasan Komentar',
+        message: `${req.user!.name} (@${req.user!.username}) membalas komentar Anda: "${commentText.trim().slice(0, 80)}"`,
+        type: 'social_reply',
+        linkType: 'post',
+        linkId: req.params.id,
+        targetUserId: replyToAuthorId,
+      });
+    } catch (_) {}
+  }
+
+  // Notifikasi 2: Kirim notifikasi ke pembuat postingan (jika bukan dirinya sendiri & tidak sama dengan user yang dibalas)
+  try {
+    const post = db.getPostById(req.params.id);
+    if (post && post.authorId !== req.user!.id && post.authorId !== replyToAuthorId) {
+      db.createNotification({
+        title: 'Komentar Baru di Postingan Anda',
+        message: `${req.user!.name} (@${req.user!.username}) mengomentari postingan Anda: "${commentText.trim().slice(0, 80)}"`,
+        type: 'social_comment',
+        linkType: 'post',
+        linkId: req.params.id,
+        targetUserId: post.authorId,
+      });
+    }
+  } catch (_) {}
 
   try {
     await db.saveAsync();
