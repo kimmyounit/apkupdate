@@ -15,6 +15,8 @@ import {
   HelpCircle,
   MessageCircle,
   Send,
+  UserPlus,
+  UserMinus,
 } from 'lucide-react';
 import type { GameRoom, GamePlayer, SpyCategory } from '../../types/game.ts';
 import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
@@ -28,6 +30,8 @@ interface GameLobbyViewProps {
   onLeaveRoom: () => Promise<void>;
   onSendChat: (text: string) => Promise<void>;
   onOpenRules: () => void;
+  onAddBot?: () => Promise<void>;
+  onRemoveBot?: () => Promise<void>;
 }
 
 export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
@@ -39,6 +43,8 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
   onLeaveRoom,
   onSendChat,
   onOpenRules,
+  onAddBot,
+  onRemoveBot,
 }) => {
   const [copiedCode, setCopiedCode] = useState(false);
   const [chatInput, setChatInput] = useState('');
@@ -219,6 +225,41 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
                 </div>
               ))}
             </div>
+
+            {/* Host Simulation Bot Controls */}
+            {isHost && onAddBot && (
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <div className="text-xs">
+                  <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <UserPlus className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Mode Latihan / Bot Simulasi</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Tambah bot siswa otomatis agar dapat langsung bermain
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {room.players.some((p) => p.username.startsWith('bot_')) && onRemoveBot && (
+                    <button
+                      type="button"
+                      onClick={onRemoveBot}
+                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1"
+                    >
+                      <UserMinus className="w-3.5 h-3.5" />
+                      <span>Kurangi Bot</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={onAddBot}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-1"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>+ Tambah Bot</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Non-host Ready Toggle Button */}
             {!isHost && (

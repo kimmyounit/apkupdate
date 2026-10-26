@@ -138,11 +138,14 @@ export const StudentDashboard: React.FC = () => {
       </div>
 
       {/* PERSISTENT BOTTOM NAVIGATION BAR (Home, Artikel, Quiz, Arsip, QR, Profil) */}
-      <StudentBottomNav
-        activeTab={isNavTab(activeTab) ? activeTab : 'home'}
-        onTabChange={handleTabChange}
-        isQuizActive={isQuizActive}
-      />
+      {/* Disembunyikan saat bermain game agar layar bersih, penuh dan kontrol permainan tidak tertutup */}
+      {activeTab !== 'games' && (
+        <StudentBottomNav
+          activeTab={isNavTab(activeTab) ? activeTab : 'home'}
+          onTabChange={handleTabChange}
+          isQuizActive={isQuizActive}
+        />
+      )}
     </div>
   );
 };

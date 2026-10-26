@@ -446,17 +446,6 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
               </p>
             </div>
           </div>
-
-          {/* Right Header: Garis Tiga (Menu) */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setIsSideMenuOpen(true)}
-              className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 shrink-0 shadow-sm"
-              title="Buka Menu Navigasi Siswa"
-            >
-              <Menu className="w-5 h-5 text-white" />
-            </button>
-          </div>
         </div>
 
         {/* ------------------------------------------------------------- */}

@@ -288,8 +288,53 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
     setRoom(null);
   };
 
+  // 13. Add / Remove Bot Simulation (Host only)
+  const handleAddBot = async () => {
+    if (!activeRoomCode) return;
+    try {
+      const updated = await gameApi.addGameBot(activeRoomCode);
+      if (updated) setRoom(updated);
+    } catch (err: any) {
+      alert(err.message || 'Gagal menambahkan bot.');
+    }
+  };
+
+  const handleRemoveBot = async () => {
+    if (!activeRoomCode) return;
+    try {
+      const updated = await gameApi.removeGameBot(activeRoomCode);
+      if (updated) setRoom(updated);
+    } catch (err: any) {
+      alert(err.message || 'Gagal mengurangi bot.');
+    }
+  };
+
   // Render Active Room View if in a room
-  if (activeRoomCode && room && currentPlayer) {
+  if (activeRoomCode) {
+    if (!room || !currentPlayer) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 p-6 flex flex-col items-center justify-center text-center">
+          <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-3xl mb-4">
+            <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
+          </div>
+          <h3 className="font-bold text-lg text-white">Menghubungkan ke Room...</h3>
+          <p className="text-xs text-slate-400 mt-1 max-w-xs">
+            Menyinkronkan data room <span className="font-mono text-emerald-300 font-bold">{activeRoomCode}</span>.
+          </p>
+          <button
+            onClick={() => {
+              setActiveRoomCode(null);
+              setRoom(null);
+              sessionStorage.removeItem('tamvesta_active_game_code');
+            }}
+            className="mt-6 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-bold border border-slate-700 transition"
+          >
+            Batal & Kembali ke Menu Permainan
+          </button>
+        </div>
+      );
+    }
+
     if (room.status === 'waiting') {
       return (
         <>
@@ -301,6 +346,8 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
             onStartGame={handleStartGame}
             onLeaveRoom={handleLeaveRoom}
             onSendChat={handleSendChat}
+            onAddBot={handleAddBot}
+            onRemoveBot={handleRemoveBot}
             onOpenRules={() => {
               setRulesTab(room.gameType);
               setShowRulesModal(true);

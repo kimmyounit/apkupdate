@@ -1727,6 +1727,8 @@ app.post('/api/games/rooms/:code/ready', authMiddleware, (req: AuthenticatedRequ
   return res.json({ room });
 });
 
+
+
 // Update Pengaturan Room (Hanya Host)
 app.post('/api/games/rooms/:code/settings', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
@@ -1740,6 +1742,55 @@ app.post('/api/games/rooms/:code/settings', authMiddleware, (req: AuthenticatedR
   if (mafiaSettings) room.mafiaSettings = { ...room.mafiaSettings, ...mafiaSettings };
 
   db.saveGameRoom(room);
+  return res.json({ room });
+});
+
+
+
+// Tambah Pemain Bot (Simulasi) ke Room (Hanya Host)
+app.post('/api/games/rooms/:code/bot', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+    return res.status(403).json({ error: 'Hanya host yang dapat menambah bot simulasi.' });
+  }
+
+  const botCount = room.players.filter((p: any) => p.username.startsWith('bot_')).length + 1;
+  const botId = `bot_${Date.now()}_${botCount}`;
+  const botPlayer = {
+    id: botId,
+    userId: botId,
+    username: `bot_siswa_${botCount}`,
+    name: `Siswa Simulasi ${botCount}`,
+    kelas: 'Tamansiswa',
+    avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=Bot${botCount}`,
+    isHost: false,
+    isReady: true,
+    isAlive: true,
+    isSpectator: false,
+    joinedAt: Date.now(),
+    lastSeenAt: Date.now(),
+  };
+
+  room.players.push(botPlayer);
+  db.saveGameRoom(room);
+  return res.json({ room });
+});
+
+// Hapus Bot Simulasi Terakhir dari Room (Hanya Host)
+app.delete('/api/games/rooms/:code/bot', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const room = db.getGameRoomByCode(req.params.code);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+    return res.status(403).json({ error: 'Hanya host yang dapat menghapus bot simulasi.' });
+  }
+
+  const bots = room.players.filter((p: any) => p.username.startsWith('bot_'));
+  if (bots.length > 0) {
+    const lastBot = bots[bots.length - 1];
+    room.players = room.players.filter((p: any) => p.id !== lastBot.id);
+    db.saveGameRoom(room);
+  }
   return res.json({ room });
 });
 
@@ -1853,6 +1904,8 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
   return res.json({ room });
 });
 
+
+
 // Memberikan Suara Voting (Spy & Mafia)
 app.post('/api/games/rooms/:code/vote', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
@@ -1888,6 +1941,8 @@ app.post('/api/games/rooms/:code/vote', authMiddleware, (req: AuthenticatedReque
   return res.json({ room });
 });
 
+
+
 // Imposter Tebak Kata (Who's the Spy)
 app.post('/api/games/rooms/:code/spy-guess', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
@@ -1918,6 +1973,8 @@ app.post('/api/games/rooms/:code/spy-guess', authMiddleware, (req: Authenticated
   db.saveGameRoom(room);
   return res.json({ room });
 });
+
+
 
 // Aksi Malam Mafia (Mafia, Dokter, Detektif)
 app.post('/api/games/rooms/:code/night-action', authMiddleware, (req: AuthenticatedRequest, res) => {
@@ -1974,6 +2031,8 @@ app.post('/api/games/rooms/:code/night-action', authMiddleware, (req: Authentica
   db.saveGameRoom(room);
   return res.json({ room });
 });
+
+
 
 // Kirim Pesan Chat Room
 app.post('/api/games/rooms/:code/chat', authMiddleware, (req: AuthenticatedRequest, res) => {
@@ -2056,6 +2115,8 @@ app.post('/api/games/rooms/:code/restart', authMiddleware, (req: AuthenticatedRe
   return res.json({ room });
 });
 
+
+
 // Tinggalkan Room
 app.post('/api/games/rooms/:code/leave', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
@@ -2091,6 +2152,8 @@ app.post('/api/games/rooms/:code/leave', authMiddleware, (req: AuthenticatedRequ
   db.saveGameRoom(room);
   return res.json({ room });
 });
+
+
 
 
 // -------------------------------------------------------------

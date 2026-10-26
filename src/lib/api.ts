@@ -2102,6 +2102,56 @@ export const api = {
       }
     }
   },
+
+  addGameBot: async (code: string) => {
+    try {
+      const res = await tryServerRequest(`/api/games/rooms/${encodeURIComponent(code)}/bot`, {
+        method: 'POST',
+      });
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const botCount = local.players.filter((p) => p.username.startsWith('bot_')).length + 1;
+      const botId = `bot_${Date.now()}_${botCount}`;
+      const botPlayer: any = {
+        id: botId,
+        userId: botId,
+        username: `bot_siswa_${botCount}`,
+        name: `Siswa Simulasi ${botCount}`,
+        kelas: 'Tamansiswa',
+        avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=Bot${botCount}`,
+        isHost: false,
+        isReady: true,
+        isAlive: true,
+        isSpectator: false,
+        joinedAt: Date.now(),
+        lastSeenAt: Date.now(),
+      };
+      local.players.push(botPlayer);
+      offlineStore.saveGameRoom(local);
+      return local;
+    }
+  },
+
+  removeGameBot: async (code: string) => {
+    try {
+      const res = await tryServerRequest(`/api/games/rooms/${encodeURIComponent(code)}/bot`, {
+        method: 'DELETE',
+      });
+      return res.room;
+    } catch (_) {
+      const local = offlineStore.getGameRoom(code);
+      if (!local) throw new Error('Room tidak ditemukan.');
+      const bots = local.players.filter((p) => p.username.startsWith('bot_'));
+      if (bots.length > 0) {
+        const lastBot = bots[bots.length - 1];
+        local.players = local.players.filter((p) => p.id !== lastBot.id);
+        offlineStore.saveGameRoom(local);
+      }
+      return local;
+    }
+  },
 };
 
 export const gameApi = {
@@ -2119,6 +2169,8 @@ export const gameApi = {
   sendGameChat: api.sendGameChat,
   restartGame: api.restartGame,
   leaveGameRoom: api.leaveGameRoom,
+  addGameBot: api.addGameBot,
+  removeGameBot: api.removeGameBot,
 };
 
 export { offlineStore };
