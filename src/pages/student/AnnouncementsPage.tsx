@@ -52,7 +52,7 @@ export const AnnouncementsPage: React.FC<AnnouncementsPageProps> = ({ onBack }) 
               <Bell className="w-3.5 h-3.5 text-amber-300" />
               <span>INFORMASI RESMI PERGURUAN</span>
             </div>
-            <h1 className="text-base sm:text-lg font-bold tracking-tight">Halaman Pengumuman Sekolah</h1>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight">Halaman Pengumuman Sekolah</h1>
             <p className="text-xs sm:text-sm text-amber-100 max-w-xl">
               Pusat edaran resmi, jadwal ujian, agenda kegiatan OSIS, dan pengumuman akademik Tamansiswa Batam.
             </p>

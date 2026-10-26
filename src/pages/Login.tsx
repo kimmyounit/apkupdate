@@ -85,10 +85,10 @@ export const Login: React.FC = () => {
         {/* Card Form */}
         <div className="mt-8 bg-white/95 backdrop-blur-md py-7 px-6 sm:px-8 shadow-2xl rounded-3xl border border-slate-100/80 space-y-4">
           <div className="border-b border-slate-100 pb-2">
-            <h2 className="text-base font-bold text-slate-900">
+            <h2 className="text-lg font-bold text-slate-900">
               Masuk ke Portal Sekolah
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-sm text-slate-500 mt-0.5">
               Masukkan username dan password akun Anda
             </p>
           </div>
@@ -112,7 +112,7 @@ export const Login: React.FC = () => {
 
           <form className="space-y-3.5" onSubmit={handleLoginSubmit}>
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-sm font-semibold text-slate-700 mb-1">
                 Username Akun
               </label>
               <div className="relative">
@@ -131,7 +131,7 @@ export const Login: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-sm font-semibold text-slate-700 mb-1">
                 Password
               </label>
               <div className="relative">

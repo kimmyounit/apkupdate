@@ -6,7 +6,7 @@
   }
 
   html {
-    font-size: 14px; /* Ukuran dasar sedang / proporsional untuk aplikasi */
+    font-size: 15px; /* Ukuran dasar sedang-leluasa (nyaman, jelas dan tidak kekecilan) */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     width: 100%;
@@ -14,7 +14,7 @@
 
   @media (min-width: 768px) {
     html {
-      font-size: 14.5px;
+      font-size: 15.5px;
     }
   }
 
@@ -27,7 +27,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.5;
   }
 
@@ -37,11 +37,11 @@
   }
 }
 
-/* Ukuran sedang untuk input / textarea / select agar pas dan tidak kebesaran */
+/* Ukuran sedang-jelas untuk input / textarea / select agar terbaca leluasa dan pas */
 input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
-  font-size: 14px !important;
+  font-size: 15px !important;
 }
 
 /* Print Styles for Student ID & QR Code Card */

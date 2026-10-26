@@ -422,7 +422,7 @@ export const DirectMessagesPage: React.FC<DirectMessagesPageProps> = ({
                   </button>
                 )}
                 <div>
-                  <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                  <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     <MessageCircle className="w-6 h-6 text-emerald-600" />
                     Pesan & DM
                   </h1>

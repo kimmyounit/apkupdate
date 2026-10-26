@@ -434,10 +434,10 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             </div>
 
             <div className="space-y-0.5 min-w-0">
-              <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-[10px] sm:text-xs font-semibold text-emerald-200 border border-white/15">
+              <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-xs font-semibold text-emerald-200 border border-white/15">
                 Selamat Datang di TAMVESTA
               </span>
-              <h1 className="text-sm sm:text-base font-bold tracking-tight text-white leading-tight truncate flex items-center gap-1.5 flex-wrap">
+              <h1 className="text-base sm:text-lg font-bold tracking-tight text-white leading-tight truncate flex items-center gap-1.5 flex-wrap">
                 <span className="truncate">Hello!, {user?.name || 'Siswa'}</span>
                 {user?.isVerified && (
                   <VerifiedBadge
@@ -446,7 +446,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                   />
                 )}
               </h1>
-              <p className="text-[10px] sm:text-[11px] text-teal-100 flex items-center gap-1.5 truncate">
+              <p className="text-xs sm:text-sm text-teal-100 flex items-center gap-1.5 truncate">
                 <span className="truncate">@{user?.username}</span>
                 <span>•</span>
                 <span className="font-semibold text-amber-300 truncate">{user?.kelas || 'Tamansiswa Batam'}</span>
@@ -482,8 +482,8 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                 <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 bg-white text-slate-800 rounded-3xl shadow-2xl border border-slate-200/90 z-50 p-2.5 space-y-1.5 animate-in fade-in slide-in-from-top-3 duration-150">
                   <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
                     <div>
-                      <p className="text-[11px] font-bold text-slate-900">Menu TAMVESTA</p>
-                      <p className="text-[10px] text-slate-400">@{user?.username} • {user?.kelas || 'Siswa'}</p>
+                      <p className="text-xs font-bold text-slate-900">Menu TAMVESTA</p>
+                      <p className="text-[11px] text-slate-400">@{user?.username} • {user?.kelas || 'Siswa'}</p>
                     </div>
                     <button
                       type="button"
@@ -511,14 +511,14 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                         )}
                       </div>
                       <div>
-                        <span className="text-xs font-bold block">Notifikasi Sekolah</span>
-                        <span className="text-[10px] text-slate-400 block">
+                        <span className="text-sm font-bold block">Notifikasi Sekolah</span>
+                        <span className="text-[11px] text-slate-400 block">
                           {unreadNotifCount > 0 ? `${unreadNotifCount} belum dibaca` : 'Lihat semua notifikasi'}
                         </span>
                       </div>
                     </div>
                     {unreadNotifCount > 0 ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-xs">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white shadow-xs">
                         {unreadNotifCount}
                       </span>
                     ) : (
@@ -541,8 +541,8 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                         <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
                       </div>
                       <div>
-                        <span className="text-xs font-bold block">Refresh Data</span>
-                        <span className="text-[10px] text-slate-400 block">
+                        <span className="text-sm font-bold block">Refresh Data</span>
+                        <span className="text-[11px] text-slate-400 block">
                           {refreshing ? 'Menyinkronkan data...' : 'Muat ulang & sinyal ke Admin'}
                         </span>
                       </div>
@@ -565,8 +565,8 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                         <User className="w-4 h-4" />
                       </div>
                       <div>
-                        <span className="text-xs font-bold block">Akun & Profil</span>
-                        <span className="text-[10px] text-slate-400 block">Biodata, foto & kelas</span>
+                        <span className="text-sm font-bold block">Akun & Profil</span>
+                        <span className="text-[11px] text-slate-400 block">Biodata, foto & kelas</span>
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
@@ -587,8 +587,8 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                           <LogOut className="w-4 h-4" />
                         </div>
                         <div>
-                          <span className="text-xs font-bold block text-rose-600">Keluar</span>
-                          <span className="text-[10px] text-rose-400 block">Keluar dari akun siswa</span>
+                          <span className="text-sm font-bold block text-rose-600">Keluar</span>
+                          <span className="text-[11px] text-rose-400 block">Keluar dari akun siswa</span>
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-rose-400 group-hover:translate-x-0.5 transition" />
@@ -964,7 +964,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                         <button
                           type="button"
                           onClick={() => setSelectedProfileUsername(post.authorUsername)}
-                          className="font-bold text-xs sm:text-sm text-slate-900 hover:text-emerald-700 transition flex items-center gap-1"
+                          className="font-bold text-sm sm:text-base text-slate-900 hover:text-emerald-700 transition flex items-center gap-1"
                         >
                           <span>{post.authorName}</span>
                           {/* Lencana Centang Kuning Resmi Developer vs Centang Biru Siswa */}
@@ -979,22 +979,22 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                         {post.authorIsDeveloper ||
                         (post as any).authorBadgeType === 'developer' ||
                         post.authorUsername?.toLowerCase() === 'tamvesta' ? (
-                          <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-500/15 text-amber-800 font-black border border-amber-300">
+                          <span className="px-1.5 py-0.2 rounded text-[11px] bg-amber-500/15 text-amber-800 font-bold border border-amber-300">
                             Developer Resmi
                           </span>
                         ) : (post as any).authorIsAlumni ? (
-                          <span className="px-1.5 py-0.2 rounded text-[10px] bg-purple-50 text-purple-700 font-bold border border-purple-200">
+                          <span className="px-1.5 py-0.2 rounded text-[11px] bg-purple-50 text-purple-700 font-bold border border-purple-200">
                             Alumni
                           </span>
                         ) : (
                           post.authorKelas && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600 font-semibold">
+                            <span className="px-1.5 py-0.2 rounded text-[11px] bg-slate-100 text-slate-600 font-semibold">
                               {post.authorKelas}
                             </span>
                           )
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                      <div className="text-xs text-slate-400 flex items-center gap-1.5">
                         <span>@{post.authorUsername}</span>
                         <span>•</span>
                         <span>{formatRelativeTime(post.createdAt)}</span>
@@ -1125,7 +1125,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed">
+                    <p className="text-sm sm:text-base text-slate-800 whitespace-pre-line leading-relaxed">
                       {post.caption}
                     </p>
                   )}

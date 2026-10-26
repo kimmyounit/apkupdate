@@ -97,7 +97,7 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
 
               {/* Label */}
               <span
-                className={`text-[10px] sm:text-[11px] tracking-tight mt-1 truncate ${
+                className={`text-[11px] sm:text-xs tracking-tight mt-1 truncate ${
                   isActive ? 'text-emerald-800 font-bold' : 'text-slate-500 font-medium'
                 }`}
               >

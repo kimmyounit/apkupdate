@@ -304,7 +304,7 @@ export const SchoolReportsPage: React.FC<SchoolReportsPageProps> = ({
             </button>
           )}
           <div>
-            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
               <Shield className="w-6 h-6 text-emerald-600" />
               Layanan & Sistem Laporan Sekolah
             </h1>

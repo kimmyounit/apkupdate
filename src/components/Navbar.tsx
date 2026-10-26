@@ -454,7 +454,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
             <>
               <button
                 onClick={() => handleNav('home')}
-                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold ${
                   currentTab === 'home' || currentTab === 'dashboard' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -464,7 +464,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
               <button
                 onClick={() => handleNav('mapel')}
-                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold ${
                   currentTab === 'mapel' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -474,7 +474,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
               <button
                 onClick={() => handleNav('perpustakaan')}
-                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold ${
                   currentTab === 'perpustakaan' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -484,7 +484,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
               <button
                 onClick={() => handleNav('pengumuman')}
-                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold ${
                   currentTab === 'pengumuman' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -494,7 +494,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
               <button
                 onClick={() => handleNav('quiz')}
-                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold ${
                   currentTab === 'quiz' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -504,7 +504,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
               <button
                 onClick={() => handleNav('permainan')}
-                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold ${
                   currentTab === 'permainan' ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
