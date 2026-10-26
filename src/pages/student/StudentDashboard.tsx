@@ -42,7 +42,9 @@ export const StudentDashboard: React.FC = () => {
   React.useEffect(() => {
     const handleNavEvent = (e: any) => {
       const tab = e.detail;
-      if (tab === 'permainan' || tab === 'games') {
+      if (tab === 'home' || tab === 'dashboard' || tab === 'beranda') {
+        setActiveTab('home');
+      } else if (tab === 'permainan' || tab === 'games') {
         setActiveTab('games');
       } else if (tab === 'mapel') {
         setActiveTab('subjects');
