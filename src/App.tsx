@@ -136,8 +136,8 @@ function AppContent() {
         }}
       />
 
-      {/* Mandatory Password Change Gate for First Login (Kecuali Akun Admin) */}
-      {mustChangePassword && userRole !== 'admin' && (
+      {/* Mandatory Password Change Gate for First Login (Kecuali Akun Admin & Support) */}
+      {mustChangePassword && userRole !== 'admin' && userRole !== 'support' && (
         <PasswordChangeModal
           isOpen={true}
           isMandatory={true}

@@ -396,16 +396,17 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
               <span>Keluar</span>
             </button>
 
-            {/* Mobile menu toggle: untuk staff/guru/admin */}
-            {userRole !== 'siswa' && (
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl"
-                title="Buka Menu"
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-            )}
+            {/* Mobile menu toggle (Garis Tiga) */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl relative transition"
+              title="Menu Garis Tiga"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {unreadNotifCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -577,6 +578,17 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
             <UserIcon className="w-4 h-4 text-emerald-600" />
             <span>Halaman Profil Saya & QR</span>
           </button>
+
+          {/* Logout Mobile */}
+          <div className="pt-2 border-t border-slate-100">
+            <button
+              onClick={logout}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Keluar dari Akun</span>
+            </button>
+          </div>
         </div>
       )}
 
