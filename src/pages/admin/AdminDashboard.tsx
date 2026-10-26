@@ -46,6 +46,7 @@ import {
   Send,
   Contact,
   Share2,
+  Radio,
 } from 'lucide-react';
 import { api } from '../../lib/api.ts';
 import type {
@@ -57,6 +58,7 @@ import type {
   QuizAttempt,
   AttendanceEvent,
   PasswordResetRequest,
+  RefreshSignal,
 } from '../../types/index.ts';
 import { StudentProfileModal } from '../../components/StudentProfileModal.tsx';
 import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
@@ -85,6 +87,10 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   const [isRefreshingStudents, setIsRefreshingStudents] = useState(false);
   const [refreshStudentsNotice, setRefreshStudentsNotice] = useState<string | null>(null);
   const [lastStudentRefreshTime, setLastStudentRefreshTime] = useState<string | null>(null);
+
+  // --- Sinyal Refresh Siswa (Real-time Monitoring) ---
+  const [refreshSignals, setRefreshSignals] = useState<RefreshSignal[]>([]);
+  const [isFetchingSignals, setIsFetchingSignals] = useState(false);
 
   // --- Student Contact Management State ---
   const [contactSearch, setContactSearch] = useState('');
@@ -492,6 +498,18 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     }
   };
 
+  const loadRefreshSignals = async () => {
+    setIsFetchingSignals(true);
+    try {
+      const sigs = await api.getRefreshSignals();
+      setRefreshSignals(sigs || []);
+    } catch (err) {
+      console.warn('Gagal memuat sinyal refresh:', err);
+    } finally {
+      setIsFetchingSignals(false);
+    }
+  };
+
   const loadAllData = async () => {
     try {
       // Sync any local student accounts to cloud server so they are visible across all devices
@@ -499,7 +517,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         await api.syncLocalUsersToServer();
       } catch (_) {}
 
-      const [stu, subs, bks, anns, qzs, atts, evs, staff, reqs] = await Promise.all([
+      const [stu, subs, bks, anns, qzs, atts, evs, staff, reqs, sigs] = await Promise.all([
         api.getStudents(),
         api.getSubjects(),
         api.getBooks(),
@@ -509,6 +527,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         api.getAttendanceEvents(),
         api.getStaff(),
         api.getPasswordResetRequests(),
+        api.getRefreshSignals().catch(() => []),
       ]);
       setResetRequests(reqs || []);
       setStudents(stu);
@@ -519,6 +538,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setQuizAttempts(atts);
       setEvents(evs);
       setStaffList(staff);
+      setRefreshSignals(sigs || []);
     } catch (err) {
       console.error('Failed to load admin data:', err);
     }
@@ -826,8 +846,9 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     try {
       channel = new BroadcastChannel('tamvesta_admin_sync');
       channel.onmessage = (msg) => {
-        if (msg.data?.type === 'REFRESH_ALL') {
+        if (msg.data?.type === 'REFRESH_ALL' || msg.data?.type === 'REFRESH_SIGNAL_SENT') {
           syncDataSilently();
+          loadRefreshSignals();
         }
       };
     } catch (_) {}
@@ -977,6 +998,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       if (Array.isArray(updated)) {
         setStudents(updated);
         notifyMultiDeviceSync();
+        loadRefreshSignals();
         const diff = updated.length - prevCount;
         const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         setLastStudentRefreshTime(nowStr);
@@ -1703,6 +1725,98 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                 </button>
               </div>
             </form>
+          </div>
+
+          {/* ------------------------------------------------------------- */}
+          {/* 📡 LOG SINYAL REFRESH SISWA (REAL-TIME MONITORING) */}
+          {/* ------------------------------------------------------------- */}
+          <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white rounded-3xl p-5 sm:p-6 border border-teal-800/60 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center text-teal-300 shrink-0">
+                  <Radio className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-sm sm:text-base font-black text-white">
+                      📡 Log Sinyal Refresh Siswa (Terhubung Real-Time)
+                    </h4>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[10px] font-bold">
+                      Online • Auto Sync
+                    </span>
+                  </div>
+                  <p className="text-xs text-teal-200/80 mt-0.5">
+                    Menampilkan konfirmasi aktivitas penekanan tombol Refresh dari dashboard akun siswa.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={loadRefreshSignals}
+                  disabled={isFetchingSignals}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 text-xs font-bold transition active:scale-95 disabled:opacity-50"
+                  title="Segarkan log sinyal aktivitas refresh dari siswa"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isFetchingSignals ? 'animate-spin text-emerald-300' : ''}`} />
+                  <span>{isFetchingSignals ? 'Mengecek...' : 'Segarkan Log Sinyal'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* List Sinyal */}
+            {refreshSignals.length === 0 ? (
+              <div className="py-6 text-center text-xs text-teal-200/60 border border-teal-800/40 rounded-2xl bg-black/20">
+                Belum ada catatan aktivitas refresh dari siswa hari ini. Sinyal akan langsung muncul di sini ketika siswa menekan tombol Refresh di dashboard.
+              </div>
+            ) : (
+              <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
+                {refreshSignals.slice(0, 10).map((sig) => (
+                  <div
+                    key={sig.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 font-black text-xs shrink-0">
+                        {sig.userName ? sig.userName.charAt(0).toUpperCase() : 'S'}
+                      </div>
+                      <div>
+                        <div className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 flex-wrap">
+                          <span>{sig.userName}</span>
+                          <span className="text-teal-300 font-mono text-[11px]">@{sig.userUsername}</span>
+                          <span className="px-1.5 py-0.2 rounded-md bg-white/10 text-teal-200 text-[10px] font-bold">
+                            {sig.userKelas || 'Tamansiswa'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-teal-200/70 flex items-center gap-1.5 mt-0.5">
+                          <Clock className="w-3 h-3 text-teal-300" />
+                          <span>
+                            {new Date(sig.timestamp).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}{' '}
+                            pk{' '}
+                            {new Date(sig.timestamp).toLocaleTimeString('id-ID', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                            })}{' '}
+                            WIB
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 self-start sm:self-auto px-2.5 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black shrink-0">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Sinyal Diterima Admin (200 OK)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Student Accounts Table & Management */}

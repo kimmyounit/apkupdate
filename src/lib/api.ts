@@ -1016,6 +1016,85 @@ export const api = {
     }
   },
 
+  togglePinPost: async (postId: string) => {
+    try {
+      const res = await tryServerRequest<{ message: string; post: StudentPost }>(`/api/posts/${postId}/pin`, {
+        method: 'POST',
+      });
+      if (res?.post) {
+        offlineStore.savePostDirect(res.post);
+      }
+      return res;
+    } catch (_) {
+      const post = offlineStore.togglePinPost(postId);
+      return { message: post.isPinned ? 'Postingan disematkan!' : 'Sematan dilepas.', post };
+    }
+  },
+
+  sendRefreshSignal: async (data?: { userName?: string; userKelas?: string }) => {
+    const me = offlineStore.getCurrentUser();
+    try {
+      const res = await tryServerRequest<{ success: boolean; message: string; signal: any }>('/api/refresh-signals', {
+        method: 'POST',
+        body: JSON.stringify(data || {}),
+      });
+      if (res?.signal) {
+        offlineStore.addRefreshSignal(res.signal);
+      }
+      return res;
+    } catch (err) {
+      if (me) {
+        const sig = offlineStore.addRefreshSignal({
+          userId: me.id,
+          userName: data?.userName || me.name,
+          userUsername: me.username,
+          userKelas: data?.userKelas || me.kelas || '-',
+        });
+        return { success: true, message: 'Sinyal refresh tersinkron ke Admin Dashboard!', signal: sig };
+      }
+      throw err;
+    }
+  },
+
+  getRefreshSignals: async () => {
+    try {
+      const res = await tryServerRequest<{ signals: any[] }>('/api/refresh-signals');
+      if (res?.signals) return res.signals;
+      return offlineStore.getRefreshSignals();
+    } catch (_) {
+      return offlineStore.getRefreshSignals();
+    }
+  },
+
+  resetStudentAvatar: async (studentId: string, reason: string) => {
+    const me = offlineStore.getCurrentUser();
+    try {
+      const res = await tryServerRequest<{ success: boolean; message: string; user: any }>('/api/moderation/avatar-reset', {
+        method: 'POST',
+        body: JSON.stringify({ studentId, reason }),
+      });
+      if (res?.user) {
+        offlineStore.saveUser(res.user);
+      }
+      return res;
+    } catch (err) {
+      if (me) {
+        return offlineStore.resetStudentAvatar(studentId, { id: me.id, name: me.name, username: me.username }, reason);
+      }
+      throw err;
+    }
+  },
+
+  getModerationLogs: async () => {
+    try {
+      const res = await tryServerRequest<{ logs: any[] }>('/api/moderation/logs');
+      if (res?.logs) return res.logs;
+      return offlineStore.getModerationLogs();
+    } catch (_) {
+      return offlineStore.getModerationLogs();
+    }
+  },
+
   toggleFollow: async (targetUserId: string) => {
     try {
       return await tryServerRequest<{ isFollowing: boolean; followersCount: number; followingCount: number }>(

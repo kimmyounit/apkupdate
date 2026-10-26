@@ -24,6 +24,11 @@ import { GameLobbyView } from './GameLobbyView.tsx';
 import { SpyGameView } from './SpyGameView.tsx';
 import { MafiaGameView } from './MafiaGameView.tsx';
 import { GameRulesModal } from './GameRulesModal.tsx';
+import { Abc5DasarView } from './Abc5DasarView.tsx';
+import { TruthOrDareView } from './TruthOrDareView.tsx';
+import { UlarTanggaView } from './UlarTanggaView.tsx';
+import { SambungKataView } from './SambungKataView.tsx';
+import { TwoTruthsView } from './TwoTruthsView.tsx';
 
 interface GamesPageProps {
   onBack: () => void;
@@ -31,6 +36,9 @@ interface GamesPageProps {
 
 export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
   const currentUser = offlineStore.getCurrentUser();
+  const [activeSelectedGame, setActiveSelectedGame] = useState<
+    'hub' | 'abc' | 'truth_dare' | 'ular_tangga' | 'sambung_kata' | 'two_truths'
+  >('hub');
   const [activeRoomCode, setActiveRoomCode] = useState<string | null>(() => {
     return sessionStorage.getItem('tamvesta_active_game_code') || null;
   });
@@ -362,6 +370,43 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
     }
   }
 
+  // Active Sub-game View Routers
+  if (activeSelectedGame === 'abc') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 pb-28">
+        <Abc5DasarView onBack={() => setActiveSelectedGame('hub')} />
+      </div>
+    );
+  }
+  if (activeSelectedGame === 'truth_dare') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 pb-28">
+        <TruthOrDareView onBack={() => setActiveSelectedGame('hub')} />
+      </div>
+    );
+  }
+  if (activeSelectedGame === 'ular_tangga') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 pb-28">
+        <UlarTanggaView onBack={() => setActiveSelectedGame('hub')} />
+      </div>
+    );
+  }
+  if (activeSelectedGame === 'sambung_kata') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 pb-28">
+        <SambungKataView onBack={() => setActiveSelectedGame('hub')} />
+      </div>
+    );
+  }
+  if (activeSelectedGame === 'two_truths') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 pb-28">
+        <TwoTruthsView onBack={() => setActiveSelectedGame('hub')} />
+      </div>
+    );
+  }
+
   // DEFAULT VIEW: MAIN GAMES HUB MENU
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 pb-28">
@@ -384,7 +429,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 rounded-xl border border-emerald-800/60 text-xs font-bold transition-all"
           >
             <HelpCircle className="w-4 h-4" />
-            <span>Cara Bermain</span>
+            <span>Aturan Sekolah</span>
           </button>
         </div>
 
@@ -393,13 +438,13 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
           <div className="relative z-10 space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 rounded-full text-emerald-300 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-              <span>Menu Permainan Siswa TAMVESTA</span>
+              <span>Menu Permainan Siswa TAMVESTA (Saat Jam Kosong)</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-              Arena Multiplayer Edukatif
+              Arena Permainan Edukatif & Santai
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
-              Mainkan permainan deduksi dan strategi bersama teman sekelas. Asah kemampuan berpikir kritis, observasi, dan komunikasi tanpa mengganggu kegiatan belajar mengajar.
+              Mainkan 7 permainan seru bersama teman saat waktu luang atau jam istirahat. Asah wawasan, konsentrasi, logika, dan sportivitas tanpa mengganggu kegiatan belajar mengajar (KBM).
             </p>
           </div>
 
@@ -408,7 +453,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
           </div>
         </div>
 
-        {/* ATURAN PENGGUNAAN DI SEKOLAH (Crucial School Rule Banner) */}
+        {/* ATURAN PENGGUNAAN DI SEKOLAH */}
         <div className="p-4 sm:p-5 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-200 flex items-start gap-3.5 shadow-lg">
           <div className="p-2 bg-amber-500/20 rounded-xl border border-amber-500/40 text-amber-400 shrink-0 mt-0.5">
             <AlertTriangle className="w-5 h-5 animate-pulse" />
@@ -418,7 +463,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
               Tata Tertib & Aturan Penggunaan di Sekolah
             </h4>
             <p className="text-xs text-amber-200/90 leading-relaxed">
-              Fitur permainan ini hanya boleh dimainkan saat <strong>jam istirahat</strong> atau <strong>jam kosong</strong>. Dilarang keras bermain saat guru sedang mengajar di kelas (KBM). Jaga ketertiban, kejujuran, dan sportivitas bersama teman!
+              Fitur permainan ini hanya boleh dimainkan saat <strong>jam istirahat</strong> atau <strong>jam kosong</strong> yang diizinkan sekolah. Dilarang keras bermain saat guru sedang mengajar di kelas. Jaga ketertiban dan sportivitas!
             </p>
           </div>
         </div>
@@ -433,117 +478,284 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
           </div>
         )}
 
-        {/* 2 Main Game Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Card 1: Who's the Spy */}
-          <div className="group rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 p-6 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-2xl">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <Search className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                </div>
-                <span className="text-[11px] font-black uppercase tracking-wider bg-emerald-950/80 text-emerald-300 px-3 py-1 rounded-full border border-emerald-800/60">
-                  3 - 10 Pemain
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-black text-white group-hover:text-emerald-400 transition-colors">
-                  Who's the Spy
-                </h3>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                  Permainan mencari Imposter yang memiliki kata rahasia berbeda. Berikan petunjuk cerdas, diskusikan kecurigaan Anda, dan temukan siapa mata-mata sebelum mereka berhasil menebak kata asli!
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 pt-2">
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">
-                  Tirai Privasi Kata
-                </span>
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">
-                  Voting Otomatis
-                </span>
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">
-                  Mode Tebak Kata
-                </span>
-              </div>
-            </div>
-
-            <div className="pt-6 flex gap-2">
-              <button
-                disabled={loading}
-                onClick={() => handleCreateRoom('spy')}
-                className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl text-xs shadow-lg transition-all flex items-center justify-center gap-1.5"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>Buat Room Spy</span>
-              </button>
-              <button
-                onClick={() => {
-                  setRulesTab('spy');
-                  setShowRulesModal(true);
-                }}
-                className="px-3.5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl text-xs font-bold transition-all"
-                title="Aturan Spy"
-              >
-                <BookOpen className="w-4 h-4" />
-              </button>
-            </div>
+        {/* DAFTAR 7 PERMAINAN LENGKAP */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-black text-white flex items-center gap-2">
+              <Gamepad2 className="w-5 h-5 text-emerald-400" />
+              <span>Pilihan 7 Permainan Siswa</span>
+            </h3>
+            <span className="text-xs text-slate-400 font-bold">Solo • Berdua • Multiplayer</span>
           </div>
 
-          {/* Card 2: Mafia */}
-          <div className="group rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-red-500/50 p-6 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-2xl">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
-                  <Flame className="w-6 h-6 group-hover:scale-110 transition-transform" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* 1. ABC 5 DASAR */}
+            <div className="rounded-3xl bg-slate-900 border border-slate-800 hover:border-amber-500/60 p-5 flex flex-col justify-between transition-all duration-300 shadow-xl group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black text-xl">
+                    ABC
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-amber-950/80 text-amber-300 px-2.5 py-1 rounded-full border border-amber-800/60">
+                    Solo • Berdua • Room
+                  </span>
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-wider bg-red-950/80 text-red-300 px-3 py-1 rounded-full border border-red-800/60">
-                  4 - 15 Pemain
-                </span>
+                <div>
+                  <h4 className="text-lg font-black text-white group-hover:text-amber-400 transition-colors">
+                    1. ABC 5 Dasar
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Huruf acak A-Z untuk 5 kategori pilihan (Negara, Buah, Hewan, Makanan, Benda, Profesi, dll). Lengkapi jawaban sebelum waktu habis! Pemain kalah mendapatkan kartu Truth or Dare aman.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">11 Kategori</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Batas Waktu</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Truth/Dare Loser</span>
+                </div>
               </div>
-
-              <div>
-                <h3 className="text-xl font-black text-white group-hover:text-red-400 transition-colors">
-                  Mafia (Moderator Otomatis)
-                </h3>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                  Permainan strategi dan intrik psikologis dengan moderator otomatis dari aplikasi TAMVESTA (tanpa moderator manusia). Peran rahasia: Mafia, Dokter, Detektif, dan Warga Kota!
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 pt-2">
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">
-                  Moderator Tanpa Manusia
-                </span>
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">
-                  Fase Malam & Siang
-                </span>
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">
-                  Aksi Rahasia Berperan
-                </span>
+              <div className="pt-4">
+                <button
+                  onClick={() => setActiveSelectedGame('abc')}
+                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition active:scale-98"
+                >
+                  Mulai Bermain ABC 5 Dasar ➔
+                </button>
               </div>
             </div>
 
-            <div className="pt-6 flex gap-2">
-              <button
-                disabled={loading}
-                onClick={() => handleCreateRoom('mafia')}
-                className="flex-1 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold rounded-2xl text-xs shadow-lg transition-all flex items-center justify-center gap-1.5"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>Buat Room Mafia</span>
-              </button>
-              <button
-                onClick={() => {
-                  setRulesTab('mafia');
-                  setShowRulesModal(true);
-                }}
-                className="px-3.5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl text-xs font-bold transition-all"
-                title="Aturan Mafia"
-              >
-                <BookOpen className="w-4 h-4" />
-              </button>
+            {/* 2. TRUTH OR DARE */}
+            <div className="rounded-3xl bg-slate-900 border border-slate-800 hover:border-purple-500/60 p-5 flex flex-col justify-between transition-all duration-300 shadow-xl group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 font-black text-2xl">
+                    🎲
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-purple-950/80 text-purple-300 px-2.5 py-1 rounded-full border border-purple-800/60">
+                    Solo • Berdua • Kelas
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-white group-hover:text-purple-400 transition-colors">
+                    2. Truth or Dare
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Pilih kejujuran santai (Truth) atau tantangan seru (Dare) yang aman, ramah sekolah, bebas dari perundungan atau permintaan kata sandi/privasi.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Tantangan Aman</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Giliran Pemain</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Sopan & Edukatif</span>
+                </div>
+              </div>
+              <div className="pt-4">
+                <button
+                  onClick={() => setActiveSelectedGame('truth_dare')}
+                  className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-black text-xs rounded-xl shadow-md transition active:scale-98"
+                >
+                  Mulai Truth or Dare ➔
+                </button>
+              </div>
+            </div>
+
+            {/* 3. ULAR TANGGA */}
+            <div className="rounded-3xl bg-slate-900 border border-slate-800 hover:border-emerald-500/60 p-5 flex flex-col justify-between transition-all duration-300 shadow-xl group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-2xl">
+                    🪜
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-950/80 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-800/60">
+                    Solo Vs Bot • 1 - 4 Pemain
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-white group-hover:text-emerald-400 transition-colors">
+                    3. Ular Tangga 100
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Papan petak bernomor 1 sampai 100 dengan dadu digital. Bidak bergerak sesuai hasil lemparan, panjat tangga naik dan hindari gigitan ular!
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Papan 1 - 100</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Dadu Digital</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Bidak Tersinkron</span>
+                </div>
+              </div>
+              <div className="pt-4">
+                <button
+                  onClick={() => setActiveSelectedGame('ular_tangga')}
+                  className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-black text-xs rounded-xl shadow-md transition active:scale-98"
+                >
+                  Mulai Ular Tangga ➔
+                </button>
+              </div>
+            </div>
+
+            {/* 4. SAMBUNG KATA */}
+            <div className="rounded-3xl bg-slate-900 border border-slate-800 hover:border-cyan-500/60 p-5 flex flex-col justify-between transition-all duration-300 shadow-xl group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-black text-2xl">
+                    💬
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-cyan-950/80 text-cyan-300 px-2.5 py-1 rounded-full border border-cyan-800/60">
+                    Solo • Berdua • Room
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-white group-hover:text-cyan-400 transition-colors">
+                    4. Sambung Kata
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Sistem memberikan kata awal. Sambung dengan kata baru yang diawali huruf terakhir kata sebelumnya dalam batas waktu 20 detik tanpa mengulang kata!
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Timer 20 Detik</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Rantai Kata</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Auto-Turn Switch</span>
+                </div>
+              </div>
+              <div className="pt-4">
+                <button
+                  onClick={() => setActiveSelectedGame('sambung_kata')}
+                  className="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 text-white font-black text-xs rounded-xl shadow-md transition active:scale-98"
+                >
+                  Mulai Sambung Kata ➔
+                </button>
+              </div>
+            </div>
+
+            {/* 5. TWO TRUTHS AND A LIE */}
+            <div className="rounded-3xl bg-slate-900 border border-slate-800 hover:border-indigo-500/60 p-5 flex flex-col justify-between transition-all duration-300 shadow-xl group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-black text-2xl">
+                    🎭
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-950/80 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-800/60">
+                    Solo • Multiplayer
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-white group-hover:text-indigo-400 transition-colors">
+                    5. Two Truths and a Lie
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Tiga pernyataan disajikan: dua benar dan satu bohong! Tebak mana pernyataan yang bohong, kumpulkan skor tebakan tepat, dan pelajari fakta ilmiahnya.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Sains & Fakta</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Tebak Kebohongan</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Skor & Riwayat</span>
+                </div>
+              </div>
+              <div className="pt-4">
+                <button
+                  onClick={() => setActiveSelectedGame('two_truths')}
+                  className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 text-white font-black text-xs rounded-xl shadow-md transition active:scale-98"
+                >
+                  Mulai Two Truths & a Lie ➔
+                </button>
+              </div>
+            </div>
+
+            {/* 6. WHO'S THE SPY */}
+            <div className="rounded-3xl bg-slate-900 border border-slate-800 hover:border-emerald-500/60 p-5 flex flex-col justify-between transition-all duration-300 shadow-xl group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-2xl">
+                    <Search className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-950/80 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-800/60">
+                    3 - 10 Pemain • Ruangan
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-white group-hover:text-emerald-400 transition-colors">
+                    6. Who's the Spy
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Sistem membagikan kata rahasia secara privat. Impostor/Spy memegang kata berbeda yang berkaitan. Berikan petunjuk cerdas, diskusikan, dan lakukan voting tanpa moderator bot!
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Kata Rahasia Privat</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Voting Realtime</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Tanpa Bot Karakter</span>
+                </div>
+              </div>
+              <div className="pt-4 flex gap-2">
+                <button
+                  disabled={loading}
+                  onClick={() => handleCreateRoom('spy')}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-black text-xs rounded-xl shadow-md transition active:scale-98 flex items-center justify-center gap-1.5"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Buat Room Spy</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setRulesTab('spy');
+                    setShowRulesModal(true);
+                  }}
+                  className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold"
+                  title="Aturan Spy"
+                >
+                  <BookOpen className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* 7. MAFIA */}
+            <div className="rounded-3xl bg-slate-900 border border-slate-800 hover:border-red-500/60 p-5 flex flex-col justify-between transition-all duration-300 shadow-xl group md:col-span-2">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 font-black text-2xl">
+                    <Flame className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-red-950/80 text-red-300 px-2.5 py-1 rounded-full border border-red-800/60">
+                    4 - 15 Pemain • Ruangan Privat
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-white group-hover:text-red-400 transition-colors">
+                    7. Mafia (Ruangan Privat)
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Peran rahasia: Mafia, Warga, Detektif, dan Dokter. Bergantian antara fase malam (aksi khusus rahasia) dan siang (diskusi & voting warga). Sistem mengelola aturan dan fase secara otomatis tanpa moderator bot karakter yang mengambil alih permainan.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Fase Malam & Siang</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Peran Dokter & Detektif</span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">Sistem Otomatis Netral</span>
+                </div>
+              </div>
+              <div className="pt-4 flex gap-2">
+                <button
+                  disabled={loading}
+                  onClick={() => handleCreateRoom('mafia')}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 text-white font-black text-xs rounded-xl shadow-md transition active:scale-98 flex items-center justify-center gap-1.5"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Buat Room Mafia</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setRulesTab('mafia');
+                    setShowRulesModal(true);
+                  }}
+                  className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold"
+                  title="Aturan Mafia"
+                >
+                  <BookOpen className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -557,24 +769,23 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
             <div>
               <h4 className="text-sm font-black text-white">Sudah Punya Kode Room?</h4>
               <p className="text-xs text-slate-400">
-                Masukkan 6 karakter kode yang dibagikan teman (contoh: SPY-123 atau MFA-456).
+                Masukkan kode yang dibagikan teman (contoh: SPY-123 atau MFA-456).
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto">
             <input
               type="text"
+              placeholder="Ketik Kode Room..."
               value={joinCodeInput}
               onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
-              placeholder="Contoh: SPY-892"
-              maxLength={8}
-              className="bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-xs font-mono font-bold text-center uppercase tracking-widest text-white w-full sm:w-44 focus:outline-none"
+              className="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-xs font-mono font-black text-white focus:outline-none focus:border-emerald-500 uppercase tracking-widest w-full sm:w-44 text-center"
             />
             <button
-              disabled={!joinCodeInput.trim() || loading}
+              disabled={loading || !joinCodeInput.trim()}
               onClick={() => handleJoinRoom(joinCodeInput)}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-lg transition-all whitespace-nowrap"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 shrink-0"
             >
               Gabung Room
             </button>

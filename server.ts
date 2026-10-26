@@ -1172,6 +1172,92 @@ app.put('/api/posts/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
   return res.json(updated);
 });
 
+// POST /api/posts/:id/pin - Sematkan atau lepas sematan postingan (Pinned Feed)
+app.post('/api/posts/:id/pin', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    const isPrivileged = req.user!.role === 'admin' || req.user!.role === 'support' || req.user!.isDeveloper;
+    const post = db.getPostById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: 'Postingan tidak ditemukan.' });
+    }
+    if (post.authorId !== req.user!.id && !isPrivileged) {
+      return res.status(403).json({ error: 'Hanya pemilik postingan atau Support/Admin yang dapat menyematkan feed ini.' });
+    }
+    const updated = db.togglePinPost(req.params.id);
+    try {
+      await db.saveAsync();
+    } catch (_) {}
+    return res.json({
+      message: updated.isPinned ? 'Postingan berhasil disematkan ke bagian atas profil!' : 'Sematan postingan berhasil dilepas.',
+      post: updated,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Gagal mengubah status sematan postingan.' });
+  }
+});
+
+// -------------------------------------------------------------
+// SINYAL REFRESH SISWA & LOG ADMIN
+// -------------------------------------------------------------
+app.post('/api/refresh-signals', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    const user = req.user!;
+    const signal = db.addRefreshSignal({
+      userId: user.id,
+      userName: user.name,
+      userUsername: user.username,
+      userKelas: user.kelas || '-',
+    });
+    try {
+      await db.saveAsync();
+    } catch (_) {}
+    return res.status(201).json({
+      success: true,
+      message: 'Sinyal refresh berhasil diterima oleh Admin Dashboard!',
+      signal,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Gagal memproses sinyal refresh.' });
+  }
+});
+
+app.get('/api/refresh-signals', authMiddleware, (req: AuthenticatedRequest, res) => {
+  return res.json({ signals: db.getRefreshSignals() });
+});
+
+// -------------------------------------------------------------
+// MODERASI FOTO PROFIL SISWA (SUPPORT & ADMIN)
+// -------------------------------------------------------------
+app.post('/api/moderation/avatar-reset', authMiddleware, requireRole(['admin', 'support']), async (req: AuthenticatedRequest, res) => {
+  const { studentId, reason } = req.body;
+  if (!studentId || !reason?.trim()) {
+    return res.status(400).json({ error: 'ID siswa dan alasan moderasi wajib disertakan.' });
+  }
+  const result = db.resetStudentAvatar(studentId, {
+    id: req.user!.id,
+    name: req.user!.name,
+    username: req.user!.username,
+  }, reason.trim());
+
+  if (!result.success) {
+    return res.status(404).json({ error: 'Siswa tidak ditemukan.' });
+  }
+
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+
+  return res.json({
+    success: true,
+    message: 'Foto profil siswa berhasil direset ke avatar default TAMVESTA.',
+    user: result.user,
+  });
+});
+
+app.get('/api/moderation/logs', authMiddleware, requireRole(['admin', 'support']), (req, res) => {
+  return res.json({ logs: db.getModerationLogs() });
+});
+
 // PUT /api/users/profile - Perbarui foto profil, bio, nomor WhatsApp & Gmail
 app.put('/api/users/profile', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const { bio, avatarUrl, phone, email } = req.body;

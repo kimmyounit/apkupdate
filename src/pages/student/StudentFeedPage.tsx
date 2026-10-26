@@ -34,6 +34,9 @@ import {
   HelpCircle,
   ChevronRight,
   User,
+  Pin,
+  AlertCircle,
+  ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -73,8 +76,16 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
+  const [refreshStatus, setRefreshStatus] = useState<{
+    type: 'pending' | 'success' | 'error';
+    message: string;
+  } | null>(null);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+
+  // Moderasi Foto Profil Siswa State (Support / Admin)
+  const [moderatingUser, setModeratingUser] = useState<{ id: string; name: string; username: string } | null>(null);
+  const [moderationReason, setModerationReason] = useState('');
+  const [isModerating, setIsModerating] = useState(false);
 
   // Modals & Menu
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
@@ -158,18 +169,95 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
     }
   }, [user?.id]);
 
+  // 1. Refresh Terhubung ke Admin Dashboard via Backend
   const handleRefresh = async () => {
+    if (refreshing) return; // Mencegah pencatatan berulang
     setRefreshing(true);
+    setRefreshStatus({
+      type: 'pending',
+      message: 'Menghubungkan sinyal ke Admin Dashboard...',
+    });
+
     try {
-      await Promise.allSettled([
+      const [signalRes] = await Promise.all([
+        api.sendRefreshSignal({
+          userName: user?.name,
+          userKelas: user?.kelas,
+        }),
         refreshUser(),
         loadFeedData(false),
       ]);
-      setRefreshNotice('Sinyal Admin Terhubung! Status & Feed berhasil disegarkan.');
-      setTimeout(() => setRefreshNotice(null), 3500);
-    } catch (_) {
+
+      // Tampilkan status berhasil hanya setelah backend mengonfirmasi penerimaan sinyal
+      setRefreshStatus({
+        type: 'success',
+        message: signalRes?.message || 'Permintaan Refresh Berhasil Diterima Admin!',
+      });
+
+      // Siarkan ke channel admin untuk pembaruan instan jika di browser yang sama
+      try {
+        const syncChannel = new BroadcastChannel('tamvesta_admin_sync');
+        syncChannel.postMessage({ type: 'REFRESH_SIGNAL_SENT', user: user?.username });
+        syncChannel.close();
+      } catch (_) {}
+
+      setTimeout(() => {
+        setRefreshStatus(null);
+      }, 4000);
+    } catch (err: any) {
+      setRefreshStatus({
+        type: 'error',
+        message: err.message || 'Gagal mengirim sinyal ke Admin Dashboard. Coba lagi.',
+      });
+      setTimeout(() => {
+        setRefreshStatus(null);
+      }, 4000);
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  // 2. Konfirmasi Keluar Akun Siswa (Tanpa menghapus data)
+  const handleConfirmLogout = () => {
+    const isConfirmed = window.confirm(
+      'Apakah Anda yakin ingin keluar dari akun TAMVESTA? Data akun Anda tetap aman tersimpan.'
+    );
+    if (isConfirmed) {
+      logout();
+    }
+  };
+
+  // 3. Sematkan ke Profil / Lepas Sematan (Pinned Post)
+  const handleTogglePinPost = async (postId: string) => {
+    try {
+      const res = await api.togglePinPost(postId);
+      setPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, isPinned: res.isPinned } : p))
+      );
+      await loadFeedData(true);
+    } catch (err: any) {
+      alert(err.message || 'Gagal mengubah status sematan postingan.');
+    }
+  };
+
+  // 4. Moderasi Foto Profil Siswa oleh Akun Support / Admin
+  const handleExecuteAvatarModeration = async () => {
+    if (!moderatingUser) return;
+    if (!moderationReason.trim()) {
+      alert('Mohon masukkan alasan moderasi foto profil.');
+      return;
+    }
+    setIsModerating(true);
+    try {
+      await api.resetStudentAvatar(moderatingUser.id, moderationReason.trim());
+      alert(`Foto profil ${moderatingUser.name} berhasil di-reset ke default TAMVESTA.`);
+      setModeratingUser(null);
+      setModerationReason('');
+      await loadFeedData(true);
+    } catch (err: any) {
+      alert(err.message || 'Gagal melakukan moderasi foto profil.');
+    } finally {
+      setIsModerating(false);
     }
   };
 
@@ -333,17 +421,23 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             </div>
 
             <div className="space-y-0.5">
+              {/* Sambutan Selamat Datang di TAMVESTA dengan Garis Tiga tersemat */}
               <div
                 onClick={() => setIsSideMenuOpen(true)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-[10px] sm:text-[11px] font-bold text-emerald-200 border border-white/10 cursor-pointer transition active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-[11px] sm:text-xs font-black text-emerald-200 border border-white/15 cursor-pointer transition active:scale-95 shadow-xs"
                 title="Buka Menu Siswa"
               >
                 <Menu className="w-3.5 h-3.5 text-amber-300" />
-                <span>Selamat Datang Tamvesta</span>
+                <span>Selamat Datang di TAMVESTA</span>
               </div>
               <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white leading-tight truncate max-w-[200px] sm:max-w-none flex items-center gap-1.5 flex-wrap">
                 <span>Hello!, {user?.name || 'Siswa'}</span>
-                {user?.isVerified && <VerifiedBadge size="md" />}
+                {user?.isVerified && (
+                  <VerifiedBadge
+                    size="md"
+                    isDeveloper={user?.role === 'support' || user?.isDeveloper || user?.username?.toLowerCase() === 'tamvesta'}
+                  />
+                )}
               </h1>
               <p className="text-[11px] text-teal-100 flex items-center gap-1.5">
                 <span>@{user?.username}</span>
@@ -353,50 +447,115 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             </div>
           </div>
 
-          {/* Right Header Actions: Refresh Sinyal Admin, Notification Bell, & Garis Tiga (Menu) */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-1.5 px-2.5 py-2 sm:px-3 sm:py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 text-xs font-bold disabled:opacity-50"
-              title="Segarkan sinyal dari admin dashboard, centang biru, dan feed terbaru"
-            >
-              <RefreshCw className={`w-4 h-4 text-emerald-300 ${refreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">{refreshing ? 'Menyinkron...' : 'Segarkan Sinyal'}</span>
-            </button>
-
-            <button
-              onClick={() => setIsNotificationsOpen(true)}
-              className="relative p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95"
-              title="Notifikasi Sekolah"
-            >
-              <Bell className="w-5 h-5 text-amber-300" />
-              {unreadNotifCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center shadow-md animate-pulse">
-                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-                </span>
-              )}
-            </button>
-
-            {/* Tombol Garis Tiga (Hamburger Menu) */}
+          {/* Right Header: Garis Tiga (Menu) */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setIsSideMenuOpen(true)}
-              className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 shrink-0"
-              title="Buka Menu Siswa"
+              className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 shrink-0 shadow-sm"
+              title="Buka Menu Navigasi Siswa"
             >
               <Menu className="w-5 h-5 text-white" />
             </button>
           </div>
         </div>
 
-        {/* Signal Toast Notice */}
-        {refreshNotice && (
-          <div className="mt-3 p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-xl text-emerald-100 text-xs font-bold flex items-center justify-between animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
-              <span>{refreshNotice}</span>
+        {/* ------------------------------------------------------------- */}
+        {/* MENU 4 TOMBOL DI BAWAH TULISAN SAMBUTAN: Notifikasi, Refresh, Akun, Keluar */}
+        {/* ------------------------------------------------------------- */}
+        <div className="grid grid-cols-4 gap-2 mt-4 pt-3.5 border-t border-white/15">
+          {/* 1. Notifikasi */}
+          <button
+            type="button"
+            onClick={() => setIsNotificationsOpen(true)}
+            className="relative flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 group shadow-xs"
+            title="Lihat Notifikasi Sekolah"
+          >
+            <div className="relative">
+              <Bell className="w-5 h-5 text-amber-300 group-hover:scale-110 transition" />
+              {unreadNotifCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px] font-black shadow-md animate-pulse">
+                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                </span>
+              )}
             </div>
-            <button onClick={() => setRefreshNotice(null)} className="text-emerald-200 hover:text-white">✕</button>
+            <span className="text-[11px] font-black tracking-tight">Notifikasi</span>
+          </button>
+
+          {/* 2. Refresh (Terhubung ke Admin) */}
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 disabled:opacity-60 group shadow-xs"
+            title="Muat ulang data & kirim sinyal ke Admin Dashboard"
+          >
+            <RefreshCw
+              className={`w-5 h-5 text-emerald-300 group-hover:rotate-180 transition duration-300 ${
+                refreshing ? 'animate-spin' : ''
+              }`}
+            />
+            <span className="text-[11px] font-black tracking-tight truncate max-w-full">
+              {refreshing ? 'Menyinkron...' : 'Refresh'}
+            </span>
+          </button>
+
+          {/* 3. Akun */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenProfile) {
+                onOpenProfile();
+              } else {
+                setSelectedProfileUsername(user?.username || null);
+              }
+            }}
+            className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/15 transition active:scale-95 group shadow-xs"
+            title="Buka Profil & Akun Siswa"
+          >
+            <User className="w-5 h-5 text-sky-300 group-hover:scale-110 transition" />
+            <span className="text-[11px] font-black tracking-tight">Akun</span>
+          </button>
+
+          {/* 4. Keluar */}
+          <button
+            type="button"
+            onClick={handleConfirmLogout}
+            className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-100 backdrop-blur-sm border border-rose-400/30 transition active:scale-95 group shadow-xs"
+            title="Keluar dari Akun Siswa (Data tetap aman tersimpan)"
+          >
+            <LogOut className="w-5 h-5 text-rose-300 group-hover:scale-110 transition" />
+            <span className="text-[11px] font-black tracking-tight text-rose-200">Keluar</span>
+          </button>
+        </div>
+
+        {/* Status Sinyal Refresh Terhubung ke Admin */}
+        {refreshStatus && (
+          <div
+            className={`mt-3 p-3 rounded-2xl text-xs font-bold flex items-center justify-between border backdrop-blur-md animate-in fade-in transition ${
+              refreshStatus.type === 'pending'
+                ? 'bg-amber-500/20 border-amber-400/50 text-amber-100'
+                : refreshStatus.type === 'success'
+                ? 'bg-emerald-500/25 border-emerald-400/50 text-emerald-100'
+                : 'bg-rose-500/25 border-rose-400/50 text-rose-100'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              {refreshStatus.type === 'pending' ? (
+                <RefreshCw className="w-4 h-4 text-amber-300 animate-spin shrink-0" />
+              ) : refreshStatus.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-300 shrink-0" />
+              )}
+              <span className="leading-snug">{refreshStatus.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRefreshStatus(null)}
+              className="p-1 text-white/80 hover:text-white shrink-0 ml-2"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -686,9 +845,22 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                           className="font-bold text-xs sm:text-sm text-slate-900 hover:text-emerald-700 transition flex items-center gap-1"
                         >
                           <span>{post.authorName}</span>
-                          {post.authorIsVerified && <VerifiedBadge size="xs" />}
+                          {/* Lencana Centang Kuning Resmi Developer vs Centang Biru Siswa */}
+                          {post.authorIsDeveloper ||
+                          (post as any).authorBadgeType === 'developer' ||
+                          post.authorUsername?.toLowerCase() === 'tamvesta' ? (
+                            <VerifiedBadge size="xs" isDeveloper={true} />
+                          ) : (
+                            post.authorIsVerified && <VerifiedBadge size="xs" />
+                          )}
                         </button>
-                        {(post as any).authorIsAlumni ? (
+                        {post.authorIsDeveloper ||
+                        (post as any).authorBadgeType === 'developer' ||
+                        post.authorUsername?.toLowerCase() === 'tamvesta' ? (
+                          <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-500/15 text-amber-800 font-black border border-amber-300">
+                            Developer Resmi
+                          </span>
+                        ) : (post as any).authorIsAlumni ? (
                           <span className="px-1.5 py-0.2 rounded text-[10px] bg-purple-50 text-purple-700 font-bold border border-purple-200">
                             Alumni
                           </span>
@@ -708,8 +880,44 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                     </div>
                   </div>
 
-                  {/* Actions: Follow / Edit / Delete */}
+                  {/* Actions: Follow / Pin / Edit / Delete / Moderasi */}
                   <div className="flex items-center gap-1">
+                    {/* Sematkan ke Profil (📌) untuk Pemilik Post, Akun Support / Admin */}
+                    {(isAuthor || user?.role === 'support' || user?.role === 'admin' || user?.isDeveloper) && (
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePinPost(post.id)}
+                        className={`p-1.5 rounded-xl transition ${
+                          post.isPinned
+                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                            : 'hover:bg-slate-100 text-slate-400 hover:text-amber-600'
+                        }`}
+                        title={post.isPinned ? 'Lepas Sematan Postingan' : 'Sematkan ke Profil (📌)'}
+                      >
+                        <Pin className={`w-3.5 h-3.5 ${post.isPinned ? 'fill-amber-600 text-amber-600' : ''}`} />
+                      </button>
+                    )}
+
+                    {/* Moderasi Foto Profil oleh Support TAMVESTA / Admin */}
+                    {!isAuthor &&
+                      (user?.role === 'support' || user?.role === 'admin' || user?.isDeveloper) &&
+                      post.authorUsername?.toLowerCase() !== 'tamvesta' && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setModeratingUser({
+                              id: post.authorId,
+                              name: post.authorName,
+                              username: post.authorUsername,
+                            })
+                          }
+                          className="p-1.5 rounded-xl hover:bg-amber-50 text-slate-400 hover:text-amber-700 transition"
+                          title={`Moderasi Foto Profil @${post.authorUsername}`}
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
                     {!isAuthor && user && (
                       <button
                         type="button"
@@ -756,6 +964,16 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                     )}
                   </div>
                 </div>
+
+                {/* Indikator Postingan Disematkan (📌 Pinned) */}
+                {post.isPinned && (
+                  <div className="px-4 pb-2">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-400/40 text-amber-800 text-[10px] font-black">
+                      <Pin className="w-3 h-3 fill-amber-600 text-amber-600" />
+                      <span>Disematkan ke Profil</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Caption (or edit input) */}
                 <div className="px-4 pb-3">
@@ -877,11 +1095,13 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                                   className="font-bold text-[11px] text-slate-900 hover:text-emerald-700 flex items-center gap-1"
                                 >
                                   <span>{comment.authorName}</span>
-                                  {(comment as any).authorIsVerified && (
-                                    <span className="inline-flex items-center text-blue-500" title="Siswa Terverifikasi">
-                                      <CheckCircle2 className="w-3 h-3 fill-blue-500 text-white shrink-0" />
-                                    </span>
-                                  )}
+                                  {comment.authorUsername?.toLowerCase() === 'tamvesta' ||
+                                  (comment as any).authorIsDeveloper ||
+                                  (comment as any).authorBadgeType === 'developer' ? (
+                                    <VerifiedBadge size="xs" isDeveloper={true} />
+                                  ) : (comment as any).authorIsVerified ? (
+                                    <VerifiedBadge size="xs" />
+                                  ) : null}
                                 </button>
                                 <span className="text-[10px] text-slate-400">
                                   {formatRelativeTime(comment.createdAt)}
@@ -1030,6 +1250,60 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
         title={lightboxImage ? lightboxImage.title : undefined}
         onClose={() => setLightboxImage(null)}
       />
+
+      {/* 6b. Modal Moderasi Foto Profil Siswa oleh Support / Admin */}
+      {moderatingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-amber-100 text-amber-700">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-900">Moderasi Foto Profil</h3>
+                <p className="text-[11px] text-slate-500">Akun Siswa: @{moderatingUser.username}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Tindakan ini akan me-reset foto profil <strong>{moderatingUser.name}</strong> kembali ke foto default maskot TAMVESTA dan mencatatnya ke log moderasi admin.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-700">Alasan Moderasi:</label>
+              <textarea
+                rows={3}
+                value={moderationReason}
+                onChange={(e) => setModerationReason(e.target.value)}
+                placeholder="Contoh: Foto profil tidak pantas / melanggar norma tata tertib sekolah..."
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setModeratingUser(null);
+                  setModerationReason('');
+                }}
+                disabled={isModerating}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteAvatarModeration}
+                disabled={isModerating}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-black transition active:scale-95 disabled:opacity-50 shadow-md shadow-amber-600/20"
+              >
+                {isModerating ? 'Memproses...' : 'Reset Foto Profil'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ------------------------------------------------------------- */}
       {/* 7. DRAWER MENU (GARIS TIGA) SISWA DARI BANNER SELAMAT DATANG */}

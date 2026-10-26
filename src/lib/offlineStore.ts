@@ -762,14 +762,31 @@ export const offlineStore = {
     return (db.posts || [])
       .filter((p) => !p.id.startsWith('post_seed_'))
       .map((p) => {
-        const author = users.find((u) => u.id === p.authorId);
+        const author = users.find((u) => u.id === p.authorId || u.username.toLowerCase() === p.authorUsername.toLowerCase());
+        const isDev = author ? (author.isDeveloper || author.role === 'support' || author.username.toLowerCase() === 'tamvesta') : p.authorUsername?.toLowerCase() === 'tamvesta';
         return {
           ...p,
-          authorIsVerified: author ? !!author.isVerified : !!(p as any).authorIsVerified,
+          authorIsVerified: author ? !!author.isVerified || isDev : !!(p as any).authorIsVerified,
+          authorIsDeveloper: isDev,
+          authorBadgeType: isDev ? 'developer' : ((author?.isVerified || (p as any).authorIsVerified) ? 'blue' : undefined),
           authorIsAlumni: author ? !!author.isAlumni : !!(p as any).authorIsAlumni,
         };
       })
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+  },
+
+  togglePinPost(postId: string): StudentPost {
+    const db = loadDB();
+    if (!Array.isArray(db.posts)) db.posts = [];
+    const post = db.posts.find((p) => p.id === postId);
+    if (!post) throw new Error('Postingan tidak ditemukan.');
+    post.isPinned = !post.isPinned;
+    saveDB(db);
+    return post;
   },
 
   createPost(data: { caption: string; mediaUrl?: string; mediaType?: 'photo' | 'video' }) {
@@ -1922,5 +1939,68 @@ export const offlineStore = {
         channel.close();
       } catch (_) {}
     } catch (_) {}
+  },
+
+  // Sinyal Refresh Siswa (Terhubung ke Admin)
+  addRefreshSignal(payload: { userId: string; userName: string; userUsername: string; userKelas?: string }) {
+    const db = loadDB();
+    if (!Array.isArray((db as any).refreshSignals)) (db as any).refreshSignals = [];
+    const now = new Date();
+    const formattedTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+    const newSignal = {
+      id: `sig_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: payload.userId,
+      userName: payload.userName,
+      userUsername: payload.userUsername,
+      userKelas: payload.userKelas || '-',
+      timestamp: now.toISOString(),
+      formattedTime,
+      status: 'received',
+    };
+    (db as any).refreshSignals.unshift(newSignal);
+    if ((db as any).refreshSignals.length > 100) {
+      (db as any).refreshSignals = (db as any).refreshSignals.slice(0, 100);
+    }
+    saveDB(db);
+    return newSignal;
+  },
+
+  getRefreshSignals(): any[] {
+    const db = loadDB();
+    return Array.isArray((db as any).refreshSignals) ? (db as any).refreshSignals : [];
+  },
+
+  // Moderasi Foto Profil Siswa
+  resetStudentAvatar(studentId: string, moderator: { id: string; name: string; username: string }, reason: string) {
+    const db = loadDB();
+    const user = (db.users || []).find((u) => u.id === studentId || u.username.toLowerCase() === studentId.toLowerCase());
+    if (!user) return { success: false };
+    const oldAvatar = user.avatarUrl;
+    user.avatarUrl = '/assets/tamvesta_mascot.jpg';
+    user.updatedAt = new Date().toISOString();
+
+    if (!Array.isArray((db as any).moderationLogs)) (db as any).moderationLogs = [];
+    const log = {
+      id: `mod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      action: 'reset_avatar',
+      targetUserId: user.id,
+      targetUserName: user.name,
+      targetUsername: user.username,
+      targetUserKelas: user.kelas,
+      reason,
+      moderatorId: moderator.id,
+      moderatorName: moderator.name,
+      moderatorUsername: moderator.username,
+      timestamp: new Date().toISOString(),
+      details: `Foto profil direset dari ${oldAvatar || 'kustom'} ke avatar default TAMVESTA.`,
+    };
+    (db as any).moderationLogs.unshift(log);
+    saveDB(db);
+    return { success: true, user };
+  },
+
+  getModerationLogs(): any[] {
+    const db = loadDB();
+    return Array.isArray((db as any).moderationLogs) ? (db as any).moderationLogs : [];
   },
 };

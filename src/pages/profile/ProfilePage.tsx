@@ -349,20 +349,39 @@ export const ProfilePage: React.FC = () => {
           <div className="flex-1 text-center sm:text-left space-y-2">
             <div>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mb-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
-                  <School className="w-3 h-3 text-emerald-600" />
-                  <span>{user.isAlumni ? 'Alumni Perguruan Tamansiswa' : 'Akun Siswa Resmi'}</span>
-                </div>
+                {user.username?.toLowerCase() === 'tamvesta' || user.isDeveloper || user.role === 'support' ? (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/15 border border-amber-300 text-amber-800 text-[10px] font-black uppercase tracking-wider shadow-xs">
+                    <span>⭐</span>
+                    <span>Developer Resmi TAMVESTA</span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+                    <School className="w-3 h-3 text-emerald-600" />
+                    <span>{user.isAlumni ? 'Alumni Perguruan Tamansiswa' : 'Akun Siswa Resmi'}</span>
+                  </div>
+                )}
                 {user.isVerified && (
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold shadow-xs">
-                    <VerifiedBadge size="xs" />
-                    <span>Siswa Terverifikasi</span>
+                    <VerifiedBadge
+                      size="xs"
+                      isDeveloper={user.username?.toLowerCase() === 'tamvesta' || user.isDeveloper || user.role === 'support'}
+                    />
+                    <span>
+                      {user.username?.toLowerCase() === 'tamvesta' || user.isDeveloper || user.role === 'support'
+                        ? 'Developer Resmi (Centang Kuning)'
+                        : 'Siswa Terverifikasi'}
+                    </span>
                   </div>
                 )}
               </div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                 <span>{user.name}</span>
-                {user.isVerified && <VerifiedBadge size="lg" />}
+                {user.isVerified && (
+                  <VerifiedBadge
+                    size="lg"
+                    isDeveloper={user.username?.toLowerCase() === 'tamvesta' || user.isDeveloper || user.role === 'support'}
+                  />
+                )}
               </h1>
               <p className="text-xs text-slate-500 font-mono">@{user.username}</p>
             </div>
@@ -466,7 +485,11 @@ export const ProfilePage: React.FC = () => {
                 <span className="text-slate-500">Postingan</span>
               </div>
               <div>
-                <span className="font-black text-slate-900">{followersCount}</span>{' '}
+                <span className="font-black text-slate-900">
+                  {user.username?.toLowerCase() === 'tamvesta' || user.isDeveloper || user.role === 'support'
+                    ? user.followersCountDisplay || '1,1M'
+                    : followersCount}
+                </span>{' '}
                 <span className="text-slate-500">Pengikut</span>
               </div>
               <div>
@@ -881,6 +904,12 @@ export const ProfilePage: React.FC = () => {
                 key={post.id}
                 className="group relative aspect-square bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 hover:shadow-md transition"
               >
+                {post.isPinned && (
+                  <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 font-black text-[9px] shadow-sm flex items-center gap-1">
+                    <span>📌</span>
+                    <span>Disematkan</span>
+                  </div>
+                )}
                 {post.mediaUrl ? (
                   post.mediaType === 'video' ? (
                     <video src={post.mediaUrl} className="w-full h-full object-cover" />

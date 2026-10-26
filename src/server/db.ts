@@ -65,6 +65,8 @@ export interface DatabaseSchema {
   gameRooms?: any[];
   deletedUserIds?: string[];
   deletedPostIds?: string[];
+  refreshSignals?: RefreshSignal[];
+  moderationLogs?: ModerationLog[];
 }
 
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
@@ -301,6 +303,31 @@ export function getInitialData(): DatabaseSchema {
     updatedAt: now,
   };
 
+  // Akun Resmi Developer / Support TAMVESTA
+  const supportPass = hashPassword('Salamdanbahagia');
+  const supportUser: User = {
+    id: 'user_support_tamvesta',
+    username: 'Tamvesta',
+    name: 'Support TAMVESTA',
+    role: 'support',
+    jabatan: 'Developer Resmi TAMVESTA',
+    initialPassword: 'Salamdanbahagia',
+    password: 'Salamdanbahagia',
+    passwordHash: supportPass.hash,
+    salt: supportPass.salt,
+    mustChangePassword: false,
+    isActive: true,
+    isVerified: true,
+    isDeveloper: true,
+    badgeType: 'developer',
+    followersCountDisplay: '1,1M',
+    avatarUrl: '/assets/tamvesta_mascot.jpg',
+    bio: 'Akun Resmi Developer & Layanan Dukungan Teknis TAMVESTA Perguruan Tamansiswa Batam.',
+    qrToken: generateQrToken('user_support_tamvesta', 'Tamvesta'),
+    createdAt: now,
+    updatedAt: now,
+  };
+
   // 2. Akun Resmi Guru & Staf Tamansiswa Batam (Daftar Akun Awal TAMVESTA)
   const staffUsers: User[] = OFFICIAL_STAFF_LIST.map((staff, index) => {
     const pass = hashPassword(staff.initialPassword);
@@ -348,7 +375,7 @@ export function getInitialData(): DatabaseSchema {
   });
 
   return {
-    users: [adminUser, ...staffUsers, ...studentUsers],
+    users: [adminUser, supportUser, ...staffUsers, ...studentUsers],
     subjects: [],
     books: [],
     announcements: [],
@@ -370,6 +397,8 @@ export function getInitialData(): DatabaseSchema {
     tuMonthlyReports: [],
     deletedUserIds: [],
     deletedPostIds: [],
+    refreshSignals: [],
+    moderationLogs: [],
   };
 }
 
@@ -652,6 +681,49 @@ class DatabaseManager {
               u.salt = defaultAdminPass.salt;
             }
           });
+
+          // Pastikan akun Support TAMVESTA terdaftar & memiliki centang kuning Developer
+          const supportExisting = parsed.users.find((u: User) => u.username.toLowerCase() === 'tamvesta');
+          const supportPass = hashPassword('Salamdanbahagia');
+          if (!supportExisting) {
+            parsed.users.push({
+              id: 'user_support_tamvesta',
+              username: 'Tamvesta',
+              name: 'Support TAMVESTA',
+              role: 'support',
+              jabatan: 'Developer Resmi TAMVESTA',
+              initialPassword: 'Salamdanbahagia',
+              password: 'Salamdanbahagia',
+              passwordHash: supportPass.hash,
+              salt: supportPass.salt,
+              mustChangePassword: false,
+              isActive: true,
+              isVerified: true,
+              isDeveloper: true,
+              badgeType: 'developer',
+              followersCountDisplay: '1,1M',
+              avatarUrl: '/assets/tamvesta_mascot.jpg',
+              bio: 'Akun Resmi Developer & Layanan Dukungan Teknis TAMVESTA Perguruan Tamansiswa Batam.',
+              qrToken: generateQrToken('user_support_tamvesta', 'Tamvesta'),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+          } else {
+            supportExisting.name = 'Support TAMVESTA';
+            supportExisting.role = 'support';
+            supportExisting.jabatan = 'Developer Resmi TAMVESTA';
+            supportExisting.isVerified = true;
+            supportExisting.isDeveloper = true;
+            supportExisting.badgeType = 'developer';
+            supportExisting.followersCountDisplay = '1,1M';
+            if (!supportExisting.avatarUrl) supportExisting.avatarUrl = '/assets/tamvesta_mascot.jpg';
+            if (!supportExisting.passwordHash || !supportExisting.salt) {
+              supportExisting.passwordHash = supportPass.hash;
+              supportExisting.salt = supportPass.salt;
+              supportExisting.initialPassword = 'Salamdanbahagia';
+              supportExisting.password = 'Salamdanbahagia';
+            }
+          }
         }
 
         this.saveDataDirect(parsed);
@@ -678,6 +750,8 @@ class DatabaseManager {
           tuChatMessages: parsed.tuChatMessages || [],
           tuMonthlyReports: parsed.tuMonthlyReports || [],
           gameRooms: parsed.gameRooms || [],
+          refreshSignals: parsed.refreshSignals || [],
+          moderationLogs: parsed.moderationLogs || [],
         };
       }
     } catch (err) {
@@ -1702,12 +1776,25 @@ class DatabaseManager {
     if (!Array.isArray(this.data.posts)) this.data.posts = [];
     return [...this.data.posts]
       .filter((p) => !p.id.startsWith('post_seed_'))
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
   }
 
   getPostById(id: string): StudentPost | undefined {
     if (!Array.isArray(this.data.posts)) this.data.posts = [];
     return this.data.posts.find((p) => p.id === id);
+  }
+
+  togglePinPost(id: string): StudentPost {
+    if (!Array.isArray(this.data.posts)) this.data.posts = [];
+    const post = this.data.posts.find((p) => p.id === id);
+    if (!post) throw new Error('Postingan tidak ditemukan');
+    post.isPinned = !post.isPinned;
+    this.save();
+    return post;
   }
 
   addPost(payload: {
@@ -1721,6 +1808,10 @@ class DatabaseManager {
     mediaUrl?: string;
     mediaName?: string;
   }): StudentPost {
+    const authorUser = this.findUserById(payload.authorId) || this.findUserByUsername(payload.authorUsername);
+    const isDev = authorUser?.isDeveloper || authorUser?.role === 'support' || payload.authorUsername.toLowerCase() === 'tamvesta';
+    const isVer = authorUser?.isVerified || isDev;
+
     const newPost: StudentPost = {
       id: `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       authorId: payload.authorId,
@@ -1728,6 +1819,10 @@ class DatabaseManager {
       authorUsername: payload.authorUsername,
       authorKelas: payload.authorKelas || '',
       authorAvatar: payload.authorAvatar || '',
+      authorIsVerified: isVer,
+      authorIsDeveloper: isDev,
+      authorBadgeType: isDev ? 'developer' : (isVer ? 'blue' : undefined),
+      isPinned: false,
       caption: payload.caption.trim(),
       mediaType: payload.mediaType || 'none',
       mediaUrl: payload.mediaUrl,
@@ -2653,6 +2748,65 @@ class DatabaseManager {
       return true;
     }
     return false;
+  }
+
+  addRefreshSignal(payload: { userId: string; userName: string; userUsername: string; userKelas?: string }): RefreshSignal {
+    if (!Array.isArray(this.data.refreshSignals)) this.data.refreshSignals = [];
+    const now = new Date();
+    const formattedTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+    const newSignal: RefreshSignal = {
+      id: `sig_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: payload.userId,
+      userName: payload.userName,
+      userUsername: payload.userUsername,
+      userKelas: payload.userKelas || '-',
+      timestamp: now.toISOString(),
+      formattedTime,
+      status: 'received',
+    };
+    this.data.refreshSignals.unshift(newSignal);
+    if (this.data.refreshSignals.length > 100) {
+      this.data.refreshSignals = this.data.refreshSignals.slice(0, 100);
+    }
+    this.save();
+    return newSignal;
+  }
+
+  getRefreshSignals(): RefreshSignal[] {
+    if (!Array.isArray(this.data.refreshSignals)) this.data.refreshSignals = [];
+    return this.data.refreshSignals;
+  }
+
+  resetStudentAvatar(studentId: string, moderator: { id: string; name: string; username: string }, reason: string): { success: boolean; user?: User } {
+    const user = this.findUserById(studentId) || this.findUserByUsername(studentId);
+    if (!user) return { success: false };
+    const oldAvatar = user.avatarUrl;
+    user.avatarUrl = '/assets/tamvesta_mascot.jpg';
+    user.updatedAt = new Date().toISOString();
+
+    if (!Array.isArray(this.data.moderationLogs)) this.data.moderationLogs = [];
+    const log: ModerationLog = {
+      id: `mod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      action: 'reset_avatar',
+      targetUserId: user.id,
+      targetUserName: user.name,
+      targetUsername: user.username,
+      targetUserKelas: user.kelas,
+      reason,
+      moderatorId: moderator.id,
+      moderatorName: moderator.name,
+      moderatorUsername: moderator.username,
+      timestamp: new Date().toISOString(),
+      details: `Foto profil direset dari ${oldAvatar || 'kustom'} ke avatar default TAMVESTA.`,
+    };
+    this.data.moderationLogs.unshift(log);
+    this.save();
+    return { success: true, user };
+  }
+
+  getModerationLogs(): ModerationLog[] {
+    if (!Array.isArray(this.data.moderationLogs)) this.data.moderationLogs = [];
+    return this.data.moderationLogs;
   }
 }
 

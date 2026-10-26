@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'guru' | 'siswa' | 'kepala_sekolah' | 'tata_usaha' | 'panitia';
+export type UserRole = 'admin' | 'guru' | 'siswa' | 'kepala_sekolah' | 'tata_usaha' | 'panitia' | 'support';
 
 export interface User {
   id: string;
@@ -15,6 +15,9 @@ export interface User {
   isActive: boolean;
   isAlumni?: boolean; // Status Siswa: Siswa Aktif vs Alumni
   isVerified?: boolean; // Centang biru resmi (Verified Badge)
+  isDeveloper?: boolean; // Centang kuning resmi (Developer Resmi TAMVESTA)
+  badgeType?: 'blue' | 'yellow' | 'developer'; // Tipe lencana akun
+  followersCountDisplay?: string; // Tampilan pengikut kustom (misal: "1,1M")
   kelas?: string;
   classGrade?: string;
   classMajor?: string;
@@ -31,6 +34,32 @@ export interface User {
   followers?: string[]; // Daftar ID pengikut
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RefreshSignal {
+  id: string;
+  userId: string;
+  userName: string;
+  userUsername: string;
+  userKelas?: string;
+  timestamp: string; // ISO string
+  formattedTime?: string;
+  status: 'received' | 'processed';
+}
+
+export interface ModerationLog {
+  id: string;
+  action: 'reset_avatar' | 'delete_post' | 'delete_story';
+  targetUserId: string;
+  targetUserName: string;
+  targetUsername: string;
+  targetUserKelas?: string;
+  reason: string;
+  moderatorId: string;
+  moderatorName: string;
+  moderatorUsername: string;
+  timestamp: string;
+  details?: string;
 }
 
 export interface PasswordResetRequest {
@@ -255,6 +284,9 @@ export interface PostComment {
   authorName: string;
   authorUsername: string;
   authorAvatar?: string;
+  authorIsVerified?: boolean;
+  authorIsDeveloper?: boolean;
+  authorBadgeType?: 'blue' | 'yellow' | 'developer';
   content: string;
   createdAt: string;
   replyToCommentId?: string;
@@ -271,6 +303,9 @@ export interface StudentPost {
   authorKelas?: string;
   authorAvatar?: string;
   authorIsVerified?: boolean;
+  authorIsDeveloper?: boolean;
+  authorBadgeType?: 'blue' | 'yellow' | 'developer';
+  isPinned?: boolean; // Pinned feed feature
   caption: string;
   mediaType: 'photo' | 'video' | 'none';
   mediaUrl?: string;
@@ -288,6 +323,8 @@ export interface Story {
   authorAvatar?: string;
   authorKelas?: string;
   authorIsVerified?: boolean;
+  authorIsDeveloper?: boolean;
+  authorBadgeType?: 'blue' | 'yellow' | 'developer';
   mediaType: 'photo' | 'video';
   mediaUrl: string;
   caption?: string;

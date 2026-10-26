@@ -685,6 +685,28 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_angga_satpam:b970654ecf6fa094",
       "createdAt": "2026-10-24T08:22:47.082Z",
       "updatedAt": "2026-10-24T08:22:47.082Z"
+    },
+    {
+      "id": "user_support_tamvesta",
+      "username": "Tamvesta",
+      "name": "Support TAMVESTA",
+      "role": "support",
+      "jabatan": "Developer Resmi TAMVESTA",
+      "initialPassword": "Salamdanbahagia",
+      "password": "Salamdanbahagia",
+      "passwordHash": "b10ec402c4d6ab3435a3e6406088e71e5b5ee72d41b2a27b8ae96a9f49ed9ce1523cce23d31c3b9e6d7cf1f705a73d3f822406e4294b9abdc1b77bf072f5d6f9",
+      "salt": "408e73e178c5717ff8154faf717609b7",
+      "mustChangePassword": false,
+      "isActive": true,
+      "isVerified": true,
+      "isDeveloper": true,
+      "badgeType": "developer",
+      "followersCountDisplay": "1,1M",
+      "avatarUrl": "/assets/tamvesta_mascot.jpg",
+      "bio": "Akun Resmi Developer & Layanan Dukungan Teknis TAMVESTA Perguruan Tamansiswa Batam.",
+      "qrToken": "TAMVESTA:STUDENT:user_support_tamvesta:dev_token",
+      "createdAt": "2026-10-26T03:05:51.546Z",
+      "updatedAt": "2026-10-26T03:05:51.566Z"
     }
   ],
   "subjects": [],
@@ -708,5 +730,7 @@
   "deletedUserIds": [
     "user_siswa_siswa_smp7a_001",
     "siswa.smp7a.001"
-  ]
+  ],
+  "refreshSignals": [],
+  "moderationLogs": []
 }
