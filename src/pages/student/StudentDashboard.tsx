@@ -15,7 +15,7 @@ import { StudentContactModal } from '../../components/StudentContactModal.tsx';
 import { playQuizExitAlertSound } from '../../lib/audio.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
-export type StudentViewTab = StudentNavTab | 'announcements' | 'subjects' | 'library' | 'games';
+export type StudentViewTab = StudentNavTab | 'articles' | 'announcements' | 'subjects' | 'library' | 'games';
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -34,7 +34,7 @@ export const StudentDashboard: React.FC = () => {
   });
 
   const isNavTab = (tab: StudentViewTab): tab is StudentNavTab => {
-    return ['home', 'articles', 'quiz', 'archive', 'games', 'qr', 'profile'].includes(tab);
+    return ['home', 'quiz', 'archive', 'games', 'qr', 'profile'].includes(tab as any);
   };
 
   React.useEffect(() => {

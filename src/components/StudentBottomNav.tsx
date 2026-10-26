@@ -1,7 +1,7 @@
 import React from 'react';
 import { Home, BookOpen, HelpCircle, Archive, QrCode, User, Lock, Gamepad2 } from 'lucide-react';
 
-export type StudentNavTab = 'home' | 'articles' | 'quiz' | 'archive' | 'games' | 'qr' | 'profile';
+export type StudentNavTab = 'home' | 'quiz' | 'archive' | 'games' | 'qr' | 'profile';
 
 interface StudentBottomNavProps {
   activeTab: StudentNavTab;
@@ -19,11 +19,6 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({
       id: 'home' as const,
       label: 'Beranda',
       icon: Home,
-    },
-    {
-      id: 'articles' as const,
-      label: 'Artikel',
-      icon: BookOpen,
     },
     {
       id: 'quiz' as const,
