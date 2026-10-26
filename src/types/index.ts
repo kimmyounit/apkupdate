@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'guru' | 'siswa' | 'kepala_sekolah' | 'tata_usaha' | 'panitia' | 'support';
+export type UserRole = 'admin' | 'guru' | 'siswa' | 'kepala_sekolah' | 'tata_usaha' | 'panitia' | 'support' | 'satpam';
 
 export interface User {
   id: string;
@@ -437,9 +437,21 @@ export interface AppNotification {
   id: string;
   title: string;
   message: string;
-  type: 'announcement' | 'subject_change' | 'general' | 'tuition' | 'article' | 'social_reply' | 'social_comment';
+  type:
+    | 'announcement'
+    | 'subject_change'
+    | 'general'
+    | 'tuition'
+    | 'article'
+    | 'social_reply'
+    | 'social_comment'
+    | 'dm'
+    | 'note'
+    | 'lost_found'
+    | 'permission'
+    | 'app_report';
   isImportant?: boolean;
-  linkType?: 'announcement' | 'subject' | 'quiz' | 'tuition' | 'article' | 'post' | 'none';
+  linkType?: 'announcement' | 'subject' | 'quiz' | 'tuition' | 'article' | 'post' | 'dm' | 'reports' | 'none';
   linkId?: string;
   targetRole?: UserRole;
   targetClass?: string;
@@ -447,6 +459,217 @@ export interface AppNotification {
   readBy: string[];
   deletedBy: string[];
   createdAt: string;
+}
+
+// -------------------------------------------------------------
+// DIRECT MESSAGES (DM)
+// -------------------------------------------------------------
+export interface DirectMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderUsername: string;
+  senderAvatar?: string;
+  recipientId: string;
+  recipientName: string;
+  recipientUsername: string;
+  recipientAvatar?: string;
+  text?: string;
+  mediaType?: 'text' | 'image' | 'video' | 'audio';
+  mediaUrl?: string; // photo or video URL or base64 data URL
+  audioDuration?: number; // duration in seconds for Voice Notes
+  replyToMessage?: {
+    id: string;
+    senderName: string;
+    text?: string;
+    mediaType?: string;
+  };
+  replyToStory?: {
+    id: string;
+    mediaUrl: string;
+    authorName: string;
+    caption?: string;
+    isExpired?: boolean;
+  };
+  reactions?: Record<string, string[]>; // emoji -> array of userIds
+  isRead: boolean;
+  isDeleted?: boolean;
+  forwardedFrom?: string;
+  createdAt: string; // ISO string
+}
+
+export interface DMConversation {
+  partnerId: string;
+  partnerName: string;
+  partnerUsername: string;
+  partnerAvatar?: string;
+  lastMessage?: DirectMessage;
+  unreadCount: number;
+  updatedAt: string;
+}
+
+// -------------------------------------------------------------
+// CATATAN (NOTES) DENGAN KEDALUWARSA OTOMATIS 24 JAM
+// -------------------------------------------------------------
+export interface StudentNote {
+  id: string;
+  userId: string;
+  userName: string;
+  userUsername: string;
+  userAvatar?: string;
+  userKelas?: string;
+  text: string; // short thought / text + emoji
+  createdAt: string; // ISO string
+  expiresAt: string; // ISO string, exactly createdAt + 24 hours
+}
+
+// -------------------------------------------------------------
+// LOST AND FOUND (BARANG HILANG & DITEMUKAN)
+// -------------------------------------------------------------
+export type LostFoundType = 'lost' | 'found';
+export type LostFoundStatus =
+  | 'menunggu_pemeriksaan'
+  | 'sedang_ditindaklanjuti'
+  | 'barang_ditemukan'
+  | 'menunggu_pengambilan'
+  | 'barang_telah_dikembalikan'
+  | 'laporan_selesai';
+
+export interface LostFoundClaim {
+  id: string;
+  claimantId: string;
+  claimantName: string;
+  claimantUsername: string;
+  claimantKelas?: string;
+  reason: string;
+  identifyingFeatures: string;
+  additionalInfo?: string;
+  status: 'menunggu_verifikasi' | 'sedang_diproses' | 'disetujui' | 'ditolak' | 'barang_telah_dikembalikan';
+  satpamNotes?: string;
+  verifiedBy?: string;
+  handedOverAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LostFoundItem {
+  id: string;
+  type: LostFoundType;
+  reporterId: string;
+  reporterName: string;
+  reporterUsername: string;
+  reporterKelas?: string;
+  itemName: string;
+  category: 'elektronik' | 'alat_tulis' | 'buku_dokumen' | 'pakaian_aksesoris' | 'uang_dompet' | 'kunci' | 'lainnya';
+  photoUrl?: string;
+  description: string;
+  location: string;
+  dateTime: string;
+  storageStatus?: 'masih_di_penemu' | 'diserahkan_ke_satpam';
+  additionalNotes?: string;
+  status: LostFoundStatus;
+  claims?: LostFoundClaim[];
+  handoverOfficer?: string;
+  handoverTime?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// -------------------------------------------------------------
+// PERIZINAN TEMPAT DAN KEGIATAN
+// -------------------------------------------------------------
+export type ActivityPermissionStatus =
+  | 'menunggu_satpam'
+  | 'menunggu_kepsek'
+  | 'perlu_revisi'
+  | 'disetujui'
+  | 'ditolak'
+  | 'kegiatan_selesai';
+
+export interface ActivityPermission {
+  id: string;
+  applicantId: string;
+  applicantName: string;
+  applicantUsername: string;
+  applicantKelas?: string;
+  organizationOrClass: string;
+  activityName: string;
+  purpose: string;
+  requestedLocation: string;
+  activityDate: string;
+  startTime: string;
+  endTime: string;
+  participantCount: number;
+  supervisorTeacher: string;
+  additionalNotes?: string;
+  status: ActivityPermissionStatus;
+  satpamReview?: {
+    reviewedBy: string;
+    safetyChecked: boolean;
+    facilityAvailable: boolean;
+    notes?: string;
+    reviewedAt: string;
+  };
+  principalDecision?: {
+    decidedBy: string;
+    approved: boolean;
+    revisionNote?: string;
+    rejectionReason?: string;
+    decidedAt: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// -------------------------------------------------------------
+// LAPORAN MENGENAI APLIKASI TAMVESTA
+// -------------------------------------------------------------
+export type AppReportType =
+  | 'error_bug'
+  | 'tidak_bisa_login'
+  | 'akun_bermasalah'
+  | 'fitur_tidak_berfungsi'
+  | 'pengumuman_notifikasi'
+  | 'kendala_penggunaan'
+  | 'saran_fitur'
+  | 'lainnya';
+
+export type AppReportStatus =
+  | 'laporan_diterima'
+  | 'sedang_ditinjau'
+  | 'sedang_ditangani'
+  | 'menunggu_informasi'
+  | 'selesai'
+  | 'ditolak';
+
+export interface AppReport {
+  id: string;
+  reporterId: string;
+  reporterName: string;
+  reporterUsername: string;
+  reporterKelas?: string;
+  reportType: AppReportType;
+  title: string;
+  description: string;
+  screenshotUrl?: string;
+  incidentTime?: string;
+  additionalNotes?: string;
+  status: AppReportStatus;
+  targetHandler: 'administrasi' | 'support' | 'both';
+  adminResponse?: {
+    respondedBy: string;
+    message: string;
+    respondedAt: string;
+  };
+  supportResponse?: {
+    respondedBy: string;
+    technicalNotes: string;
+    resolvedAt?: string;
+    respondedAt: string;
+  };
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // -------------------------------------------------------------

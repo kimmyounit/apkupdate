@@ -44,8 +44,12 @@ import { useAuth } from '../../context/AuthContext.tsx';
 
 export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpenScanner }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'articles' | 'finance' | 'tu_reports'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'articles' | 'finance' | 'tu_reports' | 'permissions'>('overview');
   const [tuReports, setTuReports] = useState<any[]>([]);
+  const [permissions, setPermissions] = useState<any[]>([]);
+  const [reviewingPermId, setReviewingPermId] = useState<string | null>(null);
+  const [kepsekRevisionNote, setKepsekRevisionNote] = useState('');
+  const [kepsekRejectionReason, setKepsekRejectionReason] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Data states
@@ -70,7 +74,7 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [staffList, studentList, attEvents, artList, trxList, subjList, repList] = await Promise.all([
+      const [staffList, studentList, attEvents, artList, trxList, subjList, repList, permList] = await Promise.all([
         api.getStaff(),
         api.getStudents(),
         api.getAttendanceEvents(),
@@ -78,8 +82,10 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
         api.getTuitionTransactions(),
         api.getSubjects(),
         api.getTuMonthlyReports(),
+        api.getActivityPermissions().catch(() => []),
       ]);
       setTuReports(repList || []);
+      setPermissions(permList || []);
 
       setTeachers(staffList);
       setStudents(studentList);
@@ -276,6 +282,21 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
           <span>Laporan Tata Usaha ({tuReports.length})</span>
           {tuReports.length > 0 && (
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('permissions')}
+          className={`py-3 px-4 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'permissions'
+              ? 'border-purple-600 text-purple-700'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <School className="w-4 h-4" />
+          <span>Persetujuan Izin Kegiatan ({permissions.filter((p) => p.status === 'menunggu_kepsek').length})</span>
+          {permissions.filter((p) => p.status === 'menunggu_kepsek').length > 0 && (
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
           )}
         </button>
       </div>
@@ -852,6 +873,211 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
                       ✓ Disahkan Pemimpin Perguruan & Para Kepala Sekolah
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 6: PERSETUJUAN IZIN TEMPAT & KEGIATAN */}
+      {activeTab === 'permissions' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <School className="w-5 h-5 text-purple-600" />
+                <h2 className="text-lg sm:text-xl font-black text-slate-900">
+                  Persetujuan Izin Tempat & Kegiatan Siswa
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
+                Tinjau rekomendasi pemeriksaan fasilitas dan keamanan dari Satpam Sekolah, lalu berikan keputusan resmi (Disetujui, Perlu Revisi, atau Ditolak).
+              </p>
+            </div>
+          </div>
+
+          {permissions.length === 0 ? (
+            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-xs text-slate-400">
+              Belum ada permohonan izin tempat kegiatan yang diajukan.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {permissions.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div>
+                      <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                        {p.organizationOrClass}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900 mt-1">{p.activityName}</h3>
+                      <p className="text-xs text-slate-500">{p.purpose}</p>
+                    </div>
+
+                    <span
+                      className={`text-xs font-black px-3 py-1 rounded-full uppercase shrink-0 ${
+                        p.status === 'disetujui'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : p.status === 'ditolak'
+                          ? 'bg-rose-100 text-rose-800'
+                          : p.status === 'perlu_revisi'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}
+                    >
+                      {p.status.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50 p-3.5 rounded-2xl">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-semibold">Tempat:</span>
+                      <strong className="text-slate-800">{p.requestedLocation}</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-semibold">Tanggal & Jam:</span>
+                      <strong className="text-slate-800">{p.activityDate} ({p.startTime}-{p.endTime})</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-semibold">Peserta:</span>
+                      <strong className="text-slate-800">{p.participantCount} Orang</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-semibold">Guru Pembimbing:</span>
+                      <strong className="text-slate-800">{p.supervisorTeacher || '-'}</strong>
+                    </div>
+                  </div>
+
+                  {/* Rekomendasi Satpam */}
+                  <div className="p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl text-xs space-y-1">
+                    <span className="font-bold text-amber-900 block flex items-center gap-1.5">
+                      <Shield className="w-4 h-4 text-amber-600" />
+                      Hasil Pemeriksaan Satpam Sekolah:
+                    </span>
+                    {p.satpamReview ? (
+                      <div className="text-slate-700 space-y-0.5 mt-1">
+                        <p>✓ Keamanan: {p.satpamReview.safetyChecked ? 'Layak & Memadai' : 'Perlu Pengawasan Ekstra'}</p>
+                        <p>✓ Fasilitas: {p.satpamReview.facilityAvailable ? 'Ruangan Kosong & Siap Dipakai' : 'Ada Jadwal Lain'}</p>
+                        {p.satpamReview.notes && <p>Catatan Satpam: <em>"{p.satpamReview.notes}"</em></p>}
+                        <span className="text-[10px] text-slate-400 block">Diverifikasi oleh: {p.satpamReview.reviewedBy}</span>
+                      </div>
+                    ) : (
+                      <p className="text-amber-800 text-[11px] font-medium">Belum diverifikasi oleh petugas Satpam.</p>
+                    )}
+                  </div>
+
+                  {/* Keputusan Kepala Sekolah Controls */}
+                  {reviewingPermId === p.id ? (
+                    <div className="p-4 bg-purple-50 rounded-2xl border border-purple-200 space-y-3">
+                      <h4 className="text-xs font-black text-purple-900">Form Keputusan Kepala Sekolah</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <label className="font-bold text-slate-700 block mb-1">Catatan Revisi (Jika Meminta Revisi)</label>
+                          <input
+                            type="text"
+                            value={kepsekRevisionNote}
+                            onChange={(e) => setKepsekRevisionNote(e.target.value)}
+                            placeholder="Misal: Ubah jam kegiatan ke 15:00..."
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-bold text-slate-700 block mb-1">Alasan Penolakan (Jika Ditolak)</label>
+                          <input
+                            type="text"
+                            value={kepsekRejectionReason}
+                            onChange={(e) => setKepsekRejectionReason(e.target.value)}
+                            placeholder="Misal: Bertabrakan dengan ujian semester..."
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          onClick={() => setReviewingPermId(null)}
+                          className="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const updated = await api.decideActivityPermissionPrincipal(p.id, {
+                                approved: false,
+                                isRevision: true,
+                                revisionNote: kepsekRevisionNote.trim() || undefined,
+                              });
+                              setPermissions(prev => prev.map(item => item.id === updated.id ? updated : item));
+                              setReviewingPermId(null);
+                              setKepsekRevisionNote('');
+                              setActionSuccess('Permintaan revisi berhasil dikirim ke siswa');
+                            } catch (e: any) {
+                              setActionError(e.message);
+                            }
+                          }}
+                          className="px-3.5 py-1.5 bg-amber-600 text-white rounded-xl text-xs font-bold"
+                        >
+                          Minta Revisi
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const updated = await api.decideActivityPermissionPrincipal(p.id, {
+                                approved: false,
+                                rejectionReason: kepsekRejectionReason.trim() || undefined,
+                              });
+                              setPermissions(prev => prev.map(item => item.id === updated.id ? updated : item));
+                              setReviewingPermId(null);
+                              setKepsekRejectionReason('');
+                              setActionSuccess('Pengajuan izin kegiatan ditolak');
+                            } catch (e: any) {
+                              setActionError(e.message);
+                            }
+                          }}
+                          className="px-3.5 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold"
+                        >
+                          Tolak Izin
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const updated = await api.decideActivityPermissionPrincipal(p.id, {
+                                approved: true,
+                              });
+                              setPermissions(prev => prev.map(item => item.id === updated.id ? updated : item));
+                              setReviewingPermId(null);
+                              setActionSuccess('Pengajuan izin kegiatan BERHASIL DISETUJUI!');
+                            } catch (e: any) {
+                              setActionError(e.message);
+                            }
+                          }}
+                          className="px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20"
+                        >
+                          ✓ Setujui Izin
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <span className="text-xs text-slate-400">
+                        Pemohon: <strong>{p.applicantName}</strong> ({p.applicantKelas || '-'})
+                      </span>
+                      <button
+                        onClick={() => {
+                          setReviewingPermId(p.id);
+                          setKepsekRevisionNote('');
+                          setKepsekRejectionReason('');
+                        }}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/20 transition"
+                      >
+                        Beri Keputusan Kepala Sekolah
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

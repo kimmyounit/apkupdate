@@ -42,12 +42,18 @@ import type {
 } from '../../types/index.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
-type TuTab = 'bills' | 'finance' | 'documents' | 'chat' | 'backup';
+type TuTab = 'bills' | 'finance' | 'documents' | 'chat' | 'reports' | 'backup';
 
 export const TuDashboard: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TuTab>('bills');
   const [loading, setLoading] = useState(false);
+
+  // --- Reports State ---
+  const [appReports, setAppReports] = useState<any[]>([]);
+  const [respondingReportId, setRespondingReportId] = useState<string | null>(null);
+  const [tuResponseMessage, setTuResponseMessage] = useState('');
+  const [tuNewStatus, setTuNewStatus] = useState<any>('sedang_ditangani');
 
   // --- 1. Bills State ---
   const [bills, setBills] = useState<TuitionBill[]>([]);
@@ -112,13 +118,14 @@ export const TuDashboard: React.FC = () => {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [bList, tList, dList, cList, sList, rList] = await Promise.all([
+      const [bList, tList, dList, cList, sList, rList, repList] = await Promise.all([
         api.getTuitionBills(),
         api.getTuitionTransactions(),
         api.getTuDocuments(),
         api.getTuChatMessages(),
         api.getStudents(),
         api.getTuMonthlyReports(),
+        api.getAppReports().catch(() => []),
       ]);
       setBills(bList);
       setTransactions(tList);
@@ -126,6 +133,7 @@ export const TuDashboard: React.FC = () => {
       setChatMessages(cList);
       setAllStudents(sList);
       setMonthlyReports(rList || []);
+      setAppReports(repList || []);
     } catch (e) {
       console.error('Failed to load TU data:', e);
     } finally {
@@ -929,6 +937,18 @@ Tembusan:
         </button>
 
         <button
+          onClick={() => setActiveTab('reports')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+            activeTab === 'reports'
+              ? 'bg-emerald-700 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>Laporan Layanan Siswa ({appReports.filter((r) => r.targetHandler === 'administrasi' || r.targetHandler === 'both').length})</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('backup')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
             activeTab === 'backup'
@@ -1433,6 +1453,156 @@ Tembusan:
       )}
 
       
+      {/* ============================================================= */}
+      {/* 4.5. TAB LAPORAN LAYANAN SISWA (TATA USAHA)                  */}
+      {/* ============================================================= */}
+      {activeTab === 'reports' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-emerald-700" />
+                <h2 className="text-xl font-black text-slate-900">
+                  Laporan Layanan & Administrasi Siswa
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Laporan dan pertanyaan administrasi yang diajukan oleh siswa dan civitas sekolah melalui menu bantuan TAMVESTA.
+              </p>
+            </div>
+          </div>
+
+          {appReports.filter((r) => r.targetHandler === 'administrasi' || r.targetHandler === 'both').length === 0 ? (
+            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-xs text-slate-400">
+              Belum ada tiket laporan administrasi yang masuk.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {appReports
+                .filter((r) => r.targetHandler === 'administrasi' || r.targetHandler === 'both')
+                .map((r) => (
+                  <div
+                    key={r.id}
+                    className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                      <div>
+                        <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800">
+                          {r.reportType.replace(/_/g, ' ')}
+                        </span>
+                        <h3 className="text-base font-black text-slate-900 mt-1">{r.title}</h3>
+                        <p className="text-xs text-slate-500">
+                          Pelapor: <strong>{r.reporterName}</strong> ({r.reporterKelas || '-'}) • {new Date(r.createdAt).toLocaleDateString('id-ID')}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`text-xs font-black px-3 py-1 rounded-full uppercase shrink-0 ${
+                          r.status === 'selesai'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : r.status === 'ditolak'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {r.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-700 bg-slate-50 p-3.5 rounded-2xl whitespace-pre-wrap leading-relaxed">
+                      {r.description}
+                    </p>
+
+                    {r.screenshotUrl && (
+                      <div className="max-w-xs rounded-xl overflow-hidden border">
+                        <img src={r.screenshotUrl} alt="Screenshot" className="w-full max-h-36 object-cover" />
+                      </div>
+                    )}
+
+                    {r.adminResponse && (
+                      <div className="p-3 bg-teal-50 border border-teal-200 rounded-2xl text-xs space-y-1">
+                        <span className="font-bold text-teal-900 block">
+                          Tanggapan Resmi Tata Usaha ({r.adminResponse.respondedBy}):
+                        </span>
+                        <p className="text-slate-700">{r.adminResponse.message}</p>
+                      </div>
+                    )}
+
+                    {respondingReportId === r.id ? (
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                        <h4 className="text-xs font-bold text-slate-800">Beri Tanggapan Tata Usaha</h4>
+                        <textarea
+                          rows={2}
+                          value={tuResponseMessage}
+                          onChange={(e) => setTuResponseMessage(e.target.value)}
+                          placeholder="Tuliskan jawaban atau konfirmasi untuk siswa..."
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                        />
+                        <div className="flex items-center justify-between">
+                          <select
+                            value={tuNewStatus}
+                            onChange={(e) => setTuNewStatus(e.target.value as any)}
+                            className="text-xs font-semibold px-3 py-1.5 bg-white border border-slate-200 rounded-xl"
+                          >
+                            <option value="sedang_ditangani">Sedang Ditangani</option>
+                            <option value="selesai">Selesai / Teratasi</option>
+                            <option value="menunggu_informasi">Menunggu Informasi Tambahan</option>
+                            <option value="ditolak">Ditolak</option>
+                          </select>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setRespondingReportId(null)}
+                              className="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (!tuResponseMessage.trim()) return alert('Tanggapan tidak boleh kosong');
+                                try {
+                                  const updated = await api.respondAppReportAdmin(r.id, {
+                                    message: tuResponseMessage.trim(),
+                                    newStatus: tuNewStatus,
+                                  });
+                                  setAppReports(prev => prev.map(item => item.id === updated.id ? updated : item));
+                                  setRespondingReportId(null);
+                                  setTuResponseMessage('');
+                                  alert('Tanggapan berhasil dikirim ke siswa!');
+                                } catch (e: any) {
+                                  alert(e.message);
+                                }
+                              }}
+                              className="px-4 py-1.5 bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs"
+                            >
+                              Kirim Tanggapan
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-end pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRespondingReportId(r.id);
+                            setTuResponseMessage(r.adminResponse?.message || '');
+                          }}
+                          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs transition"
+                        >
+                          Beri Tanggapan Siswa
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ============================================================= */}
       {/* 5. TAB REKAP & BACKUP BULANAN (KIRIM KE PEMIMPIN & KEPSEK) */}
       {/* ============================================================= */}

@@ -2153,8 +2153,433 @@ app.post('/api/games/rooms/:code/leave', authMiddleware, (req: AuthenticatedRequ
   return res.json({ room });
 });
 
+// =============================================================
+// DIRECT MESSAGES (DM) API
+// =============================================================
 
+app.get('/api/dm/conversations', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const list = db.getDMConversations(req.user!.id);
+    return res.json({ conversations: list });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
+app.get('/api/dm/messages/:partnerId', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { partnerId } = req.params;
+    const messages = db.getDirectMessages(req.user!.id, partnerId);
+    db.markMessagesAsRead(partnerId, req.user!.id);
+    return res.json({ messages });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/dm/messages', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const {
+      recipientId,
+      recipientName,
+      recipientUsername,
+      recipientAvatar,
+      text,
+      mediaType,
+      mediaUrl,
+      audioDuration,
+      replyToMessage,
+      replyToStory,
+      forwardedFrom,
+    } = req.body;
+
+    if (!recipientId) {
+      return res.status(400).json({ error: 'recipientId wajib diisi.' });
+    }
+
+    const message = db.sendDirectMessage({
+      senderId: req.user!.id,
+      senderName: req.user!.name,
+      senderUsername: req.user!.username,
+      senderAvatar: req.user!.avatarUrl,
+      recipientId,
+      recipientName: recipientName || 'Pengguna',
+      recipientUsername: recipientUsername || '',
+      recipientAvatar,
+      text,
+      mediaType,
+      mediaUrl,
+      audioDuration,
+      replyToMessage,
+      replyToStory,
+      forwardedFrom,
+    });
+
+    return res.json({ message });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/dm/messages/:id/react', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { emoji } = req.body;
+    if (!emoji) return res.status(400).json({ error: 'Emoji wajib diisi.' });
+    const updated = db.reactToDirectMessage(id, emoji, req.user!.id);
+    if (!updated) return res.status(404).json({ error: 'Pesan tidak ditemukan.' });
+    return res.json({ message: updated });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/dm/messages/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const ok = db.deleteDirectMessage(id, req.user!.id);
+    if (!ok) return res.status(404).json({ error: 'Pesan tidak ditemukan atau tidak dapat dihapus.' });
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================================
+// CATATAN (NOTES) - KEDALUWARSA OTOMATIS 24 JAM
+// =============================================================
+
+app.get('/api/notes/active', optionalAuthMiddleware, (_req, res) => {
+  try {
+    const notes = db.getActiveNotes();
+    return res.json({ notes });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/notes', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'Isi catatan tidak boleh kosong.' });
+    }
+    const note = db.createOrUpdateNote({
+      userId: req.user!.id,
+      userName: req.user!.name,
+      userUsername: req.user!.username,
+      userAvatar: req.user!.avatarUrl,
+      userKelas: req.user!.kelas,
+      text,
+    });
+    return res.json({ note });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/notes', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const ok = db.deleteNote(req.user!.id);
+    return res.json({ success: ok });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================================
+// LOST AND FOUND (BARANG HILANG & DITEMUKAN)
+// =============================================================
+
+app.get('/api/lost-found', optionalAuthMiddleware, (req, res) => {
+  try {
+    const { type, status } = req.query;
+    const items = db.getLostFoundItems({
+      type: type as any,
+      status: status as string,
+    });
+    return res.json({ items });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/lost-found', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { type, itemName, category, photoUrl, description, location, dateTime, storageStatus, additionalNotes } = req.body;
+    if (!itemName || !description || !location) {
+      return res.status(400).json({ error: 'Nama barang, deskripsi, dan lokasi wajib diisi.' });
+    }
+    const item = db.createLostFoundItem({
+      type,
+      reporterId: req.user!.id,
+      reporterName: req.user!.name,
+      reporterUsername: req.user!.username,
+      reporterKelas: req.user!.kelas,
+      itemName,
+      category,
+      photoUrl,
+      description,
+      location,
+      dateTime,
+      storageStatus,
+      additionalNotes,
+    });
+    return res.json({ item });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/lost-found/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const item = db.updateLostFoundItem(id, req.body);
+    if (!item) return res.status(404).json({ error: 'Barang tidak ditemukan.' });
+    return res.json({ item });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/lost-found/:id/claim', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { reason, identifyingFeatures, additionalInfo } = req.body;
+    if (!reason || !identifyingFeatures) {
+      return res.status(400).json({ error: 'Alasan klaim dan ciri-ciri khusus wajib diisi.' });
+    }
+    const item = db.claimLostFoundItem(id, {
+      claimantId: req.user!.id,
+      claimantName: req.user!.name,
+      claimantUsername: req.user!.username,
+      claimantKelas: req.user!.kelas,
+      reason,
+      identifyingFeatures,
+      additionalInfo,
+    });
+    if (!item) return res.status(404).json({ error: 'Barang tidak ditemukan.' });
+    return res.json({ item });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/lost-found/:id/claims/:claimId', authMiddleware, requireRole(['satpam', 'admin']), (req: AuthenticatedRequest, res) => {
+  try {
+    const { id, claimId } = req.params;
+    const { status, satpamNotes } = req.body;
+    const item = db.updateLostFoundClaim(id, claimId, {
+      status,
+      satpamNotes,
+      verifiedBy: req.user!.name,
+    });
+    if (!item) return res.status(404).json({ error: 'Klaim atau barang tidak ditemukan.' });
+    return res.json({ item });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================================
+// PERIZINAN TEMPAT DAN KEGIATAN
+// =============================================================
+
+app.get('/api/activity-permissions', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const isOfficer = ['satpam', 'kepala_sekolah', 'admin', 'guru'].includes(req.user!.role);
+    const filterId = isOfficer ? undefined : req.user!.id;
+    const permissions = db.getActivityPermissions(filterId);
+    return res.json({ permissions });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/activity-permissions', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const {
+      organizationOrClass,
+      activityName,
+      purpose,
+      requestedLocation,
+      activityDate,
+      startTime,
+      endTime,
+      participantCount,
+      supervisorTeacher,
+      additionalNotes,
+    } = req.body;
+
+    if (!organizationOrClass || !activityName || !requestedLocation || !activityDate) {
+      return res.status(400).json({ error: 'Organisasi, nama kegiatan, lokasi, dan tanggal wajib diisi.' });
+    }
+
+    const perm = db.createActivityPermission({
+      applicantId: req.user!.id,
+      applicantName: req.user!.name,
+      applicantUsername: req.user!.username,
+      applicantKelas: req.user!.kelas,
+      organizationOrClass,
+      activityName,
+      purpose,
+      requestedLocation,
+      activityDate,
+      startTime,
+      endTime,
+      participantCount: Number(participantCount) || 1,
+      supervisorTeacher,
+      additionalNotes,
+    });
+
+    return res.json({ permission: perm });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/activity-permissions/:id/satpam-review', authMiddleware, requireRole(['satpam', 'admin']), (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { safetyChecked, facilityAvailable, notes } = req.body;
+    const perm = db.reviewActivityPermissionSatpam(id, {
+      reviewedBy: req.user!.name,
+      safetyChecked: !!safetyChecked,
+      facilityAvailable: !!facilityAvailable,
+      notes,
+    });
+    if (!perm) return res.status(404).json({ error: 'Perizinan tidak ditemukan.' });
+    return res.json({ permission: perm });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/activity-permissions/:id/principal-decision', authMiddleware, requireRole(['kepala_sekolah', 'admin']), (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { approved, isRevision, revisionNote, rejectionReason } = req.body;
+    const perm = db.decideActivityPermissionPrincipal(id, {
+      decidedBy: req.user!.name,
+      approved: !!approved,
+      isRevision: !!isRevision,
+      revisionNote,
+      rejectionReason,
+    });
+    if (!perm) return res.status(404).json({ error: 'Perizinan tidak ditemukan.' });
+    return res.json({ permission: perm });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/activity-permissions/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const perm = db.updateActivityPermission(id, req.body);
+    if (!perm) return res.status(404).json({ error: 'Perizinan tidak ditemukan.' });
+    return res.json({ permission: perm });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================================
+// LAPORAN APLIKASI TAMVESTA
+// =============================================================
+
+app.get('/api/app-reports', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const role = req.user!.role;
+    let targetHandler: 'administrasi' | 'support' | undefined;
+    let reporterId: string | undefined;
+
+    if (role === 'siswa') {
+      reporterId = req.user!.id;
+    } else if (role === 'tata_usaha') {
+      targetHandler = 'administrasi';
+    } else if (role === 'support') {
+      targetHandler = 'support';
+    }
+
+    const reports = db.getAppReports(reporterId, targetHandler);
+    return res.json({ reports });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/app-reports', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { reportType, title, description, screenshotUrl, incidentTime, additionalNotes, targetHandler } = req.body;
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Judul dan penjelasan laporan wajib diisi.' });
+    }
+
+    const report = db.createAppReport({
+      reporterId: req.user!.id,
+      reporterName: req.user!.name,
+      reporterUsername: req.user!.username,
+      reporterKelas: req.user!.kelas,
+      reportType,
+      title,
+      description,
+      screenshotUrl,
+      incidentTime,
+      additionalNotes,
+      targetHandler: targetHandler || (reportType === 'error_bug' || reportType === 'tidak_bisa_login' ? 'support' : 'administrasi'),
+    });
+
+    return res.json({ report });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/app-reports/:id/admin-response', authMiddleware, requireRole(['tata_usaha', 'admin']), (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { message, newStatus } = req.body;
+    if (!message) return res.status(400).json({ error: 'Tanggapan wajib diisi.' });
+    const rep = db.respondAppReportAdmin(id, {
+      respondedBy: req.user!.name,
+      message,
+      newStatus,
+    });
+    if (!rep) return res.status(404).json({ error: 'Laporan tidak ditemukan.' });
+    return res.json({ report: rep });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/app-reports/:id/support-response', authMiddleware, requireRole(['support', 'admin']), (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { technicalNotes, newStatus } = req.body;
+    if (!technicalNotes) return res.status(400).json({ error: 'Catatan teknis wajib diisi.' });
+    const rep = db.respondAppReportSupport(id, {
+      respondedBy: req.user!.name,
+      technicalNotes,
+      newStatus,
+    });
+    if (!rep) return res.status(404).json({ error: 'Laporan tidak ditemukan.' });
+    return res.json({ report: rep });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/app-reports/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const rep = db.updateAppReport(id, req.body);
+    if (!rep) return res.status(404).json({ error: 'Laporan tidak ditemukan.' });
+    return res.json({ report: rep });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 // -------------------------------------------------------------
 // VITE INTEGRATION & STATIC SERVING

@@ -2006,4 +2006,513 @@ export const offlineStore = {
     const db = loadDB();
     return Array.isArray((db as any).moderationLogs) ? (db as any).moderationLogs : [];
   },
+
+  // -------------------------------------------------------------
+  // DIRECT MESSAGES (DM)
+  // -------------------------------------------------------------
+  getDirectMessages(userId1: string, userId2: string): any[] {
+    const db = loadDB();
+    if (!Array.isArray((db as any).directMessages)) (db as any).directMessages = [];
+    return (db as any).directMessages
+      .filter((m: any) => {
+        const match =
+          (m.senderId === userId1 && m.recipientId === userId2) ||
+          (m.senderId === userId2 && m.recipientId === userId1);
+        return match && !m.isDeleted;
+      })
+      .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  },
+
+  getDMConversations(userId: string): any[] {
+    const db = loadDB();
+    if (!Array.isArray((db as any).directMessages)) (db as any).directMessages = [];
+    const conversationMap = new Map<string, { lastMessage: any; unreadCount: number }>();
+
+    for (const m of (db as any).directMessages) {
+      if (m.isDeleted) continue;
+      let partnerId: string | null = null;
+      if (m.senderId === userId) {
+        partnerId = m.recipientId;
+      } else if (m.recipientId === userId) {
+        partnerId = m.senderId;
+      }
+      if (!partnerId) continue;
+
+      const existing = conversationMap.get(partnerId);
+      const isUnread = m.recipientId === userId && !m.isRead;
+      if (!existing) {
+        conversationMap.set(partnerId, {
+          lastMessage: m,
+          unreadCount: isUnread ? 1 : 0,
+        });
+      } else {
+        if (new Date(m.createdAt).getTime() > new Date(existing.lastMessage.createdAt).getTime()) {
+          existing.lastMessage = m;
+        }
+        if (isUnread) {
+          existing.unreadCount += 1;
+        }
+      }
+    }
+
+    const conversations: any[] = [];
+    conversationMap.forEach((conv, partnerId) => {
+      const partner = (db.users || []).find((u) => u.id === partnerId || u.username === partnerId);
+      conversations.push({
+        partnerId,
+        partnerName: partner ? partner.name : (conv.lastMessage.senderId === partnerId ? conv.lastMessage.senderName : conv.lastMessage.recipientName),
+        partnerUsername: partner ? partner.username : (conv.lastMessage.senderId === partnerId ? conv.lastMessage.senderUsername : conv.lastMessage.recipientUsername),
+        partnerAvatar: partner?.avatarUrl,
+        lastMessage: conv.lastMessage,
+        unreadCount: conv.unreadCount,
+        updatedAt: conv.lastMessage.createdAt,
+      });
+    });
+
+    return conversations.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  },
+
+  sendDirectMessage(payload: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).directMessages)) (db as any).directMessages = [];
+    const now = new Date().toISOString();
+    const newMsg: any = {
+      id: `dm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      senderId: payload.senderId,
+      senderName: payload.senderName,
+      senderUsername: payload.senderUsername,
+      senderAvatar: payload.senderAvatar,
+      recipientId: payload.recipientId,
+      recipientName: payload.recipientName,
+      recipientUsername: payload.recipientUsername,
+      recipientAvatar: payload.recipientAvatar,
+      text: payload.text || '',
+      mediaType: payload.mediaType || 'text',
+      mediaUrl: payload.mediaUrl,
+      audioDuration: payload.audioDuration,
+      replyToMessage: payload.replyToMessage,
+      replyToStory: payload.replyToStory,
+      reactions: {},
+      isRead: false,
+      forwardedFrom: payload.forwardedFrom,
+      createdAt: now,
+    };
+
+    (db as any).directMessages.push(newMsg);
+    saveDB(db);
+    return newMsg;
+  },
+
+  reactToDirectMessage(messageId: string, emoji: string, userId: string): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).directMessages)) return null;
+    const msg = (db as any).directMessages.find((m: any) => m.id === messageId);
+    if (!msg) return null;
+
+    if (!msg.reactions) msg.reactions = {};
+    const usersForEmoji = msg.reactions[emoji] || [];
+    const alreadyHas = usersForEmoji.includes(userId);
+
+    for (const key of Object.keys(msg.reactions)) {
+      msg.reactions[key] = msg.reactions[key].filter((id: string) => id !== userId);
+      if (msg.reactions[key].length === 0) {
+        delete msg.reactions[key];
+      }
+    }
+
+    if (!alreadyHas) {
+      if (!msg.reactions[emoji]) msg.reactions[emoji] = [];
+      msg.reactions[emoji].push(userId);
+    }
+
+    saveDB(db);
+    return msg;
+  },
+
+  deleteDirectMessage(messageId: string, userId: string): boolean {
+    const db = loadDB();
+    if (!Array.isArray((db as any).directMessages)) return false;
+    const msg = (db as any).directMessages.find((m: any) => m.id === messageId);
+    if (!msg) return false;
+    if (msg.senderId === userId || msg.recipientId === userId) {
+      msg.isDeleted = true;
+      saveDB(db);
+      return true;
+    }
+    return false;
+  },
+
+  markMessagesAsRead(senderId: string, recipientId: string): void {
+    const db = loadDB();
+    if (!Array.isArray((db as any).directMessages)) return;
+    let modified = false;
+    for (const m of (db as any).directMessages) {
+      if (m.senderId === senderId && m.recipientId === recipientId && !m.isRead) {
+        m.isRead = true;
+        modified = true;
+      }
+    }
+    if (modified) saveDB(db);
+  },
+
+  // -------------------------------------------------------------
+  // CATATAN (NOTES) - KEDALUWARSA 24 JAM
+  // -------------------------------------------------------------
+  getActiveNotes(): any[] {
+    const db = loadDB();
+    if (!Array.isArray((db as any).studentNotes)) (db as any).studentNotes = [];
+    const now = Date.now();
+    const active = (db as any).studentNotes.filter((n: any) => {
+      const exp = new Date(n.expiresAt).getTime();
+      return exp > now;
+    });
+
+    if (active.length !== (db as any).studentNotes.length) {
+      (db as any).studentNotes = active;
+      saveDB(db);
+    }
+
+    return (db as any).studentNotes.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  createOrUpdateNote(payload: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).studentNotes)) (db as any).studentNotes = [];
+    (db as any).studentNotes = (db as any).studentNotes.filter((n: any) => n.userId !== payload.userId);
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const newNote: any = {
+      id: `note_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: payload.userId,
+      userName: payload.userName,
+      userUsername: payload.userUsername,
+      userAvatar: payload.userAvatar,
+      userKelas: payload.userKelas,
+      text: payload.text.trim(),
+      createdAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+    };
+
+    (db as any).studentNotes.unshift(newNote);
+    saveDB(db);
+    return newNote;
+  },
+
+  deleteNote(userId: string): boolean {
+    const db = loadDB();
+    if (!Array.isArray((db as any).studentNotes)) return false;
+    const initialLen = (db as any).studentNotes.length;
+    (db as any).studentNotes = (db as any).studentNotes.filter((n: any) => n.userId !== userId);
+    if ((db as any).studentNotes.length !== initialLen) {
+      saveDB(db);
+      return true;
+    }
+    return false;
+  },
+
+  // -------------------------------------------------------------
+  // LOST AND FOUND (BARANG HILANG & DITEMUKAN)
+  // -------------------------------------------------------------
+  getLostFoundItems(filter?: any): any[] {
+    const db = loadDB();
+    if (!Array.isArray((db as any).lostFoundItems)) (db as any).lostFoundItems = [];
+    let list = [...(db as any).lostFoundItems];
+    if (filter?.type) {
+      list = list.filter((i: any) => i.type === filter.type);
+    }
+    if (filter?.status) {
+      list = list.filter((i: any) => i.status === filter.status);
+    }
+    return list.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  createLostFoundItem(payload: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).lostFoundItems)) (db as any).lostFoundItems = [];
+    const now = new Date().toISOString();
+    const newItem: any = {
+      id: `lf_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      type: payload.type || 'lost',
+      reporterId: payload.reporterId || '',
+      reporterName: payload.reporterName || 'Siswa',
+      reporterUsername: payload.reporterUsername || '',
+      reporterKelas: payload.reporterKelas,
+      itemName: (payload.itemName || '').trim(),
+      category: payload.category || 'lainnya',
+      photoUrl: payload.photoUrl,
+      description: (payload.description || '').trim(),
+      location: (payload.location || '').trim(),
+      dateTime: payload.dateTime || now,
+      storageStatus: payload.storageStatus || 'masih_di_penemu',
+      additionalNotes: payload.additionalNotes,
+      status: 'menunggu_pemeriksaan',
+      claims: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    (db as any).lostFoundItems.unshift(newItem);
+    saveDB(db);
+    return newItem;
+  },
+
+  updateLostFoundItem(id: string, updates: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).lostFoundItems)) return null;
+    const item = (db as any).lostFoundItems.find((i: any) => i.id === id);
+    if (!item) return null;
+
+    Object.assign(item, updates, { updatedAt: new Date().toISOString() });
+    saveDB(db);
+    return item;
+  },
+
+  claimLostFoundItem(itemId: string, claimPayload: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).lostFoundItems)) return null;
+    const item = (db as any).lostFoundItems.find((i: any) => i.id === itemId);
+    if (!item) return null;
+
+    if (!Array.isArray(item.claims)) item.claims = [];
+    const now = new Date().toISOString();
+    const newClaim: any = {
+      id: `claim_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      claimantId: claimPayload.claimantId || '',
+      claimantName: claimPayload.claimantName || '',
+      claimantUsername: claimPayload.claimantUsername || '',
+      claimantKelas: claimPayload.claimantKelas,
+      reason: (claimPayload.reason || '').trim(),
+      identifyingFeatures: (claimPayload.identifyingFeatures || '').trim(),
+      additionalInfo: claimPayload.additionalInfo,
+      status: 'menunggu_verifikasi',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    item.claims.unshift(newClaim);
+    item.updatedAt = now;
+    saveDB(db);
+    return item;
+  },
+
+  updateLostFoundClaim(itemId: string, claimId: string, updates: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).lostFoundItems)) return null;
+    const item = (db as any).lostFoundItems.find((i: any) => i.id === itemId);
+    if (!item || !Array.isArray(item.claims)) return null;
+
+    const claim = item.claims.find((c: any) => c.id === claimId);
+    if (!claim) return null;
+
+    Object.assign(claim, updates, { updatedAt: new Date().toISOString() });
+    item.updatedAt = new Date().toISOString();
+
+    if (updates.status === 'barang_telah_dikembalikan') {
+      item.status = 'barang_telah_dikembalikan';
+      item.handoverOfficer = updates.verifiedBy;
+      item.handoverTime = new Date().toISOString();
+    }
+
+    saveDB(db);
+    return item;
+  },
+
+  // -------------------------------------------------------------
+  // PERIZINAN TEMPAT DAN KEGIATAN
+  // -------------------------------------------------------------
+  getActivityPermissions(applicantId?: string): any[] {
+    const db = loadDB();
+    if (!Array.isArray((db as any).activityPermissions)) (db as any).activityPermissions = [];
+    let list = [...(db as any).activityPermissions];
+    if (applicantId) {
+      list = list.filter((p: any) => p.applicantId === applicantId);
+    }
+    return list.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  createActivityPermission(payload: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).activityPermissions)) (db as any).activityPermissions = [];
+    const now = new Date().toISOString();
+    const newPerm: any = {
+      id: `perm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      applicantId: payload.applicantId || '',
+      applicantName: payload.applicantName || '',
+      applicantUsername: payload.applicantUsername || '',
+      applicantKelas: payload.applicantKelas,
+      organizationOrClass: (payload.organizationOrClass || '').trim(),
+      activityName: (payload.activityName || '').trim(),
+      purpose: (payload.purpose || '').trim(),
+      requestedLocation: (payload.requestedLocation || '').trim(),
+      activityDate: payload.activityDate || '',
+      startTime: payload.startTime || '',
+      endTime: payload.endTime || '',
+      participantCount: payload.participantCount || 1,
+      supervisorTeacher: (payload.supervisorTeacher || '').trim(),
+      additionalNotes: payload.additionalNotes,
+      status: 'menunggu_satpam',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    (db as any).activityPermissions.unshift(newPerm);
+    saveDB(db);
+    return newPerm;
+  },
+
+  reviewActivityPermissionSatpam(id: string, review: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).activityPermissions)) return null;
+    const perm = (db as any).activityPermissions.find((p: any) => p.id === id);
+    if (!perm) return null;
+
+    perm.satpamReview = {
+      reviewedBy: review.reviewedBy,
+      safetyChecked: review.safetyChecked,
+      facilityAvailable: review.facilityAvailable,
+      notes: review.notes,
+      reviewedAt: new Date().toISOString(),
+    };
+
+    perm.status = 'menunggu_kepsek';
+    perm.updatedAt = new Date().toISOString();
+    saveDB(db);
+    return perm;
+  },
+
+  decideActivityPermissionPrincipal(id: string, decision: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).activityPermissions)) return null;
+    const perm = (db as any).activityPermissions.find((p: any) => p.id === id);
+    if (!perm) return null;
+
+    const now = new Date().toISOString();
+    perm.principalDecision = {
+      decidedBy: decision.decidedBy,
+      approved: decision.approved,
+      revisionNote: decision.revisionNote,
+      rejectionReason: decision.rejectionReason,
+      decidedAt: now,
+    };
+
+    if (decision.isRevision) {
+      perm.status = 'perlu_revisi';
+    } else if (decision.approved) {
+      perm.status = 'disetujui';
+    } else {
+      perm.status = 'ditolak';
+    }
+
+    perm.updatedAt = now;
+    saveDB(db);
+    return perm;
+  },
+
+  updateActivityPermission(id: string, updates: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).activityPermissions)) return null;
+    const perm = (db as any).activityPermissions.find((p: any) => p.id === id);
+    if (!perm) return null;
+
+    Object.assign(perm, updates, { updatedAt: new Date().toISOString() });
+    saveDB(db);
+    return perm;
+  },
+
+  // -------------------------------------------------------------
+  // LAPORAN APLIKASI TAMVESTA
+  // -------------------------------------------------------------
+  getAppReports(reporterId?: string, targetHandler?: string): any[] {
+    const db = loadDB();
+    if (!Array.isArray((db as any).appReports)) (db as any).appReports = [];
+    let list = [...(db as any).appReports];
+    if (reporterId) {
+      list = list.filter((r: any) => r.reporterId === reporterId);
+    }
+    if (targetHandler) {
+      list = list.filter((r: any) => r.targetHandler === targetHandler || r.targetHandler === 'both');
+    }
+    return list.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  createAppReport(payload: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).appReports)) (db as any).appReports = [];
+    const now = new Date().toISOString();
+    const newReport: any = {
+      id: `rep_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      reporterId: payload.reporterId || '',
+      reporterName: payload.reporterName || '',
+      reporterUsername: payload.reporterUsername || '',
+      reporterKelas: payload.reporterKelas,
+      reportType: payload.reportType || 'kendala_penggunaan',
+      title: (payload.title || '').trim(),
+      description: (payload.description || '').trim(),
+      screenshotUrl: payload.screenshotUrl,
+      incidentTime: payload.incidentTime || now,
+      additionalNotes: payload.additionalNotes,
+      status: 'laporan_diterima',
+      targetHandler: payload.targetHandler || 'support',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    (db as any).appReports.unshift(newReport);
+    saveDB(db);
+    return newReport;
+  },
+
+  respondAppReportAdmin(id: string, response: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).appReports)) return null;
+    const rep = (db as any).appReports.find((r: any) => r.id === id);
+    if (!rep) return null;
+
+    const now = new Date().toISOString();
+    rep.adminResponse = {
+      respondedBy: response.respondedBy,
+      message: response.message,
+      respondedAt: now,
+    };
+    if (response.newStatus) {
+      rep.status = response.newStatus;
+    }
+    rep.updatedAt = now;
+    saveDB(db);
+    return rep;
+  },
+
+  respondAppReportSupport(id: string, response: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).appReports)) return null;
+    const rep = (db as any).appReports.find((r: any) => r.id === id);
+    if (!rep) return null;
+
+    const now = new Date().toISOString();
+    rep.supportResponse = {
+      respondedBy: response.respondedBy,
+      technicalNotes: response.technicalNotes,
+      resolvedAt: response.newStatus === 'selesai' ? now : undefined,
+      respondedAt: now,
+    };
+    if (response.newStatus) {
+      rep.status = response.newStatus;
+    }
+    rep.updatedAt = now;
+    saveDB(db);
+    return rep;
+  },
+
+  updateAppReport(id: string, updates: any): any {
+    const db = loadDB();
+    if (!Array.isArray((db as any).appReports)) return null;
+    const rep = (db as any).appReports.find((r: any) => r.id === id);
+    if (!rep) return null;
+
+    Object.assign(rep, updates, { updatedAt: new Date().toISOString() });
+    saveDB(db);
+    return rep;
+  },
 };

@@ -23,6 +23,16 @@ import type {
   TuitionTransaction,
   TuDocument,
   TuChatMessage,
+  DirectMessage,
+  DMConversation,
+  StudentNote,
+  LostFoundItem,
+  LostFoundClaim,
+  LostFoundStatus,
+  ActivityPermission,
+  ActivityPermissionStatus,
+  AppReport,
+  AppReportStatus,
 } from '../types/index.ts';
 
 const DEFAULT_DATA_FILE = path.resolve(process.cwd(), 'data', 'tamvesta-data.json');
@@ -67,6 +77,11 @@ export interface DatabaseSchema {
   deletedPostIds?: string[];
   refreshSignals?: RefreshSignal[];
   moderationLogs?: ModerationLog[];
+  directMessages?: DirectMessage[];
+  studentNotes?: StudentNote[];
+  lostFoundItems?: LostFoundItem[];
+  activityPermissions?: ActivityPermission[];
+  appReports?: AppReport[];
 }
 
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
@@ -237,7 +252,7 @@ export const OFFICIAL_STAFF_LIST: StaffPreset[] = [
     jabatan: 'Satpam',
     username: 'angga.satpam',
     initialPassword: 'Tamvesta!A2617',
-    role: 'panitia',
+    role: 'satpam',
   },
 ];
 
@@ -399,6 +414,11 @@ export function getInitialData(): DatabaseSchema {
     deletedPostIds: [],
     refreshSignals: [],
     moderationLogs: [],
+    directMessages: [],
+    studentNotes: [],
+    lostFoundItems: [],
+    activityPermissions: [],
+    appReports: [],
   };
 }
 
@@ -548,6 +568,21 @@ class DatabaseManager {
             };
           }
         });
+      }
+      if (Array.isArray(parsed.directMessages)) {
+        this.data.directMessages = parsed.directMessages;
+      }
+      if (Array.isArray(parsed.studentNotes)) {
+        this.data.studentNotes = parsed.studentNotes;
+      }
+      if (Array.isArray(parsed.lostFoundItems)) {
+        this.data.lostFoundItems = parsed.lostFoundItems;
+      }
+      if (Array.isArray(parsed.activityPermissions)) {
+        this.data.activityPermissions = parsed.activityPermissions;
+      }
+      if (Array.isArray(parsed.appReports)) {
+        this.data.appReports = parsed.appReports;
       }
       this.saveDataDirect(this.data);
     } catch (err) {
@@ -750,6 +785,11 @@ class DatabaseManager {
           gameRooms: parsed.gameRooms || [],
           refreshSignals: parsed.refreshSignals || [],
           moderationLogs: parsed.moderationLogs || [],
+          directMessages: parsed.directMessages || [],
+          studentNotes: parsed.studentNotes || [],
+          lostFoundItems: parsed.lostFoundItems || [],
+          activityPermissions: parsed.activityPermissions || [],
+          appReports: parsed.appReports || [],
         };
       }
     } catch (err) {
@@ -2805,6 +2845,671 @@ class DatabaseManager {
   getModerationLogs(): ModerationLog[] {
     if (!Array.isArray(this.data.moderationLogs)) this.data.moderationLogs = [];
     return this.data.moderationLogs;
+  }
+
+  // -------------------------------------------------------------
+  // DIRECT MESSAGES (DM)
+  // -------------------------------------------------------------
+  getDirectMessages(userId1: string, userId2: string): DirectMessage[] {
+    if (!Array.isArray(this.data.directMessages)) this.data.directMessages = [];
+    return this.data.directMessages
+      .filter((m) => {
+        const match =
+          (m.senderId === userId1 && m.recipientId === userId2) ||
+          (m.senderId === userId2 && m.recipientId === userId1);
+        return match && !m.isDeleted;
+      })
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  getDMConversations(userId: string): DMConversation[] {
+    if (!Array.isArray(this.data.directMessages)) this.data.directMessages = [];
+    const conversationMap = new Map<string, { lastMessage: DirectMessage; unreadCount: number }>();
+
+    for (const m of this.data.directMessages) {
+      if (m.isDeleted) continue;
+      let partnerId: string | null = null;
+      if (m.senderId === userId) {
+        partnerId = m.recipientId;
+      } else if (m.recipientId === userId) {
+        partnerId = m.senderId;
+      }
+      if (!partnerId) continue;
+
+      const existing = conversationMap.get(partnerId);
+      const isUnread = m.recipientId === userId && !m.isRead;
+      if (!existing) {
+        conversationMap.set(partnerId, {
+          lastMessage: m,
+          unreadCount: isUnread ? 1 : 0,
+        });
+      } else {
+        if (new Date(m.createdAt).getTime() > new Date(existing.lastMessage.createdAt).getTime()) {
+          existing.lastMessage = m;
+        }
+        if (isUnread) {
+          existing.unreadCount += 1;
+        }
+      }
+    }
+
+    const conversations: DMConversation[] = [];
+    conversationMap.forEach((conv, partnerId) => {
+      const partner = this.findUserById(partnerId) || this.findUserByUsername(partnerId);
+      conversations.push({
+        partnerId,
+        partnerName: partner ? partner.name : (conv.lastMessage.senderId === partnerId ? conv.lastMessage.senderName : conv.lastMessage.recipientName),
+        partnerUsername: partner ? partner.username : (conv.lastMessage.senderId === partnerId ? conv.lastMessage.senderUsername : conv.lastMessage.recipientUsername),
+        partnerAvatar: partner?.avatarUrl,
+        lastMessage: conv.lastMessage,
+        unreadCount: conv.unreadCount,
+        updatedAt: conv.lastMessage.createdAt,
+      });
+    });
+
+    return conversations.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }
+
+  sendDirectMessage(payload: {
+    senderId: string;
+    senderName: string;
+    senderUsername: string;
+    senderAvatar?: string;
+    recipientId: string;
+    recipientName: string;
+    recipientUsername: string;
+    recipientAvatar?: string;
+    text?: string;
+    mediaType?: 'text' | 'image' | 'video' | 'audio';
+    mediaUrl?: string;
+    audioDuration?: number;
+    replyToMessage?: any;
+    replyToStory?: any;
+    forwardedFrom?: string;
+  }): DirectMessage {
+    if (!Array.isArray(this.data.directMessages)) this.data.directMessages = [];
+    const now = new Date().toISOString();
+    const newMsg: DirectMessage = {
+      id: `dm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      senderId: payload.senderId,
+      senderName: payload.senderName,
+      senderUsername: payload.senderUsername,
+      senderAvatar: payload.senderAvatar,
+      recipientId: payload.recipientId,
+      recipientName: payload.recipientName,
+      recipientUsername: payload.recipientUsername,
+      recipientAvatar: payload.recipientAvatar,
+      text: payload.text || '',
+      mediaType: payload.mediaType || 'text',
+      mediaUrl: payload.mediaUrl,
+      audioDuration: payload.audioDuration,
+      replyToMessage: payload.replyToMessage,
+      replyToStory: payload.replyToStory,
+      reactions: {},
+      isRead: false,
+      forwardedFrom: payload.forwardedFrom,
+      createdAt: now,
+    };
+
+    this.data.directMessages.push(newMsg);
+    this.save();
+
+    const snippet = payload.text
+      ? (payload.text.length > 45 ? payload.text.substring(0, 42) + '...' : payload.text)
+      : payload.mediaType === 'audio'
+      ? '🎤 Mengirim pesan suara'
+      : payload.mediaType === 'image'
+      ? '📷 Mengirim foto'
+      : payload.mediaType === 'video'
+      ? '🎥 Mengirim video'
+      : 'Pesan baru';
+
+    this.createNotification({
+      title: `Pesan dari ${payload.senderName}`,
+      message: snippet,
+      type: 'dm',
+      linkType: 'dm',
+      linkId: payload.senderId,
+      targetUserId: payload.recipientId,
+    });
+
+    return newMsg;
+  }
+
+  reactToDirectMessage(messageId: string, emoji: string, userId: string): DirectMessage | null {
+    if (!Array.isArray(this.data.directMessages)) return null;
+    const msg = this.data.directMessages.find((m) => m.id === messageId);
+    if (!msg) return null;
+
+    if (!msg.reactions) msg.reactions = {};
+
+    const usersForEmoji = msg.reactions[emoji] || [];
+    const alreadyHas = usersForEmoji.includes(userId);
+
+    for (const key of Object.keys(msg.reactions)) {
+      msg.reactions[key] = msg.reactions[key].filter((id) => id !== userId);
+      if (msg.reactions[key].length === 0) {
+        delete msg.reactions[key];
+      }
+    }
+
+    if (!alreadyHas) {
+      if (!msg.reactions[emoji]) msg.reactions[emoji] = [];
+      msg.reactions[emoji].push(userId);
+    }
+
+    this.save();
+    return msg;
+  }
+
+  deleteDirectMessage(messageId: string, userId: string): boolean {
+    if (!Array.isArray(this.data.directMessages)) return false;
+    const msg = this.data.directMessages.find((m) => m.id === messageId);
+    if (!msg) return false;
+    if (msg.senderId === userId || msg.recipientId === userId) {
+      msg.isDeleted = true;
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  markMessagesAsRead(senderId: string, recipientId: string): void {
+    if (!Array.isArray(this.data.directMessages)) return;
+    let modified = false;
+    for (const m of this.data.directMessages) {
+      if (m.senderId === senderId && m.recipientId === recipientId && !m.isRead) {
+        m.isRead = true;
+        modified = true;
+      }
+    }
+    if (modified) this.save();
+  }
+
+  // -------------------------------------------------------------
+  // CATATAN (NOTES) - KEDALUWARSA 24 JAM
+  // -------------------------------------------------------------
+  getActiveNotes(): StudentNote[] {
+    if (!Array.isArray(this.data.studentNotes)) this.data.studentNotes = [];
+    const now = Date.now();
+    const active = this.data.studentNotes.filter((n) => {
+      const exp = new Date(n.expiresAt).getTime();
+      return exp > now;
+    });
+
+    if (active.length !== this.data.studentNotes.length) {
+      this.data.studentNotes = active;
+      this.save();
+    }
+
+    return this.data.studentNotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  createOrUpdateNote(payload: {
+    userId: string;
+    userName: string;
+    userUsername: string;
+    userAvatar?: string;
+    userKelas?: string;
+    text: string;
+  }): StudentNote {
+    if (!Array.isArray(this.data.studentNotes)) this.data.studentNotes = [];
+    this.data.studentNotes = this.data.studentNotes.filter((n) => n.userId !== payload.userId);
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const newNote: StudentNote = {
+      id: `note_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: payload.userId,
+      userName: payload.userName,
+      userUsername: payload.userUsername,
+      userAvatar: payload.userAvatar,
+      userKelas: payload.userKelas,
+      text: payload.text.trim(),
+      createdAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+    };
+
+    this.data.studentNotes.unshift(newNote);
+    this.save();
+    return newNote;
+  }
+
+  deleteNote(userId: string): boolean {
+    if (!Array.isArray(this.data.studentNotes)) return false;
+    const initialLen = this.data.studentNotes.length;
+    this.data.studentNotes = this.data.studentNotes.filter((n) => n.userId !== userId);
+    if (this.data.studentNotes.length !== initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  // -------------------------------------------------------------
+  // LOST AND FOUND (BARANG HILANG & DITEMUKAN)
+  // -------------------------------------------------------------
+  getLostFoundItems(filter?: { type?: 'lost' | 'found'; status?: string }): LostFoundItem[] {
+    if (!Array.isArray(this.data.lostFoundItems)) this.data.lostFoundItems = [];
+    let list = [...this.data.lostFoundItems];
+    if (filter?.type) {
+      list = list.filter((i) => i.type === filter.type);
+    }
+    if (filter?.status) {
+      list = list.filter((i) => i.status === filter.status);
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  createLostFoundItem(payload: Partial<LostFoundItem>): LostFoundItem {
+    if (!Array.isArray(this.data.lostFoundItems)) this.data.lostFoundItems = [];
+    const now = new Date().toISOString();
+    const newItem: LostFoundItem = {
+      id: `lf_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      type: payload.type || 'lost',
+      reporterId: payload.reporterId || '',
+      reporterName: payload.reporterName || 'Siswa',
+      reporterUsername: payload.reporterUsername || '',
+      reporterKelas: payload.reporterKelas,
+      itemName: (payload.itemName || '').trim(),
+      category: payload.category || 'lainnya',
+      photoUrl: payload.photoUrl,
+      description: (payload.description || '').trim(),
+      location: (payload.location || '').trim(),
+      dateTime: payload.dateTime || now,
+      storageStatus: payload.storageStatus || 'masih_di_penemu',
+      additionalNotes: payload.additionalNotes,
+      status: 'menunggu_pemeriksaan',
+      claims: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.data.lostFoundItems.unshift(newItem);
+    this.save();
+
+    this.createNotification({
+      title: payload.type === 'found' ? 'Laporan Barang Ditemukan Baru' : 'Laporan Barang Hilang Baru',
+      message: `${newItem.reporterName} (${newItem.reporterKelas || '-'}) melaporkan: "${newItem.itemName}" di lokasi ${newItem.location}.`,
+      type: 'lost_found',
+      linkType: 'reports',
+      linkId: newItem.id,
+      targetRole: 'satpam',
+    });
+
+    return newItem;
+  }
+
+  updateLostFoundItem(id: string, updates: Partial<LostFoundItem>): LostFoundItem | null {
+    if (!Array.isArray(this.data.lostFoundItems)) return null;
+    const item = this.data.lostFoundItems.find((i) => i.id === id);
+    if (!item) return null;
+
+    Object.assign(item, updates, { updatedAt: new Date().toISOString() });
+    this.save();
+
+    if (updates.status) {
+      this.createNotification({
+        title: 'Status Laporan Barang Diperbarui',
+        message: `Laporan Anda untuk "${item.itemName}" kini berstatus: ${updates.status.replace(/_/g, ' ')}.`,
+        type: 'lost_found',
+        linkType: 'reports',
+        linkId: item.id,
+        targetUserId: item.reporterId,
+      });
+    }
+
+    return item;
+  }
+
+  claimLostFoundItem(itemId: string, claimPayload: Partial<LostFoundClaim>): LostFoundItem | null {
+    if (!Array.isArray(this.data.lostFoundItems)) return null;
+    const item = this.data.lostFoundItems.find((i) => i.id === itemId);
+    if (!item) return null;
+
+    if (!Array.isArray(item.claims)) item.claims = [];
+    const now = new Date().toISOString();
+    const newClaim: LostFoundClaim = {
+      id: `claim_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      claimantId: claimPayload.claimantId || '',
+      claimantName: claimPayload.claimantName || '',
+      claimantUsername: claimPayload.claimantUsername || '',
+      claimantKelas: claimPayload.claimantKelas,
+      reason: (claimPayload.reason || '').trim(),
+      identifyingFeatures: (claimPayload.identifyingFeatures || '').trim(),
+      additionalInfo: claimPayload.additionalInfo,
+      status: 'menunggu_verifikasi',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    item.claims.unshift(newClaim);
+    item.updatedAt = now;
+    this.save();
+
+    this.createNotification({
+      title: 'Klaim Kepemilikan Barang Baru',
+      message: `${newClaim.claimantName} mengklaim barang "${item.itemName}". Mohon verifikasi bukti kepemilikan.`,
+      type: 'lost_found',
+      linkType: 'reports',
+      linkId: item.id,
+      targetRole: 'satpam',
+    });
+
+    return item;
+  }
+
+  updateLostFoundClaim(itemId: string, claimId: string, updates: Partial<LostFoundClaim>): LostFoundItem | null {
+    if (!Array.isArray(this.data.lostFoundItems)) return null;
+    const item = this.data.lostFoundItems.find((i) => i.id === itemId);
+    if (!item || !Array.isArray(item.claims)) return null;
+
+    const claim = item.claims.find((c) => c.id === claimId);
+    if (!claim) return null;
+
+    Object.assign(claim, updates, { updatedAt: new Date().toISOString() });
+    item.updatedAt = new Date().toISOString();
+
+    if (updates.status === 'barang_telah_dikembalikan') {
+      item.status = 'barang_telah_dikembalikan';
+      item.handoverOfficer = updates.verifiedBy;
+      item.handoverTime = new Date().toISOString();
+    }
+
+    this.save();
+
+    this.createNotification({
+      title: 'Status Klaim Barang Anda',
+      message: `Klaim Anda untuk "${item.itemName}" telah diperbarui menjadi: ${claim.status.replace(/_/g, ' ')}. ${claim.satpamNotes ? `Catatan: ${claim.satpamNotes}` : ''}`,
+      type: 'lost_found',
+      linkType: 'reports',
+      linkId: item.id,
+      targetUserId: claim.claimantId,
+    });
+
+    return item;
+  }
+
+  // -------------------------------------------------------------
+  // PERIZINAN TEMPAT DAN KEGIATAN
+  // -------------------------------------------------------------
+  getActivityPermissions(applicantId?: string): ActivityPermission[] {
+    if (!Array.isArray(this.data.activityPermissions)) this.data.activityPermissions = [];
+    let list = [...this.data.activityPermissions];
+    if (applicantId) {
+      list = list.filter((p) => p.applicantId === applicantId);
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  createActivityPermission(payload: Partial<ActivityPermission>): ActivityPermission {
+    if (!Array.isArray(this.data.activityPermissions)) this.data.activityPermissions = [];
+    const now = new Date().toISOString();
+    const newPerm: ActivityPermission = {
+      id: `perm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      applicantId: payload.applicantId || '',
+      applicantName: payload.applicantName || '',
+      applicantUsername: payload.applicantUsername || '',
+      applicantKelas: payload.applicantKelas,
+      organizationOrClass: (payload.organizationOrClass || '').trim(),
+      activityName: (payload.activityName || '').trim(),
+      purpose: (payload.purpose || '').trim(),
+      requestedLocation: (payload.requestedLocation || '').trim(),
+      activityDate: payload.activityDate || '',
+      startTime: payload.startTime || '',
+      endTime: payload.endTime || '',
+      participantCount: payload.participantCount || 1,
+      supervisorTeacher: (payload.supervisorTeacher || '').trim(),
+      additionalNotes: payload.additionalNotes,
+      status: 'menunggu_satpam',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.data.activityPermissions.unshift(newPerm);
+    this.save();
+
+    this.createNotification({
+      title: 'Pengajuan Izin Tempat Baru',
+      message: `${newPerm.organizationOrClass} mengajukan izin "${newPerm.activityName}" di ${newPerm.requestedLocation}. Menunggu verifikasi fasilitas & keamanan Satpam.`,
+      type: 'permission',
+      linkType: 'reports',
+      linkId: newPerm.id,
+      targetRole: 'satpam',
+    });
+
+    return newPerm;
+  }
+
+  reviewActivityPermissionSatpam(
+    id: string,
+    review: { reviewedBy: string; safetyChecked: boolean; facilityAvailable: boolean; notes?: string }
+  ): ActivityPermission | null {
+    if (!Array.isArray(this.data.activityPermissions)) return null;
+    const perm = this.data.activityPermissions.find((p) => p.id === id);
+    if (!perm) return null;
+
+    perm.satpamReview = {
+      reviewedBy: review.reviewedBy,
+      safetyChecked: review.safetyChecked,
+      facilityAvailable: review.facilityAvailable,
+      notes: review.notes,
+      reviewedAt: new Date().toISOString(),
+    };
+
+    perm.status = 'menunggu_kepsek';
+    perm.updatedAt = new Date().toISOString();
+    this.save();
+
+    this.createNotification({
+      title: 'Persetujuan Izin Kegiatan (Rekomendasi Satpam Siap)',
+      message: `Satpam telah memeriksa keamanan & ketersediaan fasilitas untuk kegiatan "${perm.activityName}" di ${perm.requestedLocation}. Menunggu keputusan Kepala Sekolah.`,
+      type: 'permission',
+      linkType: 'reports',
+      linkId: perm.id,
+      targetRole: 'kepala_sekolah',
+    });
+
+    this.createNotification({
+      title: 'Pemeriksaan Satpam Selesai',
+      message: `Pemeriksaan fasilitas untuk "${perm.activityName}" telah diselesaikan oleh Satpam dan diteruskan ke Kepala Sekolah.`,
+      type: 'permission',
+      linkType: 'reports',
+      linkId: perm.id,
+      targetUserId: perm.applicantId,
+    });
+
+    return perm;
+  }
+
+  decideActivityPermissionPrincipal(
+    id: string,
+    decision: { decidedBy: string; approved: boolean; isRevision?: boolean; revisionNote?: string; rejectionReason?: string }
+  ): ActivityPermission | null {
+    if (!Array.isArray(this.data.activityPermissions)) return null;
+    const perm = this.data.activityPermissions.find((p) => p.id === id);
+    if (!perm) return null;
+
+    const now = new Date().toISOString();
+    perm.principalDecision = {
+      decidedBy: decision.decidedBy,
+      approved: decision.approved,
+      revisionNote: decision.revisionNote,
+      rejectionReason: decision.rejectionReason,
+      decidedAt: now,
+    };
+
+    if (decision.isRevision) {
+      perm.status = 'perlu_revisi';
+    } else if (decision.approved) {
+      perm.status = 'disetujui';
+    } else {
+      perm.status = 'ditolak';
+    }
+
+    perm.updatedAt = now;
+    this.save();
+
+    const statusText = perm.status === 'disetujui' ? 'DISETUJUI' : perm.status === 'perlu_revisi' ? 'PERLU REVISI' : 'DITOLAK';
+    this.createNotification({
+      title: `Keputusan Izin Kegiatan: ${statusText}`,
+      message: `Pengajuan izin "${perm.activityName}" telah ${statusText} oleh Kepala Sekolah. ${decision.revisionNote ? `Catatan Revisi: ${decision.revisionNote}` : decision.rejectionReason ? `Alasan: ${decision.rejectionReason}` : ''}`,
+      type: 'permission',
+      linkType: 'reports',
+      linkId: perm.id,
+      targetUserId: perm.applicantId,
+    });
+
+    return perm;
+  }
+
+  updateActivityPermission(id: string, updates: Partial<ActivityPermission>): ActivityPermission | null {
+    if (!Array.isArray(this.data.activityPermissions)) return null;
+    const perm = this.data.activityPermissions.find((p) => p.id === id);
+    if (!perm) return null;
+
+    Object.assign(perm, updates, { updatedAt: new Date().toISOString() });
+    this.save();
+    return perm;
+  }
+
+  // -------------------------------------------------------------
+  // LAPORAN APLIKASI TAMVESTA
+  // -------------------------------------------------------------
+  getAppReports(reporterId?: string, targetHandler?: 'administrasi' | 'support'): AppReport[] {
+    if (!Array.isArray(this.data.appReports)) this.data.appReports = [];
+    let list = [...this.data.appReports];
+    if (reporterId) {
+      list = list.filter((r) => r.reporterId === reporterId);
+    }
+    if (targetHandler) {
+      list = list.filter((r) => r.targetHandler === targetHandler || r.targetHandler === 'both');
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  createAppReport(payload: Partial<AppReport>): AppReport {
+    if (!Array.isArray(this.data.appReports)) this.data.appReports = [];
+    const now = new Date().toISOString();
+    const newReport: AppReport = {
+      id: `rep_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      reporterId: payload.reporterId || '',
+      reporterName: payload.reporterName || '',
+      reporterUsername: payload.reporterUsername || '',
+      reporterKelas: payload.reporterKelas,
+      reportType: payload.reportType || 'kendala_penggunaan',
+      title: (payload.title || '').trim(),
+      description: (payload.description || '').trim(),
+      screenshotUrl: payload.screenshotUrl,
+      incidentTime: payload.incidentTime || now,
+      additionalNotes: payload.additionalNotes,
+      status: 'laporan_diterima',
+      targetHandler: payload.targetHandler || 'support',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.data.appReports.unshift(newReport);
+    this.save();
+
+    if (newReport.targetHandler === 'administrasi' || newReport.targetHandler === 'both') {
+      this.createNotification({
+        title: 'Laporan Layanan Administrasi Baru',
+        message: `${newReport.reporterName} menyampaikan laporan: "${newReport.title}".`,
+        type: 'app_report',
+        linkType: 'reports',
+        linkId: newReport.id,
+        targetRole: 'tata_usaha',
+      });
+    }
+    if (newReport.targetHandler === 'support' || newReport.targetHandler === 'both') {
+      this.createNotification({
+        title: 'Tiket Kendala Teknis TAMVESTA',
+        message: `${newReport.reporterName} melaporkan: "${newReport.title}" (${newReport.reportType}).`,
+        type: 'app_report',
+        linkType: 'reports',
+        linkId: newReport.id,
+        targetRole: 'support',
+      });
+    }
+
+    return newReport;
+  }
+
+  respondAppReportAdmin(
+    id: string,
+    response: { respondedBy: string; message: string; newStatus?: AppReportStatus }
+  ): AppReport | null {
+    if (!Array.isArray(this.data.appReports)) return null;
+    const rep = this.data.appReports.find((r) => r.id === id);
+    if (!rep) return null;
+
+    const now = new Date().toISOString();
+    rep.adminResponse = {
+      respondedBy: response.respondedBy,
+      message: response.message,
+      respondedAt: now,
+    };
+    if (response.newStatus) {
+      rep.status = response.newStatus;
+    }
+    rep.updatedAt = now;
+    this.save();
+
+    this.createNotification({
+      title: 'Tanggapan Tata Usaha atas Laporan Anda',
+      message: `Tata Usaha menanggapi laporan "${rep.title}": ${response.message}`,
+      type: 'app_report',
+      linkType: 'reports',
+      linkId: rep.id,
+      targetUserId: rep.reporterId,
+    });
+
+    return rep;
+  }
+
+  respondAppReportSupport(
+    id: string,
+    response: { respondedBy: string; technicalNotes: string; newStatus?: AppReportStatus }
+  ): AppReport | null {
+    if (!Array.isArray(this.data.appReports)) return null;
+    const rep = this.data.appReports.find((r) => r.id === id);
+    if (!rep) return null;
+
+    const now = new Date().toISOString();
+    rep.supportResponse = {
+      respondedBy: response.respondedBy,
+      technicalNotes: response.technicalNotes,
+      resolvedAt: response.newStatus === 'selesai' ? now : undefined,
+      respondedAt: now,
+    };
+    if (response.newStatus) {
+      rep.status = response.newStatus;
+    }
+    rep.updatedAt = now;
+    this.save();
+
+    this.createNotification({
+      title: 'Tanggapan Support TAMVESTA',
+      message: `Tim Support TAMVESTA menanggapi laporan "${rep.title}": ${response.technicalNotes}`,
+      type: 'app_report',
+      linkType: 'reports',
+      linkId: rep.id,
+      targetUserId: rep.reporterId,
+    });
+
+    return rep;
+  }
+
+  updateAppReport(id: string, updates: Partial<AppReport>): AppReport | null {
+    if (!Array.isArray(this.data.appReports)) return null;
+    const rep = this.data.appReports.find((r) => r.id === id);
+    if (!rep) return null;
+
+    Object.assign(rep, updates, { updatedAt: new Date().toISOString() });
+    this.save();
+    return rep;
   }
 }
 

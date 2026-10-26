@@ -26,6 +26,14 @@ import type {
   GameType,
   SpySettings,
   MafiaSettings,
+  DirectMessage,
+  DMConversation,
+  StudentNote,
+  LostFoundItem,
+  LostFoundClaim,
+  ActivityPermission,
+  AppReport,
+  AppReportStatus,
 } from '../types/index.ts';
 import {
   createGameRoom,
@@ -2150,6 +2158,399 @@ export const api = {
         offlineStore.saveGameRoom(local);
       }
       return local;
+    }
+  },
+
+  // -------------------------------------------------------------
+  // DIRECT MESSAGES (DM)
+  // -------------------------------------------------------------
+  getDMConversations: async (): Promise<DMConversation[]> => {
+    try {
+      const res = await tryServerRequest<{ conversations: DMConversation[] }>('/api/dm/conversations');
+      return res.conversations;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      return offlineStore.getDMConversations(curId);
+    }
+  },
+
+  getDirectMessages: async (partnerId: string): Promise<DirectMessage[]> => {
+    try {
+      const res = await tryServerRequest<{ messages: DirectMessage[] }>(`/api/dm/messages/${encodeURIComponent(partnerId)}`);
+      return res.messages;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      offlineStore.markMessagesAsRead(partnerId, curId);
+      return offlineStore.getDirectMessages(curId, partnerId);
+    }
+  },
+
+  sendDirectMessage: async (payload: {
+    recipientId: string;
+    recipientName?: string;
+    recipientUsername?: string;
+    recipientAvatar?: string;
+    text?: string;
+    mediaType?: 'text' | 'image' | 'video' | 'audio';
+    mediaUrl?: string;
+    audioDuration?: number;
+    replyToMessage?: any;
+    replyToStory?: any;
+    forwardedFrom?: string;
+  }): Promise<DirectMessage> => {
+    try {
+      const res = await tryServerRequest<{ message: DirectMessage }>('/api/dm/messages', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return res.message;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      return offlineStore.sendDirectMessage({
+        senderId: curId,
+        senderName: curUser?.name || 'Siswa',
+        senderUsername: curUser?.username || '',
+        senderAvatar: curUser?.avatarUrl,
+        ...payload,
+      });
+    }
+  },
+
+  reactToDirectMessage: async (messageId: string, emoji: string): Promise<DirectMessage> => {
+    try {
+      const res = await tryServerRequest<{ message: DirectMessage }>(`/api/dm/messages/${encodeURIComponent(messageId)}/react`, {
+        method: 'POST',
+        body: JSON.stringify({ emoji }),
+      });
+      return res.message;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const updated = offlineStore.reactToDirectMessage(messageId, emoji, curId);
+      if (!updated) throw new Error('Pesan tidak ditemukan.');
+      return updated;
+    }
+  },
+
+  deleteDirectMessage: async (messageId: string): Promise<boolean> => {
+    try {
+      await tryServerRequest(`/api/dm/messages/${encodeURIComponent(messageId)}`, {
+        method: 'DELETE',
+      });
+      return true;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      return offlineStore.deleteDirectMessage(messageId, curId);
+    }
+  },
+
+  // -------------------------------------------------------------
+  // CATATAN (NOTES) - KEDALUWARSA 24 JAM
+  // -------------------------------------------------------------
+  getActiveNotes: async (): Promise<StudentNote[]> => {
+    try {
+      const res = await tryServerRequest<{ notes: StudentNote[] }>('/api/notes/active');
+      return res.notes;
+    } catch (_) {
+      return offlineStore.getActiveNotes();
+    }
+  },
+
+  createOrUpdateNote: async (text: string): Promise<StudentNote> => {
+    try {
+      const res = await tryServerRequest<{ note: StudentNote }>('/api/notes', {
+        method: 'POST',
+        body: JSON.stringify({ text }),
+      });
+      return res.note;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      return offlineStore.createOrUpdateNote({
+        userId: curId,
+        userName: curUser?.name || 'Siswa',
+        userUsername: curUser?.username || '',
+        userAvatar: curUser?.avatarUrl,
+        userKelas: curUser?.kelas,
+        text,
+      });
+    }
+  },
+
+  deleteNote: async (): Promise<boolean> => {
+    try {
+      const res = await tryServerRequest<{ success: boolean }>('/api/notes', {
+        method: 'DELETE',
+      });
+      return res.success;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      return offlineStore.deleteNote(curId);
+    }
+  },
+
+  // -------------------------------------------------------------
+  // LOST AND FOUND (BARANG HILANG & DITEMUKAN)
+  // -------------------------------------------------------------
+  getLostFoundItems: async (filter?: { type?: 'lost' | 'found'; status?: string }): Promise<LostFoundItem[]> => {
+    try {
+      const params = new URLSearchParams();
+      if (filter?.type) params.set('type', filter.type);
+      if (filter?.status) params.set('status', filter.status);
+      const q = params.toString() ? `?${params.toString()}` : '';
+      const res = await tryServerRequest<{ items: LostFoundItem[] }>(`/api/lost-found${q}`);
+      return res.items;
+    } catch (_) {
+      return offlineStore.getLostFoundItems(filter);
+    }
+  },
+
+  createLostFoundItem: async (payload: Partial<LostFoundItem>): Promise<LostFoundItem> => {
+    try {
+      const res = await tryServerRequest<{ item: LostFoundItem }>('/api/lost-found', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return res.item;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      return offlineStore.createLostFoundItem({
+        reporterId: curId,
+        reporterName: curUser?.name || 'Siswa',
+        reporterUsername: curUser?.username || '',
+        reporterKelas: curUser?.kelas,
+        ...payload,
+      });
+    }
+  },
+
+  updateLostFoundItem: async (id: string, updates: Partial<LostFoundItem>): Promise<LostFoundItem> => {
+    try {
+      const res = await tryServerRequest<{ item: LostFoundItem }>(`/api/lost-found/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+      });
+      return res.item;
+    } catch (_) {
+      const item = offlineStore.updateLostFoundItem(id, updates);
+      if (!item) throw new Error('Barang tidak ditemukan.');
+      return item;
+    }
+  },
+
+  claimLostFoundItem: async (id: string, claimPayload: { reason: string; identifyingFeatures: string; additionalInfo?: string }): Promise<LostFoundItem> => {
+    try {
+      const res = await tryServerRequest<{ item: LostFoundItem }>(`/api/lost-found/${encodeURIComponent(id)}/claim`, {
+        method: 'POST',
+        body: JSON.stringify(claimPayload),
+      });
+      return res.item;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      const item = offlineStore.claimLostFoundItem(id, {
+        claimantId: curId,
+        claimantName: curUser?.name || 'Siswa',
+        claimantUsername: curUser?.username || '',
+        claimantKelas: curUser?.kelas,
+        ...claimPayload,
+      });
+      if (!item) throw new Error('Barang tidak ditemukan.');
+      return item;
+    }
+  },
+
+  updateLostFoundClaim: async (itemId: string, claimId: string, updates: Partial<LostFoundClaim>): Promise<LostFoundItem> => {
+    try {
+      const res = await tryServerRequest<{ item: LostFoundItem }>(`/api/lost-found/${encodeURIComponent(itemId)}/claims/${encodeURIComponent(claimId)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+      });
+      return res.item;
+    } catch (_) {
+      const item = offlineStore.updateLostFoundClaim(itemId, claimId, updates);
+      if (!item) throw new Error('Klaim atau barang tidak ditemukan.');
+      return item;
+    }
+  },
+
+  // -------------------------------------------------------------
+  // PERIZINAN TEMPAT DAN KEGIATAN
+  // -------------------------------------------------------------
+  getActivityPermissions: async (): Promise<ActivityPermission[]> => {
+    try {
+      const res = await tryServerRequest<{ permissions: ActivityPermission[] }>('/api/activity-permissions');
+      return res.permissions;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      const isOfficer = curUser && ['satpam', 'kepala_sekolah', 'admin', 'guru'].includes(curUser.role);
+      return offlineStore.getActivityPermissions(isOfficer ? undefined : curId);
+    }
+  },
+
+  createActivityPermission: async (payload: Partial<ActivityPermission>): Promise<ActivityPermission> => {
+    try {
+      const res = await tryServerRequest<{ permission: ActivityPermission }>('/api/activity-permissions', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return res.permission;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      return offlineStore.createActivityPermission({
+        applicantId: curId,
+        applicantName: curUser?.name || 'Siswa',
+        applicantUsername: curUser?.username || '',
+        applicantKelas: curUser?.kelas,
+        ...payload,
+      });
+    }
+  },
+
+  reviewActivityPermissionSatpam: async (id: string, review: { safetyChecked: boolean; facilityAvailable: boolean; notes?: string }): Promise<ActivityPermission> => {
+    try {
+      const res = await tryServerRequest<{ permission: ActivityPermission }>(`/api/activity-permissions/${encodeURIComponent(id)}/satpam-review`, {
+        method: 'POST',
+        body: JSON.stringify(review),
+      });
+      return res.permission;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      const perm = offlineStore.reviewActivityPermissionSatpam(id, {
+        reviewedBy: curUser?.name || 'Satpam Sekolah',
+        ...review,
+      });
+      if (!perm) throw new Error('Perizinan tidak ditemukan.');
+      return perm;
+    }
+  },
+
+  decideActivityPermissionPrincipal: async (id: string, decision: { approved: boolean; isRevision?: boolean; revisionNote?: string; rejectionReason?: string }): Promise<ActivityPermission> => {
+    try {
+      const res = await tryServerRequest<{ permission: ActivityPermission }>(`/api/activity-permissions/${encodeURIComponent(id)}/principal-decision`, {
+        method: 'POST',
+        body: JSON.stringify(decision),
+      });
+      return res.permission;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      const perm = offlineStore.decideActivityPermissionPrincipal(id, {
+        decidedBy: curUser?.name || 'Kepala Sekolah',
+        ...decision,
+      });
+      if (!perm) throw new Error('Perizinan tidak ditemukan.');
+      return perm;
+    }
+  },
+
+  updateActivityPermission: async (id: string, updates: Partial<ActivityPermission>): Promise<ActivityPermission> => {
+    try {
+      const res = await tryServerRequest<{ permission: ActivityPermission }>(`/api/activity-permissions/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+      });
+      return res.permission;
+    } catch (_) {
+      const perm = offlineStore.updateActivityPermission(id, updates);
+      if (!perm) throw new Error('Perizinan tidak ditemukan.');
+      return perm;
+    }
+  },
+
+  // -------------------------------------------------------------
+  // LAPORAN APLIKASI TAMVESTA
+  // -------------------------------------------------------------
+  getAppReports: async (): Promise<AppReport[]> => {
+    try {
+      const res = await tryServerRequest<{ reports: AppReport[] }>('/api/app-reports');
+      return res.reports;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      const role = curUser?.role;
+      let targetHandler: string | undefined;
+      let reporterId: string | undefined;
+      if (role === 'siswa') reporterId = curId;
+      else if (role === 'tata_usaha') targetHandler = 'administrasi';
+      else if (role === 'support') targetHandler = 'support';
+      return offlineStore.getAppReports(reporterId, targetHandler);
+    }
+  },
+
+  createAppReport: async (payload: Partial<AppReport>): Promise<AppReport> => {
+    try {
+      const res = await tryServerRequest<{ report: AppReport }>('/api/app-reports', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return res.report;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      return offlineStore.createAppReport({
+        reporterId: curId,
+        reporterName: curUser?.name || 'Siswa',
+        reporterUsername: curUser?.username || '',
+        reporterKelas: curUser?.kelas,
+        ...payload,
+      });
+    }
+  },
+
+  respondAppReportAdmin: async (id: string, response: { message: string; newStatus?: AppReportStatus }): Promise<AppReport> => {
+    try {
+      const res = await tryServerRequest<{ report: AppReport }>(`/api/app-reports/${encodeURIComponent(id)}/admin-response`, {
+        method: 'POST',
+        body: JSON.stringify(response),
+      });
+      return res.report;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      const rep = offlineStore.respondAppReportAdmin(id, {
+        respondedBy: curUser?.name || 'Tata Usaha',
+        ...response,
+      });
+      if (!rep) throw new Error('Laporan tidak ditemukan.');
+      return rep;
+    }
+  },
+
+  respondAppReportSupport: async (id: string, response: { technicalNotes: string; newStatus?: AppReportStatus }): Promise<AppReport> => {
+    try {
+      const res = await tryServerRequest<{ report: AppReport }>(`/api/app-reports/${encodeURIComponent(id)}/support-response`, {
+        method: 'POST',
+        body: JSON.stringify(response),
+      });
+      return res.report;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId);
+      const rep = offlineStore.respondAppReportSupport(id, {
+        respondedBy: curUser?.name || 'Support TAMVESTA',
+        ...response,
+      });
+      if (!rep) throw new Error('Laporan tidak ditemukan.');
+      return rep;
+    }
+  },
+
+  updateAppReport: async (id: string, updates: Partial<AppReport>): Promise<AppReport> => {
+    try {
+      const res = await tryServerRequest<{ report: AppReport }>(`/api/app-reports/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+      });
+      return res.report;
+    } catch (_) {
+      const rep = offlineStore.updateAppReport(id, updates);
+      if (!rep) throw new Error('Laporan tidak ditemukan.');
+      return rep;
     }
   },
 };

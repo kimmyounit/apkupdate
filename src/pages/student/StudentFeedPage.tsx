@@ -37,6 +37,8 @@ import {
   Pin,
   AlertCircle,
   ShieldAlert,
+  Shield,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -58,6 +60,8 @@ interface StudentFeedPageProps {
   onOpenProfile?: () => void;
   onOpenArticles?: () => void;
   onOpenGames?: () => void;
+  onOpenDm?: () => void;
+  onOpenReports?: () => void;
 }
 
 export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
@@ -69,6 +73,8 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   onOpenProfile,
   onOpenArticles,
   onOpenGames,
+  onOpenDm,
+  onOpenReports,
 }) => {
   const { user, refreshUser, logout } = useAuth();
   const [posts, setPosts] = useState<StudentPost[]>([]);
@@ -81,6 +87,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
     message: string;
   } | null>(null);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [unreadDmCount, setUnreadDmCount] = useState(0);
 
   // Moderasi Foto Profil Siswa State (Support / Admin)
   const [moderatingUser, setModeratingUser] = useState<{ id: string; name: string; username: string } | null>(null);
@@ -114,10 +121,11 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   const loadFeedData = async (silent = false) => {
     if (!silent && posts.length === 0) setLoading(true);
     try {
-      const [fetchedPosts, fetchedStories, notifs] = await Promise.all([
+      const [fetchedPosts, fetchedStories, notifs, convs] = await Promise.all([
         api.getPosts(),
         api.getStories().catch(() => []),
         api.getNotifications().catch(() => []),
+        api.getDMConversations().catch(() => []),
       ]);
       setPosts((prev) => {
         if (fetchedPosts.length === 0 && prev.length > 0) return prev;
@@ -128,6 +136,10 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
         return fetchedStories;
       });
       setUnreadNotifCount(notifs.filter((n: { isRead: boolean }) => !n.isRead).length);
+      if (Array.isArray(convs)) {
+        const totalUnread = convs.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+        setUnreadDmCount(totalUnread);
+      }
     } catch (err) {
       console.error('Failed to load feed data:', err);
     } finally {
@@ -554,42 +566,63 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
           </div>
         )}
 
-        {/* Quick Hub Navigation: Pengumuman, Mapel, Perpustakaan, Permainan, Artikel */}
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-4 pt-3 border-t border-white/10 text-white text-xs font-bold">
+        {/* Quick Hub Navigation: Pengumuman, Mapel, Perpustakaan, Permainan, Artikel, DM, Laporan */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-1.5 sm:gap-2 mt-4 pt-3 border-t border-white/10 text-white text-xs font-bold">
           <button
             onClick={onOpenAnnouncements}
-            className="flex items-center justify-center gap-1.5 py-2 px-2 bg-white/10 hover:bg-white/20 rounded-xl transition"
+            className="flex items-center justify-center gap-1.5 py-2 px-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition"
           >
-            <Megaphone className="w-3.5 h-3.5 text-amber-300" />
+            <Megaphone className="w-3.5 h-3.5 text-amber-300 shrink-0" />
             <span className="truncate">Pengumuman</span>
           </button>
           <button
             onClick={onOpenSubjects}
-            className="flex items-center justify-center gap-1.5 py-2 px-2 bg-white/10 hover:bg-white/20 rounded-xl transition"
+            className="flex items-center justify-center gap-1.5 py-2 px-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition"
           >
-            <BookOpen className="w-3.5 h-3.5 text-emerald-300" />
+            <BookOpen className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
             <span className="truncate">Mata Pelajaran</span>
           </button>
           <button
             onClick={onOpenLibrary}
-            className="flex items-center justify-center gap-1.5 py-2 px-2 bg-white/10 hover:bg-white/20 rounded-xl transition"
+            className="flex items-center justify-center gap-1.5 py-2 px-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition"
           >
-            <Library className="w-3.5 h-3.5 text-cyan-300" />
+            <Library className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
             <span className="truncate">Perpustakaan</span>
           </button>
           <button
             onClick={onOpenGames}
-            className="flex items-center justify-center gap-1.5 py-2 px-2 bg-purple-500/30 hover:bg-purple-500/40 text-purple-200 border border-purple-400/40 rounded-xl transition font-black shadow-sm"
+            className="flex items-center justify-center gap-1.5 py-2 px-1.5 bg-purple-500/30 hover:bg-purple-500/40 text-purple-200 border border-purple-400/40 rounded-xl transition font-black shadow-sm"
           >
-            <Gamepad2 className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
+            <Gamepad2 className="w-3.5 h-3.5 text-purple-300 shrink-0 animate-pulse" />
             <span className="truncate">Permainan</span>
           </button>
           <button
             onClick={onOpenArticles}
-            className="flex items-center justify-center gap-1.5 py-2 px-2 bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-300/30 rounded-xl transition font-semibold"
+            className="flex items-center justify-center gap-1.5 py-2 px-1.5 bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-300/30 rounded-xl transition font-semibold"
           >
-            <BookOpen className="w-3.5 h-3.5 text-amber-300" />
+            <BookOpen className="w-3.5 h-3.5 text-amber-300 shrink-0" />
             <span className="truncate">Artikel Guru</span>
+          </button>
+          {/* DM / Pesan tepat di samping menu Artikel */}
+          <button
+            onClick={onOpenDm}
+            className="flex items-center justify-center gap-1.5 py-2 px-1.5 bg-emerald-500/30 hover:bg-emerald-500/40 text-emerald-200 border border-emerald-400/30 rounded-xl transition font-bold relative"
+          >
+            <MessageCircle className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+            <span className="truncate">Pesan DM</span>
+            {unreadDmCount > 0 && (
+              <span className="w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-black flex items-center justify-center shadow-xs">
+                {unreadDmCount}
+              </span>
+            )}
+          </button>
+          {/* Laporan Sekolah & Lost and Found */}
+          <button
+            onClick={onOpenReports}
+            className="flex items-center justify-center gap-1.5 py-2 px-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 rounded-xl transition font-bold"
+          >
+            <Shield className="w-3.5 h-3.5 text-indigo-300 shrink-0" />
+            <span className="truncate">Laporan</span>
           </button>
         </div>
       </div>
@@ -1482,6 +1515,51 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                   <div>
                     <span className="text-xs font-bold block">Artikel Sekolah</span>
                     <span className="text-[10px] text-slate-400 block">Karya tulis & berita</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+              </button>
+
+              {/* Menu Pesan & DM tepat di samping / bawah Artikel */}
+              <button
+                onClick={() => {
+                  setIsSideMenuOpen(false);
+                  onOpenDm?.();
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-emerald-50/70 text-slate-700 hover:text-emerald-800 transition group text-left border border-transparent hover:border-emerald-100"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl group-hover:scale-105 transition relative">
+                    <MessageCircle className="w-4 h-4" />
+                    {unreadDmCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-black flex items-center justify-center">
+                        {unreadDmCount}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold block">Pesan & DM</span>
+                    <span className="text-[10px] text-slate-400 block">Percakapan, Catatan & Voice Note</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+              </button>
+
+              {/* Menu Layanan Laporan & Lost and Found */}
+              <button
+                onClick={() => {
+                  setIsSideMenuOpen(false);
+                  onOpenReports?.();
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-indigo-50/70 text-slate-700 hover:text-indigo-800 transition group text-left border border-transparent hover:border-indigo-100"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 text-indigo-700 rounded-xl group-hover:scale-105 transition">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold block">Laporan & Lost/Found</span>
+                    <span className="text-[10px] text-slate-400 block">Barang hilang, izin tempat & bantuan</span>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />

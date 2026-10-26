@@ -47,6 +47,8 @@ import {
   Contact,
   Share2,
   Radio,
+  LifeBuoy,
+  Wrench,
 } from 'lucide-react';
 import { api } from '../../lib/api.ts';
 import type {
@@ -59,12 +61,14 @@ import type {
   AttendanceEvent,
   PasswordResetRequest,
   RefreshSignal,
+  AppReport,
+  AppReportStatus,
 } from '../../types/index.ts';
 import { StudentProfileModal } from '../../components/StudentProfileModal.tsx';
 import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
 import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
 
-type AdminTab = 'students' | 'contacts' | 'staff' | 'subjects' | 'library' | 'announcements' | 'quizzes' | 'events' | 'tickets';
+type AdminTab = 'students' | 'contacts' | 'staff' | 'subjects' | 'library' | 'announcements' | 'quizzes' | 'events' | 'tickets' | 'support_tickets';
 
 export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpenScanner }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('students');
@@ -72,6 +76,13 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
   const [isSyncingMultiDevice, setIsSyncingMultiDevice] = useState<boolean>(false);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
+
+  // --- Support Tickets State (Subkategori B Laporan Aplikasi) ---
+  const [supportReports, setSupportReports] = useState<AppReport[]>([]);
+  const [respondingSupportId, setRespondingSupportId] = useState<string | null>(null);
+  const [supportTechnicalNote, setSupportTechnicalNote] = useState<string>('');
+  const [supportTicketStatus, setSupportTicketStatus] = useState<AppReportStatus>('sedang_ditangani');
+  const [supportProcessing, setSupportProcessing] = useState<boolean>(false);
 
   // --- Student Management State ---
   const [students, setStudents] = useState<User[]>([]);
@@ -517,7 +528,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         await api.syncLocalUsersToServer();
       } catch (_) {}
 
-      const [stu, subs, bks, anns, qzs, atts, evs, staff, reqs, sigs] = await Promise.all([
+      const [stu, subs, bks, anns, qzs, atts, evs, staff, reqs, sigs, reps] = await Promise.all([
         api.getStudents(),
         api.getSubjects(),
         api.getBooks(),
@@ -528,6 +539,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         api.getStaff(),
         api.getPasswordResetRequests(),
         api.getRefreshSignals().catch(() => []),
+        api.getAppReports().catch(() => []),
       ]);
       setResetRequests(reqs || []);
       setStudents(stu);
@@ -539,8 +551,31 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setEvents(evs);
       setStaffList(staff);
       setRefreshSignals(sigs || []);
+      setSupportReports(reps || []);
     } catch (err) {
       console.error('Failed to load admin data:', err);
+    }
+  };
+
+  const handleRespondSupport = async (reportId: string) => {
+    if (!supportTechnicalNote.trim()) {
+      alert('Masukkan catatan teknis perbaikan sistem');
+      return;
+    }
+    setSupportProcessing(true);
+    try {
+      const updated = await api.respondAppReportSupport(reportId, {
+        technicalNotes: supportTechnicalNote,
+        newStatus: supportTicketStatus,
+      });
+      setSupportReports(prev => prev.map(r => r.id === reportId ? updated : r));
+      setRespondingSupportId(null);
+      setSupportTechnicalNote('');
+      alert('Tanggapan teknis perbaikan sistem berhasil disimpan!');
+    } catch (err: any) {
+      alert('Terjadi kesalahan: ' + err.message);
+    } finally {
+      setSupportProcessing(false);
     }
   };
 
@@ -1567,6 +1602,21 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
           {resetRequests.filter((r) => r.status === 'pending').length > 0 && (
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
               {resetRequests.filter((r) => r.status === 'pending').length}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('support_tickets')}
+          className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition ${
+            activeTab === 'support_tickets' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <LifeBuoy className="w-4 h-4 shrink-0" />
+          <span className="truncate">Tiket Kendala Sistem</span>
+          {supportReports.filter((r) => r.status === 'laporan_diterima' || r.status === 'sedang_ditangani' || r.status === 'sedang_ditinjau').length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-500 text-white">
+              {supportReports.filter((r) => r.status === 'laporan_diterima' || r.status === 'sedang_ditangani' || r.status === 'sedang_ditinjau').length}
             </span>
           )}
         </button>
@@ -3448,6 +3498,212 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: TIKET KENDALA SISTEM (SUPPORT TAMVESTA & ADMIN) */}
+      {activeTab === 'support_tickets' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 mb-6 gap-3">
+              <div>
+                <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">
+                  HELPDESK & SUPPORT TAMVESTA
+                </span>
+                <h2 className="text-xl font-black text-slate-900 mt-1">
+                  Tiket Kendala Sistem & Bug Aplikasi
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Laporan kendala teknis dari siswa dan warga sekolah (error/bug, kendala login, fitur bermasalah, dan usulan fitur). Ditangani langsung oleh tim Support TAMVESTA.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadAllData}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition self-start sm:self-auto"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Segarkan Tiket
+              </button>
+            </div>
+
+            {/* List of Support Tickets */}
+            <div className="space-y-4">
+              {supportReports.length === 0 ? (
+                <div className="text-center py-12 text-slate-400 text-xs">
+                  Belum ada tiket laporan kendala sistem.
+                </div>
+              ) : (
+                supportReports.map((report) => {
+                  const isResponding = respondingSupportId === report.id;
+                  return (
+                    <div
+                      key={report.id}
+                      className="p-5 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-white transition space-y-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800">
+                            {report.reportType === 'error_bug' ? 'Error / Bug Sistem' :
+                             report.reportType === 'tidak_bisa_login' ? 'Tidak Bisa Login' :
+                             report.reportType === 'akun_bermasalah' ? 'Akun Bermasalah' :
+                             report.reportType === 'fitur_tidak_berfungsi' ? 'Fitur Tidak Berfungsi' :
+                             report.reportType === 'pengumuman_notifikasi' ? 'Pengumuman / Notifikasi' :
+                             report.reportType === 'kendala_penggunaan' ? 'Kendala Penggunaan' :
+                             report.reportType === 'saran_fitur' ? 'Saran Fitur Baru' : 'Laporan Lainnya'}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                              report.status === 'selesai'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : report.status === 'sedang_ditangani'
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                : report.status === 'ditolak'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}
+                          >
+                            {report.status.replace(/_/g, ' ').toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-slate-400">
+                          {new Date(report.createdAt).toLocaleString('id-ID')}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-sm">{report.title}</h4>
+                        <p className="text-xs text-slate-600 mt-1 whitespace-pre-wrap leading-relaxed">
+                          {report.description}
+                        </p>
+                      </div>
+
+                      <div className="text-[11px] text-slate-500 flex flex-wrap gap-4 pt-1 border-t border-slate-100">
+                        <span>Pelapor: <strong className="text-slate-700">{report.reporterName}</strong> (@{report.reporterUsername}) {report.reporterKelas ? `• Kelas ${report.reporterKelas}` : ''}</span>
+                        {report.incidentTime && <span>Waktu Kejadian: <strong className="text-slate-700">{report.incidentTime}</strong></span>}
+                      </div>
+
+                      {/* Screenshot if available */}
+                      {report.screenshotUrl && (
+                        <div className="pt-2">
+                          <p className="text-[10px] font-bold text-slate-500 mb-1">Bukti Tangkapan Layar:</p>
+                          <img
+                            src={report.screenshotUrl}
+                            alt="Bukti Laporan"
+                            onClick={() => setLightboxImage({ url: report.screenshotUrl!, title: report.title })}
+                            className="max-h-40 rounded-xl border border-slate-200 object-cover cursor-pointer hover:opacity-90 transition"
+                          />
+                        </div>
+                      )}
+
+                      {/* Admin TU Response info */}
+                      {report.adminResponse && (
+                        <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200/60 text-xs space-y-1">
+                          <div className="font-bold text-amber-800 flex items-center justify-between">
+                            <span>Tanggapan Administrasi (TU):</span>
+                            <span className="text-[10px] text-amber-600 font-normal">
+                              {new Date(report.adminResponse.respondedAt).toLocaleString('id-ID')}
+                            </span>
+                          </div>
+                          <p className="text-amber-900">{report.adminResponse.message}</p>
+                          <p className="text-[10px] text-amber-700 italic">Oleh: {report.adminResponse.respondedBy}</p>
+                        </div>
+                      )}
+
+                      {/* Support Technical Response info */}
+                      {report.supportResponse && (
+                        <div className="p-3 bg-indigo-50/70 rounded-xl border border-indigo-200/60 text-xs space-y-1">
+                          <div className="font-bold text-indigo-800 flex items-center justify-between">
+                            <span>Tanggapan Teknis Support TAMVESTA:</span>
+                            <span className="text-[10px] text-indigo-600 font-normal">
+                              {new Date(report.supportResponse.respondedAt).toLocaleString('id-ID')}
+                            </span>
+                          </div>
+                          <p className="text-indigo-900 whitespace-pre-wrap">{report.supportResponse.technicalNotes}</p>
+                          <p className="text-[10px] text-indigo-700 italic">Oleh: {report.supportResponse.respondedBy}</p>
+                        </div>
+                      )}
+
+                      {/* Form Response Action */}
+                      <div className="pt-2">
+                        {isResponding ? (
+                          <div className="p-4 bg-white rounded-2xl border-2 border-indigo-200 space-y-3">
+                            <h5 className="font-bold text-xs text-indigo-900 flex items-center gap-1.5">
+                              <Wrench className="w-3.5 h-3.5" /> Berikan Tanggapan Teknis Support TAMVESTA
+                            </h5>
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                Update Status Tiket:
+                              </label>
+                              <select
+                                value={supportTicketStatus}
+                                onChange={(e) => setSupportTicketStatus(e.target.value as AppReportStatus)}
+                                className="w-full text-xs p-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              >
+                                <option value="sedang_ditangani">Sedang Ditangani / Dalam Pengerjaan</option>
+                                <option value="selesai">Selesai Diperbaiki / Teratasi</option>
+                                <option value="menunggu_informasi">Menunggu Informasi Tambahan</option>
+                                <option value="ditolak">Tolak / Bukan Bug Sistem</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                Catatan Teknis / Penyelesaian Masalah:
+                              </label>
+                              <textarea
+                                value={supportTechnicalNote}
+                                onChange={(e) => setSupportTechnicalNote(e.target.value)}
+                                rows={3}
+                                placeholder="Jelaskan langkah perbaikan teknis atau instruksi bagi pengguna..."
+                                className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRespondingSupportId(null);
+                                  setSupportTechnicalNote('');
+                                }}
+                                disabled={supportProcessing}
+                                className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                              >
+                                Batal
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRespondSupport(report.id)}
+                                disabled={supportProcessing}
+                                className="px-4 py-1.5 rounded-xl text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition"
+                              >
+                                {supportProcessing ? 'Menyimpan...' : 'Kirim Tanggapan Support'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRespondingSupportId(report.id);
+                              setSupportTechnicalNote(report.supportResponse?.technicalNotes || '');
+                              setSupportTicketStatus(report.status === 'laporan_diterima' ? 'sedang_ditangani' : report.status);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition"
+                          >
+                            <Wrench className="w-3.5 h-3.5" />
+                            {report.supportResponse ? 'Perbarui Tanggapan Teknis' : 'Tanggapi / Tangani Tiket'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

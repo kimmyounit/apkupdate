@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { X, Trash2, ChevronLeft, ChevronRight, Clock, Send, MessageCircle, Heart, Check } from 'lucide-react';
 import type { Story } from '../types/index.ts';
+import { api } from '../lib/api.ts';
 
 interface StoryViewerModalProps {
   isOpen: boolean;
@@ -21,18 +22,23 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [progress, setProgress] = useState(0);
+  const [replyText, setReplyText] = useState('');
+  const [isReplying, setIsReplying] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex);
       setProgress(0);
+      setReplyText('');
+      setIsReplying(false);
+      setToastMessage(null);
     }
   }, [isOpen, initialIndex]);
 
   useEffect(() => {
-    if (!isOpen || stories.length === 0) return;
+    if (!isOpen || stories.length === 0 || isReplying) return;
 
-    setProgress(0);
     const stepTime = 50; // ms
     const totalDuration = 5000; // 5s per story
     const stepIncrement = (stepTime / totalDuration) * 100;
@@ -40,12 +46,10 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     const timer = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
-          // Advance to next story
           if (currentIndex < stories.length - 1) {
             setCurrentIndex((curr) => curr + 1);
             return 0;
           } else {
-            // Reached end of all stories
             clearInterval(timer);
             onClose();
             return 100;
@@ -56,7 +60,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     }, stepTime);
 
     return () => clearInterval(timer);
-  }, [isOpen, currentIndex, stories.length, onClose]);
+  }, [isOpen, currentIndex, stories.length, onClose, isReplying]);
 
   if (!isOpen || stories.length === 0) return null;
 
@@ -205,10 +209,122 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
         {/* Bottom Caption Overlay */}
         {currentStory.caption && (
-          <div className="absolute bottom-0 left-0 right-0 z-30 p-4 bg-gradient-to-t from-black/85 via-black/50 to-transparent text-white text-center">
+          <div className="absolute bottom-16 left-0 right-0 z-30 p-4 bg-gradient-to-t from-black/85 via-black/40 to-transparent text-white text-center">
             <p className="text-xs sm:text-sm font-medium drop-shadow-md">
               {currentStory.caption}
             </p>
+          </div>
+        )}
+
+        {/* Reply Story to DM Bar */}
+        {!isOwnStory && (
+          <div className="relative z-30 p-3 bg-black/90 border-t border-white/10 flex flex-col gap-2">
+            {toastMessage && (
+              <div className="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-bold text-center flex items-center justify-center gap-1.5 animate-in fade-in">
+                <Check className="w-3.5 h-3.5" />
+                {toastMessage}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={replyText}
+                onFocus={() => setIsReplying(true)}
+                onBlur={() => {
+                  if (!replyText.trim()) setIsReplying(false);
+                }}
+                onChange={(e) => setReplyText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (replyText.trim()) {
+                      api.sendDirectMessage({
+                        recipientId: currentStory.authorId,
+                        recipientName: currentStory.authorName,
+                        recipientUsername: currentStory.authorUsername,
+                        text: replyText.trim(),
+                        replyToStory: {
+                          id: currentStory.id,
+                          mediaUrl: currentStory.mediaUrl,
+                          authorName: currentStory.authorName,
+                          caption: currentStory.caption,
+                        },
+                      }).then(() => {
+                        setReplyText('');
+                        setIsReplying(false);
+                        setToastMessage('Balasan terkirim ke DM!');
+                        setTimeout(() => setToastMessage(null), 2500);
+                      }).catch(() => {
+                        setToastMessage('Gagal mengirim balasan');
+                        setTimeout(() => setToastMessage(null), 2500);
+                      });
+                    }
+                  }
+                }}
+                placeholder={`Kirim pesan ke ${currentStory.authorName}...`}
+                className="flex-1 px-3.5 py-2 bg-white/15 border border-white/20 rounded-full text-xs text-white placeholder-white/60 focus:outline-hidden focus:ring-1 focus:ring-emerald-400 focus:bg-white/25 transition"
+              />
+              {/* Quick Emojis or Send */}
+              {replyText.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    api.sendDirectMessage({
+                      recipientId: currentStory.authorId,
+                      recipientName: currentStory.authorName,
+                      recipientUsername: currentStory.authorUsername,
+                      text: replyText.trim(),
+                      replyToStory: {
+                        id: currentStory.id,
+                        mediaUrl: currentStory.mediaUrl,
+                        authorName: currentStory.authorName,
+                        caption: currentStory.caption,
+                      },
+                    }).then(() => {
+                      setReplyText('');
+                      setIsReplying(false);
+                      setToastMessage('Balasan terkirim ke DM!');
+                      setTimeout(() => setToastMessage(null), 2500);
+                    }).catch(() => {
+                      setToastMessage('Gagal mengirim balasan');
+                      setTimeout(() => setToastMessage(null), 2500);
+                    });
+                  }}
+                  className="p-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition active:scale-95"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              ) : (
+                <div className="flex items-center gap-1">
+                  {['❤️', '🔥', '😂'].map((em) => (
+                    <button
+                      key={em}
+                      type="button"
+                      onClick={() => {
+                        api.sendDirectMessage({
+                          recipientId: currentStory.authorId,
+                          recipientName: currentStory.authorName,
+                          recipientUsername: currentStory.authorUsername,
+                          text: em,
+                          replyToStory: {
+                            id: currentStory.id,
+                            mediaUrl: currentStory.mediaUrl,
+                            authorName: currentStory.authorName,
+                            caption: currentStory.caption,
+                          },
+                        }).then(() => {
+                          setToastMessage(`Reaksi ${em} terkirim ke DM!`);
+                          setTimeout(() => setToastMessage(null), 2500);
+                        });
+                      }}
+                      className="text-base p-1 hover:scale-125 transition active:scale-95"
+                    >
+                      {em}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

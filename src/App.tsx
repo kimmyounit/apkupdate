@@ -7,6 +7,7 @@ import { AdminDashboard } from './pages/admin/AdminDashboard.tsx';
 import { TeacherDashboard } from './pages/teacher/TeacherDashboard.tsx';
 import { PrincipalDashboard } from './pages/principal/PrincipalDashboard.tsx';
 import { TuDashboard } from './pages/tu/TuDashboard.tsx';
+import { SatpamDashboard } from './pages/satpam/SatpamDashboard.tsx';
 import { ScannerPage } from './pages/attendance/ScannerPage.tsx';
 import { PasswordChangeModal } from './components/PasswordChangeModal.tsx';
 import { WelcomeAnimation } from './components/WelcomeAnimation.tsx';
@@ -169,7 +170,13 @@ function AppContent() {
               <PrincipalDashboard onOpenScanner={() => setCurrentView('scanner')} />
             )}
 
-            {!['admin', 'guru', 'siswa', 'panitia', 'tata_usaha', 'kepala_sekolah'].includes(userRole) && (
+            {userRole === 'satpam' && <SatpamDashboard />}
+
+            {userRole === 'support' && (
+              <AdminDashboard onOpenScanner={() => setCurrentView('scanner')} />
+            )}
+
+            {!['admin', 'guru', 'siswa', 'panitia', 'tata_usaha', 'kepala_sekolah', 'satpam', 'support'].includes(userRole) && (
               <StudentDashboard />
             )}
           </ErrorBoundary>

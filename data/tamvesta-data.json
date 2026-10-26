@@ -675,7 +675,7 @@
       "id": "user_staff_angga_satpam",
       "username": "angga.satpam",
       "name": "Angga",
-      "role": "panitia",
+      "role": "satpam",
       "jabatan": "Satpam",
       "initialPassword": "Tamvesta!A2617",
       "passwordHash": "ec3fcb5d4e7f18812743496ebd636e5441fd75171f26ce6a61a9189fbff09e6aa9be0017773689887b3b8b2cde4df813818f14b990e2f6e3dfa199c34eebe3a1",

@@ -16,6 +16,7 @@ import {
   UserCheck,
   Gamepad2,
   RefreshCw,
+  MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../lib/api.ts';
@@ -82,6 +83,8 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
     kepala_sekolah: { label: 'KEPALA SEKOLAH', color: 'bg-purple-100 text-purple-800 border-purple-200' },
     panitia: { label: 'PANITIA OSIS', color: 'bg-amber-100 text-amber-800 border-amber-200' },
     tata_usaha: { label: 'TATA USAHA', color: 'bg-teal-100 text-teal-800 border-teal-200' },
+    satpam: { label: 'SATPAM SEKOLAH', color: 'bg-amber-100 text-amber-900 border-amber-300' },
+    support: { label: 'SUPPORT TAMVESTA', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
   };
 
   const badge = roleLabels[userRole] || {
@@ -199,7 +202,45 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
                   <Gamepad2 className="w-4 h-4" />
                   <span>Permainan</span>
                 </button>
+
+                <button
+                  onClick={() => handleNav('dm')}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition ${
+                    currentTab === 'dm'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Pesan DM</span>
+                </button>
+
+                <button
+                  onClick={() => handleNav('reports')}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition ${
+                    currentTab === 'reports'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Laporan</span>
+                </button>
               </>
+            )}
+
+            {userRole === 'satpam' && (
+              <button
+                onClick={() => handleNav('dashboard')}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                  currentTab === 'dashboard'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                <span>Pos Satpam Sekolah</span>
+              </button>
             )}
 
             {(userRole === 'admin' || userRole === 'kepala_sekolah') && (

@@ -11,11 +11,13 @@ import { AnnouncementsPage } from './AnnouncementsPage.tsx';
 import { SubjectsPage } from './SubjectsPage.tsx';
 import { LibraryPage } from './LibraryPage.tsx';
 import { GamesPage } from '../games/GamesPage.tsx';
+import { DirectMessagesPage } from '../dm/DirectMessagesPage.tsx';
+import { SchoolReportsPage } from '../reports/SchoolReportsPage.tsx';
 import { StudentContactModal } from '../../components/StudentContactModal.tsx';
 import { playQuizExitAlertSound } from '../../lib/audio.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
-export type StudentViewTab = StudentNavTab | 'articles' | 'announcements' | 'subjects' | 'library' | 'games';
+export type StudentViewTab = StudentNavTab | 'articles' | 'announcements' | 'subjects' | 'library' | 'games' | 'dm' | 'reports';
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -50,6 +52,12 @@ export const StudentDashboard: React.FC = () => {
         setActiveTab('announcements');
       } else if (tab === 'quiz') {
         setActiveTab('quiz');
+      } else if (tab === 'dm' || tab === 'pesan') {
+        setActiveTab('dm');
+      } else if (tab === 'reports' || tab === 'laporan' || tab === 'lost_found') {
+        setActiveTab('reports');
+      } else if (tab === 'articles' || tab === 'artikel') {
+        setActiveTab('articles');
       }
     };
     window.addEventListener('tamvesta_navigate', handleNavEvent);
@@ -97,7 +105,17 @@ export const StudentDashboard: React.FC = () => {
             onOpenProfile={() => setActiveTab('profile')}
             onOpenArticles={() => setActiveTab('articles')}
             onOpenGames={() => setActiveTab('games')}
+            onOpenDm={() => setActiveTab('dm')}
+            onOpenReports={() => setActiveTab('reports')}
           />
+        )}
+
+        {activeTab === 'dm' && (
+          <DirectMessagesPage onBack={() => setActiveTab('home')} />
+        )}
+
+        {activeTab === 'reports' && (
+          <SchoolReportsPage onBack={() => setActiveTab('home')} />
         )}
 
         {activeTab === 'games' && (
