@@ -1,4 +1,4 @@
-import defaultData from './defaultData.json';
+import defaultData from './defaultData.json' with { type: 'json' };
 import type {
   User,
   Subject,
