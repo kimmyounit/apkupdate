@@ -3170,13 +3170,15 @@ class DatabaseManager {
     this.data.lostFoundItems.unshift(newItem);
     this.save();
 
-    this.createNotification({
-      title: payload.type === 'found' ? 'Laporan Barang Ditemukan Baru' : 'Laporan Barang Hilang Baru',
-      message: `${newItem.reporterName} (${newItem.reporterKelas || '-'}) melaporkan: "${newItem.itemName}" di lokasi ${newItem.location}.`,
-      type: 'lost_found',
-      linkType: 'reports',
-      linkId: newItem.id,
-      targetRole: 'satpam',
+    ['satpam', 'guru', 'tata_usaha'].forEach((role) => {
+      this.createNotification({
+        title: payload.type === 'found' ? 'Laporan Barang Ditemukan Baru' : 'Laporan Barang Hilang Baru',
+        message: `${newItem.reporterName} (${newItem.reporterKelas || '-'}) melaporkan: "${newItem.itemName}" di lokasi ${newItem.location}.`,
+        type: 'lost_found',
+        linkType: 'reports',
+        linkId: newItem.id,
+        targetRole: role as any,
+      });
     });
 
     return newItem;
@@ -3229,13 +3231,15 @@ class DatabaseManager {
     item.updatedAt = now;
     this.save();
 
-    this.createNotification({
-      title: 'Klaim Kepemilikan Barang Baru',
-      message: `${newClaim.claimantName} mengklaim barang "${item.itemName}". Mohon verifikasi bukti kepemilikan.`,
-      type: 'lost_found',
-      linkType: 'reports',
-      linkId: item.id,
-      targetRole: 'satpam',
+    ['satpam', 'guru', 'tata_usaha'].forEach((role) => {
+      this.createNotification({
+        title: 'Klaim Kepemilikan Barang Baru',
+        message: `${newClaim.claimantName} mengklaim barang "${item.itemName}". Mohon verifikasi bukti kepemilikan.`,
+        type: 'lost_found',
+        linkType: 'reports',
+        linkId: item.id,
+        targetRole: role as any,
+      });
     });
 
     return item;

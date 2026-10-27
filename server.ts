@@ -2416,13 +2416,14 @@ app.post('/api/lost-found/:id/claim', authMiddleware, (req: AuthenticatedRequest
   }
 });
 
-app.patch('/api/lost-found/:id/claims/:claimId', authMiddleware, requireRole(['satpam', 'admin']), (req: AuthenticatedRequest, res) => {
+app.patch('/api/lost-found/:id/claims/:claimId', authMiddleware, requireRole(['satpam', 'admin', 'guru', 'tata_usaha']), (req: AuthenticatedRequest, res) => {
   try {
     const { id, claimId } = req.params;
-    const { status, satpamNotes } = req.body;
+    const { status, satpamNotes, officerNotes } = req.body;
     const item = db.updateLostFoundClaim(id, claimId, {
       status,
-      satpamNotes,
+      satpamNotes: satpamNotes || officerNotes,
+      officerNotes: officerNotes || satpamNotes,
       verifiedBy: req.user!.name,
     });
     if (!item) return res.status(404).json({ error: 'Klaim atau barang tidak ditemukan.' });

@@ -164,7 +164,7 @@ export const SchoolReportsPage: React.FC<SchoolReportsPageProps> = ({
       setLfDescription('');
       setLfLocation('');
       setLfPhotoUrl(undefined);
-      alert('Laporan berhasil dikirim dan otomatis masuk ke Pos Satpam Sekolah!');
+      alert('Laporan berhasil dikirim dan otomatis masuk ke Dashboard Guru, Pos Satpam, dan Tata Usaha (TU)!');
     } catch (err: any) {
       alert(err.message || 'Gagal mengirim laporan barang.');
     } finally {
@@ -192,7 +192,7 @@ export const SchoolReportsPage: React.FC<SchoolReportsPageProps> = ({
       setClaimReason('');
       setClaimFeatures('');
       setClaimInfo('');
-      alert('Pengajuan klaim berhasil dikirim! Satpam Sekolah akan memeriksa bukti kepemilikan Anda.');
+      alert('Pengajuan klaim berhasil dikirim! Guru, Satpam, dan Tata Usaha (TU) akan memeriksa bukti kepemilikan Anda.');
     } catch (err: any) {
       alert(err.message || 'Gagal mengirim pengajuan klaim.');
     } finally {
@@ -875,7 +875,9 @@ export const SchoolReportsPage: React.FC<SchoolReportsPageProps> = ({
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
                   >
                     <option value="masih_di_penemu">Masih saya simpan sendiri</option>
-                    <option value="diserahkan_ke_satpam">Sudah saya serahkan ke Pos Satpam Sekolah</option>
+                    <option value="diserahkan_ke_guru">Sudah diserahkan ke Bapak/Ibu Guru</option>
+                    <option value="diserahkan_ke_satpam">Sudah diserahkan ke Pos Satpam Sekolah</option>
+                    <option value="diserahkan_ke_tu">Sudah diserahkan ke Ruang Tata Usaha (TU)</option>
                   </select>
                 </div>
               )}

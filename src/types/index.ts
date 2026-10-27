@@ -535,6 +535,9 @@ export type LostFoundStatus =
   | 'menunggu_pemeriksaan'
   | 'sedang_ditindaklanjuti'
   | 'barang_ditemukan'
+  | 'disimpan_guru'
+  | 'disimpan_satpam'
+  | 'disimpan_tu'
   | 'menunggu_pengambilan'
   | 'barang_telah_dikembalikan'
   | 'laporan_selesai';
@@ -550,6 +553,7 @@ export interface LostFoundClaim {
   additionalInfo?: string;
   status: 'menunggu_verifikasi' | 'sedang_diproses' | 'disetujui' | 'ditolak' | 'barang_telah_dikembalikan';
   satpamNotes?: string;
+  officerNotes?: string;
   verifiedBy?: string;
   handedOverAt?: string;
   createdAt: string;
@@ -569,7 +573,7 @@ export interface LostFoundItem {
   description: string;
   location: string;
   dateTime: string;
-  storageStatus?: 'masih_di_penemu' | 'diserahkan_ke_satpam';
+  storageStatus?: 'masih_di_penemu' | 'diserahkan_ke_satpam' | 'diserahkan_ke_guru' | 'diserahkan_ke_tu' | string;
   additionalNotes?: string;
   status: LostFoundStatus;
   claims?: LostFoundClaim[];

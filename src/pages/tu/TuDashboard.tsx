@@ -30,7 +30,9 @@ import {
   Printer,
   Share2,
   FileSpreadsheet,
+  Package,
 } from 'lucide-react';
+import { LostFoundManagementPanel } from '../../components/LostFoundManagementPanel.tsx';
 import { api } from '../../lib/api.ts';
 import type {
   TuitionBill,
@@ -42,7 +44,7 @@ import type {
 } from '../../types/index.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
-type TuTab = 'bills' | 'finance' | 'documents' | 'chat' | 'reports' | 'backup';
+type TuTab = 'bills' | 'finance' | 'documents' | 'chat' | 'lost_found' | 'reports' | 'backup';
 
 export const TuDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -949,6 +951,18 @@ Tembusan:
         </button>
 
         <button
+          onClick={() => setActiveTab('lost_found')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+            activeTab === 'lost_found'
+              ? 'bg-emerald-700 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Package className="w-4 h-4 text-amber-400" />
+          <span>Barang Hilang & Ditemukan</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('backup')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
             activeTab === 'backup'
@@ -1601,6 +1615,16 @@ Tembusan:
             </div>
           )}
         </div>
+      )}
+
+      {/* ============================================================= */}
+      {/* TAB BARANG HILANG & DITEMUKAN (TATA USAHA)                   */}
+      {/* ============================================================= */}
+      {activeTab === 'lost_found' && (
+        <LostFoundManagementPanel
+          userRole="tata_usaha"
+          userName={user?.name || 'Staf Tata Usaha'}
+        />
       )}
 
       {/* ============================================================= */}

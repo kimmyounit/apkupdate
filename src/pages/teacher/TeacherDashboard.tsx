@@ -41,7 +41,9 @@ import {
   Paperclip,
   FolderDown,
   RefreshCw,
+  Package,
 } from 'lucide-react';
+import { LostFoundManagementPanel } from '../../components/LostFoundManagementPanel.tsx';
 import { api } from '../../lib/api.ts';
 import type {
   Quiz,
@@ -54,7 +56,7 @@ import type {
 } from '../../types/index.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
-type TeacherTab = 'articles' | 'attendance' | 'quizzes';
+type TeacherTab = 'articles' | 'attendance' | 'quizzes' | 'lost_found';
 
 // Helper pemetaan tingkat kelas 1 - 9 (SD & SMP) untuk pencarian siswa akurat
 const getGradeNumber = (str: string): number | null => {
@@ -915,6 +917,18 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
           <Award className="w-4 h-4" />
           <span>Manajemen Quiz & Token ({quizzes.length})</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('lost_found')}
+          className={`py-3 px-4 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'lost_found'
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Package className="w-4 h-4 text-amber-600" />
+          <span>Barang Hilang & Ditemukan</span>
+        </button>
       </div>
 
       {/* Alert Notifications */}
@@ -1747,6 +1761,14 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
             </div>
           </div>
         </div>
+      )}
+
+      {/* ===================== TAB: BARANG HILANG & DITEMUKAN ===================== */}
+      {activeTab === 'lost_found' && (
+        <LostFoundManagementPanel
+          userRole="guru"
+          userName={user?.name || 'Bapak/Ibu Guru'}
+        />
       )}
 
       {/* ===================== MODAL: BUAT / EDIT ARTIKEL ===================== */}
