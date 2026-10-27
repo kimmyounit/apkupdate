@@ -2,6 +2,10 @@
   "appId": "id.sch.tamansiswabatam.tamvesta",
   "appName": "TAMVESTA",
   "webDir": "dist",
+  "server": {
+    "url": "https://apkupdate-indol.vercel.app",
+    "cleartext": true
+  },
   "android": {
     "allowMixedContent": true
   },

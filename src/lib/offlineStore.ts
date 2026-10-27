@@ -31,7 +31,9 @@ export function getAdminRegisteredStudentsBackup(): User[] {
     const raw = localStorage.getItem(ADMIN_STUDENTS_BACKUP_KEY);
     if (raw) {
       const list = JSON.parse(raw);
-      if (Array.isArray(list)) return list;
+      if (Array.isArray(list)) {
+        return list.filter((u) => !isDemoStudent(u));
+      }
     }
   } catch (_) {}
   return [];
@@ -73,7 +75,12 @@ export const DEMO_STUDENT_USERNAMES: string[] = [
   'panitia.osis',
   'alvaro1234',
   'itskimzz',
+  'itskimz',
   'tamansiswa1',
+  'aldongker',
+  'graniat',
+  'kekey',
+  'siswa.tesnyata',
   'siswa.smp7a.001',
   'siswa.smp7a.002',
   'siswa.smp7a.003',
@@ -102,6 +109,53 @@ export const DEMO_STUDENT_USERNAMES: string[] = [
   'siswa.sd6a.001',
   'siswa.sd6a.002',
 ];
+
+export const DEMO_STUDENT_NAMES: string[] = [
+  'bunga pertiwi',
+  'cahya ramadhan',
+  'dinda aulia',
+  'eka prasetyo',
+  'fajar nugroho',
+  'gita kusuma',
+  'hendra wijaya',
+  'indah lestari',
+  'joko susilo',
+  'kartika dewi',
+  'lukman hakim',
+  'melati sari',
+  'nanda putra',
+  'olivia putri',
+  'putri rahayu',
+  'qori ananda',
+  'rizky maulana',
+  'siti aminah',
+  'taufik hidayat',
+  'umi kalsum',
+  'vino pratama',
+  'wulan sari',
+  'xena maharani',
+  'yoga santoso',
+  'zahra aulia',
+  'aldi firmansyah',
+  'ahmad fauzi',
+  'alvaro pratama herlen',
+  'ibrahim al ashry',
+  'kheisya nachua billa',
+  'tes siswa nyata',
+];
+
+export function isDemoStudent(u: { id?: string; username?: string; name?: string; role?: string }): boolean {
+  if (u.role && u.role !== 'siswa') return false;
+  const un = (u.username || '').toLowerCase().replace(/^@+/, '');
+  const id = (u.id || '').toLowerCase();
+  const nm = (u.name || '').toLowerCase();
+
+  if (id.startsWith('user_siswa_siswa_') || id.startsWith('user_siswa_')) return true;
+  if (un.startsWith('siswa.')) return true;
+  if (DEMO_STUDENT_USERNAMES.includes(un)) return true;
+  if (DEMO_STUDENT_NAMES.includes(nm)) return true;
+  return false;
+}
 
 export function getPermanentAvatar(userId: string, username?: string): string | null {
   try {
@@ -237,11 +291,9 @@ function loadDB(): StandaloneDB {
 
   // 2. Pastikan akun contoh lama & 26 akun siswa contoh tidak masuk, tapi akun terdaftar admin tetap ada
   if (Array.isArray(db.users)) {
-    const demoUsernames = DEMO_STUDENT_USERNAMES;
     db.users = db.users.filter((u) => {
+      if (isDemoStudent(u)) return false;
       const lower = (u.username || '').toLowerCase().replace(/^@+/, '');
-      const lowerName = (u.name || '').toLowerCase();
-      if (demoUsernames.includes(lower) || u.id.startsWith('user_siswa_siswa_') || lowerName === 'ahmad fauzi') return false;
       if (explicitDeleted.includes(u.id.toLowerCase()) || explicitDeleted.includes(lower)) return false;
       return true;
     });
@@ -1456,9 +1508,9 @@ export const offlineStore = {
     return (db.users || [])
       .filter((u) => u.role === 'siswa')
       .filter((u) => {
+        if (isDemoStudent(u)) return false;
         const uId = (u.id || '').toLowerCase();
         const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
-        if (uId.startsWith('user_siswa_siswa_') || DEMO_STUDENT_USERNAMES.includes(uName)) return false;
         return !explicitDeleted.includes(uId) && !explicitDeleted.includes(uName);
       });
   },

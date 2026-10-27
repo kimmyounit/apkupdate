@@ -285,8 +285,33 @@ export const OLD_DEMO_USERNAMES: string[] = [
   'siswa.sd5a.001', 'siswa.sd5a.002',
   'siswa.sd6a.001', 'siswa.sd6a.002',
   'guru.matematika', 'guru.bahasa', 'kepala.sekolah', 'panitia.osis',
-  'alvaro1234', 'itskimzz', 'tamansiswa1'
+  'alvaro1234', 'itskimzz', 'itskimz', 'tamansiswa1',
+  'aldongker', 'graniat', 'kekey', 'siswa.tesnyata'
 ];
+
+export const DEMO_STUDENT_NAMES: string[] = [
+  'bunga pertiwi', 'cahya ramadhan', 'dinda aulia', 'eka prasetyo',
+  'fajar nugroho', 'gita kusuma', 'hendra wijaya', 'indah lestari',
+  'joko susilo', 'kartika dewi', 'lukman hakim', 'melati sari',
+  'nanda putra', 'olivia putri', 'putri rahayu', 'qori ananda',
+  'rizky maulana', 'siti aminah', 'taufik hidayat', 'umi kalsum',
+  'vino pratama', 'wulan sari', 'xena maharani', 'yoga santoso',
+  'zahra aulia', 'aldi firmansyah', 'ahmad fauzi',
+  'alvaro pratama herlen', 'ibrahim al ashry', 'kheisya nachua billa', 'tes siswa nyata'
+];
+
+export function isDemoStudent(u: { id?: string; username?: string; name?: string; role?: string }): boolean {
+  if (u.role && u.role !== 'siswa') return false;
+  const un = (u.username || '').toLowerCase().replace(/^@+/, '');
+  const id = (u.id || '').toLowerCase();
+  const nm = (u.name || '').toLowerCase();
+
+  if (id.startsWith('user_siswa_siswa_') || id.startsWith('user_siswa_')) return true;
+  if (un.startsWith('siswa.')) return true;
+  if (OLD_DEMO_USERNAMES.includes(un)) return true;
+  if (DEMO_STUDENT_NAMES.includes(nm)) return true;
+  return false;
+}
 
 export function getInitialData(): DatabaseSchema {
   const now = new Date().toISOString();
@@ -493,12 +518,12 @@ class DatabaseManager {
 
       if (Array.isArray(parsed.users)) {
         parsed.users.forEach((ghUser: any) => {
+          if (isDemoStudent(ghUser)) return; // Blokir seluruh akun siswa demo lama
           const cleanGh = (ghUser.username || '').toLowerCase().replace(/^@+/, '');
           const isDeleted = (this.data.deletedUserIds || []).some(
             (did) => did === ghUser.id || did.toLowerCase() === cleanGh || did.toLowerCase() === (ghUser.username || '').toLowerCase()
-          ) || OLD_DEMO_USERNAMES.includes(cleanGh) || (ghUser.id && ghUser.id.startsWith('user_siswa_siswa_')) || (ghUser.name || '').toLowerCase() === 'ahmad fauzi';
+          );
           if (isDeleted) return; // Akun terhapus permanen
-          if (ghUser.id?.startsWith('user_siswa_siswa_') || OLD_DEMO_USERNAMES.includes(cleanGh)) return; // Blokir akun siswa contoh lama
           const existing = this.data.users.find(
             (u) => u.id === ghUser.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanGh
           );
@@ -606,16 +631,12 @@ class DatabaseManager {
         // Ensure all 17 official staff/teacher accounts exist and can log in with their credentials
         if (!parsed.users) parsed.users = [];
 
-        // Exclude permanently deleted users
+        // Exclude permanently deleted users & demo student accounts
         parsed.deletedUserIds = parsed.deletedUserIds || [];
-        const toDeleteIds = ['user_siswa_siswa_smp7a_001', 'siswa.smp7a.001'];
-        toDeleteIds.forEach((did) => {
-          if (!parsed.deletedUserIds.includes(did)) parsed.deletedUserIds.push(did);
-        });
         parsed.users = parsed.users.filter((u: User) => {
+          if (isDemoStudent(u)) return false;
           const uName = (u.username || '').toLowerCase();
-          const name = (u.name || '').toLowerCase();
-          return u.id !== 'user_siswa_siswa_smp7a_001' && uName !== 'siswa.smp7a.001' && name !== 'ahmad fauzi';
+          return !parsed.deletedUserIds.includes(u.id) && !parsed.deletedUserIds.includes(uName);
         });
         
         // Ensure all 27 official students exist and can log in with their credentials
@@ -1043,9 +1064,9 @@ class DatabaseManager {
     return this.data.users
       .filter((u) => u.role === 'siswa')
       .filter((u) => {
+        if (isDemoStudent(u)) return false;
         const un = (u.username || '').toLowerCase();
         if (deletedList.includes(u.id) || deletedList.includes(u.username) || deletedList.includes(un)) return false;
-        if (u.id.startsWith('user_siswa_siswa_') || OLD_DEMO_USERNAMES.includes(un)) return false;
         return true;
       });
   }
@@ -1053,9 +1074,9 @@ class DatabaseManager {
   public getAllUsers(): User[] {
     const deletedList = this.data.deletedUserIds || [];
     return this.data.users.filter((u) => {
+      if (isDemoStudent(u)) return false;
       const un = (u.username || '').toLowerCase();
       if (deletedList.includes(u.id) || deletedList.includes(u.username) || deletedList.includes(un)) return false;
-      if (u.id.startsWith('user_siswa_siswa_') || OLD_DEMO_USERNAMES.includes(un)) return false;
       return true;
     });
   }

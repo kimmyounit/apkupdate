@@ -6,6 +6,7 @@ import {
   savePermanentBio,
   DEMO_STUDENT_USERNAMES,
   getAdminExplicitlyDeletedIds,
+  isDemoStudent,
 } from './offlineStore.ts';
 import type {
   User,
@@ -128,10 +129,22 @@ const isStandalone = typeof window !== 'undefined' && (
  * (2) configured/default server URL for standalone APK.
  */
 function resolveUrl(endpoint: string): string {
-  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+  if (typeof window !== 'undefined') {
     const custom = localStorage.getItem(SERVER_URL_KEY);
     if (custom) return `${custom.replace(/\/+$/, '')}${endpoint}`;
-    return endpoint;
+
+    const host = window.location.hostname || '';
+    const port = window.location.port || '';
+    const isLocalDev = (host === 'localhost' || host === '127.0.0.1') && (port === '5173' || port === '3000');
+    const isProductionWeb = host.includes('vercel.app');
+
+    // Jika berjalan di web Vercel production atau Vite dev server lokal, gunakan relative endpoint
+    if (isProductionWeb || isLocalDev) {
+      return endpoint;
+    }
+
+    // Jika di Android APK (Capacitor / WebView dengan origin localhost tanpa port dev)
+    return `${DEFAULT_SERVER_URL}${endpoint}`;
   }
   const base = getServerUrl();
   if (base) return `${base}${endpoint}`;
@@ -186,11 +199,12 @@ export const api = {
         offlineStore.recordDeletedUserIds(syncRes.deletedUserIds);
       }
       if (Array.isArray(syncRes?.users) && syncRes.users.length > 0) {
-        offlineStore.mergeUsersFromServer(syncRes.users);
+        const cleanUsers = syncRes.users.filter((u: any) => !isDemoStudent(u));
+        offlineStore.mergeUsersFromServer(cleanUsers);
         if (Array.isArray(syncRes.passwordResetRequests)) {
           syncRes.passwordResetRequests.forEach((t: any) => offlineStore.saveTicketDirect(t));
         }
-        return syncRes.users;
+        return cleanUsers;
       }
     } catch (_) {}
     return null;
@@ -200,7 +214,7 @@ export const api = {
     try {
       const res = await tryServerRequest<{ users: User[] }>('/api/users/public');
       if (Array.isArray(res?.users) && res.users.length > 0) {
-        return res.users;
+        return res.users.filter((u: any) => !isDemoStudent(u));
       }
     } catch (_) {}
     return offlineStore.getAllUsers();
@@ -489,8 +503,8 @@ export const api = {
 
     // 1. Put all local students first so newly created accounts are ALWAYS included immediately
     localStudents.forEach((ls) => {
+      if (isDemoStudent(ls)) return;
       const cleanU = (ls.username || '').toLowerCase().replace(/^@+/, '');
-      if (ls.id.startsWith('user_siswa_siswa_') || DEMO_STUDENT_USERNAMES.includes(cleanU)) return;
       if (!explicitDeleted.includes(ls.id.toLowerCase()) && !explicitDeleted.includes(cleanU) && !explicitDeleted.includes((ls.username || '').toLowerCase())) {
         const permAvatar = getPermanentAvatar(ls.id, ls.username);
         const permBio = getPermanentBio(ls.id, ls.username);
@@ -505,8 +519,8 @@ export const api = {
     // 2. Merge server students: ALWAYS update with latest server data (photo, bio, phone, email)!
     if (Array.isArray(serverStudents) && serverStudents.length > 0) {
       serverStudents.forEach((ss) => {
+        if (isDemoStudent(ss)) return;
         const cleanU = (ss.username || '').toLowerCase().replace(/^@+/, '');
-        if (ss.id.startsWith('user_siswa_siswa_') || DEMO_STUDENT_USERNAMES.includes(cleanU)) return;
         if (!explicitDeleted.includes(ss.id.toLowerCase()) && !explicitDeleted.includes(cleanU) && !explicitDeleted.includes((ss.username || '').toLowerCase())) {
           const existing = studentMap.get(cleanU);
           const permAvatar = getPermanentAvatar(ss.id, ss.username);
