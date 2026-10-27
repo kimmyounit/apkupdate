@@ -5,6 +5,7 @@ export interface User {
   username: string;
   name: string;
   role: UserRole;
+  nisn?: string;
   gender?: 'Laki-laki' | 'Perempuan';
   jabatan?: string;
   initialPassword?: string;
@@ -304,6 +305,7 @@ export interface StudentPost {
   authorAvatar?: string;
   authorIsVerified?: boolean;
   authorIsDeveloper?: boolean;
+  authorIsAlumni?: boolean;
   authorBadgeType?: 'blue' | 'yellow' | 'developer';
   isPinned?: boolean; // Pinned feed feature
   caption: string;
@@ -324,6 +326,7 @@ export interface Story {
   authorKelas?: string;
   authorIsVerified?: boolean;
   authorIsDeveloper?: boolean;
+  authorIsAlumni?: boolean;
   authorBadgeType?: 'blue' | 'yellow' | 'developer';
   mediaType: 'photo' | 'video';
   mediaUrl: string;
@@ -371,6 +374,7 @@ export interface TuitionTransaction {
   amount: number;
   type: 'pemasukan' | 'pengeluaran';
   category: string;
+  date?: string;
   paymentMethod: 'Transfer Bank' | 'Tunai / Kasir TU' | 'QRIS' | 'Virtual Account';
   verifiedBy: string;
   verifiedAt: string;

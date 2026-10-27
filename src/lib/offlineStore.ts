@@ -17,12 +17,91 @@ import type {
 } from '../types/index.ts';
 import type { GameRoom } from '../types/game.ts';
 
-const DB_KEY = 'tamvesta_standalone_db_v2';
+const DB_KEY = 'tamvesta_standalone_db_v3';
 const GAME_ROOMS_KEY = 'tamvesta_game_rooms_v1';
 const CURRENT_USER_KEY = 'tamvesta_offline_current_user_id';
 const PASSWORDS_KEY = 'tamvesta_offline_passwords';
 const PERMANENT_AVATARS_KEY = 'tamvesta_permanent_avatars_v1';
 const PERMANENT_BIOS_KEY = 'tamvesta_permanent_bios_v1';
+export const ADMIN_STUDENTS_BACKUP_KEY = 'tamvesta_admin_registered_students_v1';
+export const ADMIN_DELETED_STUDENTS_KEY = 'tamvesta_admin_deleted_students_v1';
+
+export function getAdminRegisteredStudentsBackup(): User[] {
+  try {
+    const raw = localStorage.getItem(ADMIN_STUDENTS_BACKUP_KEY);
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) return list;
+    }
+  } catch (_) {}
+  return [];
+}
+
+export function saveAdminRegisteredStudentsBackup(students: User[]) {
+  try {
+    localStorage.setItem(ADMIN_STUDENTS_BACKUP_KEY, JSON.stringify(students));
+  } catch (_) {}
+}
+
+export function getAdminExplicitlyDeletedIds(): string[] {
+  try {
+    const raw = localStorage.getItem(ADMIN_DELETED_STUDENTS_KEY);
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) return list;
+    }
+  } catch (_) {}
+  return [];
+}
+
+export function addAdminExplicitlyDeletedId(id: string, username?: string) {
+  try {
+    const list = getAdminExplicitlyDeletedIds();
+    if (id && !list.includes(id.toLowerCase())) list.push(id.toLowerCase());
+    if (username) {
+      const cleanU = username.toLowerCase().replace(/^@+/, '');
+      if (!list.includes(cleanU)) list.push(cleanU);
+    }
+    localStorage.setItem(ADMIN_DELETED_STUDENTS_KEY, JSON.stringify(list));
+  } catch (_) {}
+}
+
+export const DEMO_STUDENT_USERNAMES: string[] = [
+  'guru.matematika',
+  'guru.bahasa',
+  'kepala.sekolah',
+  'panitia.osis',
+  'alvaro1234',
+  'itskimzz',
+  'tamansiswa1',
+  'siswa.smp7a.001',
+  'siswa.smp7a.002',
+  'siswa.smp7a.003',
+  'siswa.smp7b.001',
+  'siswa.smp7b.002',
+  'siswa.smp8a.001',
+  'siswa.smp8a.002',
+  'siswa.smp8a.003',
+  'siswa.smp8b.001',
+  'siswa.smp8b.002',
+  'siswa.smp9a.001',
+  'siswa.smp9a.002',
+  'siswa.smp9a.003',
+  'siswa.smp9b.001',
+  'siswa.smp9b.002',
+  'siswa.sd1a.001',
+  'siswa.sd1a.002',
+  'siswa.sd2a.001',
+  'siswa.sd2a.002',
+  'siswa.sd3a.001',
+  'siswa.sd3a.002',
+  'siswa.sd4a.001',
+  'siswa.sd4a.002',
+  'siswa.sd5a.001',
+  'siswa.sd5a.002',
+  'siswa.sd6a.001',
+  'siswa.sd6a.002',
+];
 
 export function getPermanentAvatar(userId: string, username?: string): string | null {
   try {
@@ -102,6 +181,8 @@ interface StandaloneDB {
 function loadDB(): StandaloneDB {
   let db: StandaloneDB;
   try {
+    localStorage.removeItem('tamvesta_standalone_db_v1');
+    localStorage.removeItem('tamvesta_standalone_db_v2');
     const raw = localStorage.getItem(DB_KEY);
     if (raw) {
       db = JSON.parse(raw);
@@ -135,28 +216,48 @@ function loadDB(): StandaloneDB {
     });
   }
 
-  // Pastikan akun contoh lama & akun terhapus tidak masuk
+  // 1. Pulihkan semua akun siswa terdaftar dari backup permanen agar tidak pernah hilang saat refresh
+  const backedUpStudents = getAdminRegisteredStudentsBackup();
+  const explicitDeleted = getAdminExplicitlyDeletedIds();
+  if (Array.isArray(backedUpStudents) && backedUpStudents.length > 0) {
+    if (!Array.isArray(db.users)) db.users = [];
+    backedUpStudents.forEach((bs) => {
+      const bsClean = (bs.username || '').toLowerCase().replace(/^@+/, '');
+      if (explicitDeleted.includes(bs.id.toLowerCase()) || explicitDeleted.includes(bsClean)) return;
+      const idx = db.users.findIndex(
+        (u) => u.id === bs.id || (u.username || '').toLowerCase().replace(/^@+/, '') === bsClean
+      );
+      if (idx === -1) {
+        db.users.unshift(bs);
+      } else {
+        db.users[idx] = { ...db.users[idx], ...bs };
+      }
+    });
+  }
+
+  // 2. Pastikan akun contoh lama & 26 akun siswa contoh tidak masuk, tapi akun terdaftar admin tetap ada
   if (Array.isArray(db.users)) {
-    const demoUsernames = [
-      'guru.matematika',
-      'guru.bahasa',
-      'kepala.sekolah',
-      'panitia.osis',
-      'alvaro1234',
-      'itskimzz',
-      'tamansiswa1',
-      'siswa.smp7a.001',
-    ];
+    const demoUsernames = DEMO_STUDENT_USERNAMES;
     db.users = db.users.filter((u) => {
-      const lower = (u.username || '').toLowerCase();
+      const lower = (u.username || '').toLowerCase().replace(/^@+/, '');
       const lowerName = (u.name || '').toLowerCase();
-      if (demoUsernames.includes(lower) || u.id === 'user_siswa_siswa_smp7a_001' || lowerName === 'ahmad fauzi') return false;
+      if (demoUsernames.includes(lower) || u.id.startsWith('user_siswa_siswa_') || lowerName === 'ahmad fauzi') return false;
+      if (explicitDeleted.includes(u.id.toLowerCase()) || explicitDeleted.includes(lower)) return false;
       return true;
     });
   }
+
   (db as any).deletedUserIds = (db as any).deletedUserIds || [];
-  if (!(db as any).deletedUserIds.includes('siswa.smp7a.001')) (db as any).deletedUserIds.push('siswa.smp7a.001');
-  if (!(db as any).deletedUserIds.includes('user_siswa_siswa_smp7a_001')) (db as any).deletedUserIds.push('user_siswa_siswa_smp7a_001');
+  // Bersihkan deletedUserIds agar tidak memblokir akun siswa terdaftar admin
+  if (Array.isArray((db as any).deletedUserIds)) {
+    (db as any).deletedUserIds = (db as any).deletedUserIds.filter((did: string) => {
+      const clean = (did || '').toLowerCase().replace(/^@+/, '');
+      return DEMO_STUDENT_USERNAMES.includes(clean) || did.startsWith('user_siswa_siswa_') || explicitDeleted.includes(did.toLowerCase()) || explicitDeleted.includes(clean);
+    });
+  }
+  DEMO_STUDENT_USERNAMES.forEach((du) => {
+    if (!(db as any).deletedUserIds.includes(du)) (db as any).deletedUserIds.push(du);
+  });
 
   // Pastikan struktur array ada dan bersihkan postingan/story dummy (hanya akun terdaftar yang mengisi)
   if (!Array.isArray(db.posts)) db.posts = [];
@@ -270,7 +371,7 @@ function savePassword(username: string, pass: string) {
 
 export const offlineStore = {
   getCurrentUserId(): string | null {
-    return localStorage.getItem(CURRENT_USER_KEY) || 'user_siswa_bintang';
+    return localStorage.getItem(CURRENT_USER_KEY);
   },
 
   setCurrentUserId(id: string | null) {
@@ -279,6 +380,10 @@ export const offlineStore = {
     } else {
       localStorage.removeItem(CURRENT_USER_KEY);
     }
+  },
+
+  saveUser(user: User) {
+    this.syncUserFromServer(user);
   },
 
   syncUserFromServer(user: User) {
@@ -323,6 +428,13 @@ export const offlineStore = {
       password: initialPass,
       mustChangePassword: false,
     };
+    // Simpan ke backup permanen agar tidak pernah hilang
+    const backupList = getAdminRegisteredStudentsBackup().filter(
+      (s) => s.id !== studentToSave.id && (s.username || '').toLowerCase().replace(/^@+/, '') !== cleanUsername
+    );
+    backupList.unshift(studentToSave);
+    saveAdminRegisteredStudentsBackup(backupList);
+
     // Remove from deletedUserIds
     (db as any).deletedUserIds = ((db as any).deletedUserIds || []).filter(
       (dId: string) => dId !== serverStudent.id && dId !== cleanUsername && dId !== `@${cleanUsername}`
@@ -543,11 +655,18 @@ export const offlineStore = {
     return undefined;
   },
 
-  getCurrentUser(): User | null {
+  findUserById(id: string): User | undefined {
     const db = loadDB();
+    if (!id) return undefined;
+    return db.users.find((u) => u.id === id);
+  },
+
+  getCurrentUser(): User | null {
     const id = this.getCurrentUserId();
+    if (!id) return null;
+    const db = loadDB();
     const found = db.users.find((u) => u.id === id);
-    return found || db.users[1] || db.users[0] || null;
+    return found || null;
   },
 
   login(credentials: { username: string; password: string }) {
@@ -581,6 +700,7 @@ export const offlineStore = {
         passwords[`@${cleanUsername}`],
         // Sandi awal resmi dokumen staf & admin
         (user.role === 'admin' || user.username === 'TAMANSISWA') ? 'TAMVESTA123' : null,
+        (user.role === 'admin' || user.username === 'TAMANSISWA') ? 'TAMANSISWA' : null,
         user.username === 'bambang.kepsek' ? 'Tamvesta!B2601' : null,
         user.username === 'titus.yayasan' ? 'Tamvesta!T2602' : null,
         (user.username === 'margaretha.h' || (user.name || '').toLowerCase().includes('margaretha')) ? 'Tamvesta!M2603' : null,
@@ -605,7 +725,7 @@ export const offlineStore = {
         if (!p) return false;
         const pTrim = String(p).trim();
         return pTrim === inputPass || pTrim.toLowerCase() === inputPass.toLowerCase();
-      }) || ((user.role === 'admin' || user.username === 'TAMANSISWA') && inputPass.toLowerCase() === 'tamvesta123');
+      }) || ((user.role === 'admin' || user.username === 'TAMANSISWA') && (inputPass.toLowerCase() === 'tamvesta123' || inputPass.toUpperCase() === 'TAMANSISWA'));
     }
 
     if (!isMatch) {
@@ -789,7 +909,7 @@ export const offlineStore = {
           ...p,
           authorIsVerified: author ? !!author.isVerified || isDev : !!(p as any).authorIsVerified,
           authorIsDeveloper: isDev,
-          authorBadgeType: isDev ? 'developer' : ((author?.isVerified || (p as any).authorIsVerified) ? 'blue' : undefined),
+          authorBadgeType: (isDev ? 'developer' : ((author?.isVerified || (p as any).authorIsVerified) ? 'blue' : undefined)) as ('blue' | 'yellow' | 'developer' | undefined),
           authorIsAlumni: author ? !!author.isAlumni : !!(p as any).authorIsAlumni,
         };
       })
@@ -1023,11 +1143,14 @@ export const offlineStore = {
     };
   },
 
-  // Stories (Hanya diisi oleh akun terdaftar - Permanen)
+  // Stories (Hanya diisi oleh akun terdaftar - Kedaluwarsa Otomatis 24 Jam)
   getStories(): Story[] {
     const db = loadDB();
     if (!Array.isArray(db.stories)) db.stories = [];
-    return (db.stories || []).filter((s) => !s.id.startsWith('story_seed_'));
+    const now = Date.now();
+    return (db.stories || []).filter(
+      (s) => !s.id.startsWith('story_seed_') && (!s.expiresAt || new Date(s.expiresAt).getTime() > now)
+    );
   },
 
   createStory(data: { mediaUrl: string; mediaType: 'photo' | 'video'; caption?: string }): Story {
@@ -1036,7 +1159,8 @@ export const offlineStore = {
     if (!user) throw new Error('Login diperlukan');
 
     const now = new Date();
-    const expires = '2099-12-31T23:59:59.999Z';
+    // Kedaluwarsa otomatis setelah 24 jam sesuai ketentuan
+    const expires = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
 
     const newStory: Story = {
       id: 'story_' + Date.now(),
@@ -1288,15 +1412,27 @@ export const offlineStore = {
   },
 
   // Admin
+  getAllUsers(): User[] {
+    const db = loadDB();
+    const explicitDeleted = getAdminExplicitlyDeletedIds();
+    return (db.users || []).filter((u) => {
+      const uId = (u.id || '').toLowerCase();
+      const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
+      if (DEMO_STUDENT_USERNAMES.includes(uName) || uId.startsWith('user_siswa_siswa_')) return false;
+      return !explicitDeleted.includes(uId) && !explicitDeleted.includes(uName);
+    });
+  },
+
   getStudents(): User[] {
     const db = loadDB();
-    const deletedIds: string[] = (db as any).deletedUserIds || [];
+    const explicitDeleted = getAdminExplicitlyDeletedIds();
     return (db.users || [])
       .filter((u) => u.role === 'siswa')
       .filter((u) => {
         const uId = (u.id || '').toLowerCase();
         const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
-        return !deletedIds.some((did) => did === uId || did === uName || did === (u.username || '').toLowerCase());
+        if (uId.startsWith('user_siswa_siswa_') || DEMO_STUDENT_USERNAMES.includes(uName)) return false;
+        return !explicitDeleted.includes(uId) && !explicitDeleted.includes(uName);
       });
   },
 
@@ -1630,6 +1766,19 @@ export const offlineStore = {
     savePassword(user.username, initialPassword);
     savePassword(username, initialPassword);
 
+    // Simpan ke backup permanen agar tidak pernah hilang saat refresh atau restart
+    const backupList = getAdminRegisteredStudentsBackup().filter(
+      (s) => s.id !== user.id && (s.username || '').toLowerCase().replace(/^@+/, '') !== username
+    );
+    backupList.unshift(user);
+    saveAdminRegisteredStudentsBackup(backupList);
+
+    // Hapus dari explicit deleted jika didaftarkan kembali
+    try {
+      const explicit = getAdminExplicitlyDeletedIds().filter((d) => d !== user.id.toLowerCase() && d !== username);
+      localStorage.setItem(ADMIN_DELETED_STUDENTS_KEY, JSON.stringify(explicit));
+    } catch (_) {}
+
     // Remove from deletedUserIds so it is never suppressed or hidden
     (db as any).deletedUserIds = ((db as any).deletedUserIds || []).filter(
       (dId: string) => dId !== user.id && dId !== username && dId !== `@${username}`
@@ -1647,6 +1796,14 @@ export const offlineStore = {
     if (idx !== -1) {
       const removedUser = db.users[idx];
       db.users.splice(idx, 1);
+      addAdminExplicitlyDeletedId(id, removedUser.username);
+
+      // Hapus dari backup permanen
+      const backupList = getAdminRegisteredStudentsBackup().filter(
+        (s) => s.id !== id && (s.username || '').toLowerCase().replace(/^@+/, '') !== (removedUser.username || '').toLowerCase().replace(/^@+/, '')
+      );
+      saveAdminRegisteredStudentsBackup(backupList);
+
       (db as any).deletedUserIds = (db as any).deletedUserIds || [];
       if (!(db as any).deletedUserIds.includes(id)) {
         (db as any).deletedUserIds.push(id);
@@ -1662,25 +1819,36 @@ export const offlineStore = {
     if (!Array.isArray(ids) || ids.length === 0) return;
     const db = loadDB();
     (db as any).deletedUserIds = (db as any).deletedUserIds || [];
+    const explicit = getAdminExplicitlyDeletedIds();
+    const backup = getAdminRegisteredStudentsBackup();
+    const backupUsernames = backup.map((b) => (b.username || '').toLowerCase().replace(/^@+/, ''));
+    const backupIds = backup.map((b) => (b.id || '').toLowerCase());
+
     let changed = false;
     ids.forEach((did) => {
       if (!did) return;
       const clean = did.toLowerCase().trim();
+      const cleanU = clean.replace(/^@+/, '');
+
+      // JANGAN PERNAH hapus akun siswa aktif yang didaftarkan admin via sinkronisasi remote
+      if ((backupIds.includes(clean) || backupUsernames.includes(cleanU)) && !explicit.includes(clean) && !explicit.includes(cleanU)) {
+        return;
+      }
+
       if (!(db as any).deletedUserIds.includes(clean)) {
         (db as any).deletedUserIds.push(clean);
         changed = true;
       }
     });
 
-    // Hapus akun yang cocok dari db.users secara permanen
+    // Hapus akun yang cocok dari db.users secara permanen (hanya akun demo atau yang eksplisit dihapus)
     const prevCount = (db.users || []).length;
     db.users = (db.users || []).filter((u) => {
       const uId = (u.id || '').toLowerCase();
       const uName = (u.username || '').toLowerCase().replace(/^@+/, '');
-      const isDel = (db as any).deletedUserIds.some(
-        (did: string) => did === uId || did === uName || did === (u.username || '').toLowerCase()
-      );
-      return !isDel;
+      if (DEMO_STUDENT_USERNAMES.includes(uName) || uId.startsWith('user_siswa_siswa_')) return false;
+      if (explicit.includes(uId) || explicit.includes(uName)) return false;
+      return true;
     });
 
     if ((db.users || []).length !== prevCount) {
@@ -2223,7 +2391,7 @@ export const offlineStore = {
     return newNote;
   },
 
-  deleteNote(userId: string): boolean {
+  deleteStudentNote(userId: string): boolean {
     const db = loadDB();
     if (!Array.isArray((db as any).studentNotes)) return false;
     const initialLen = (db as any).studentNotes.length;

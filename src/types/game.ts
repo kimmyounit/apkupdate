@@ -124,6 +124,7 @@ export interface GameRoom {
 
   // Voting state (both games)
   votes?: Record<string, string>; // voterPlayerId -> targetPlayerId
+  voteTally?: Record<string, number>;
   lastEliminatedPlayerId?: string | null;
   lastEliminatedPlayerRole?: string | null;
   wasTieVote?: boolean;

@@ -33,6 +33,8 @@ import type {
   ActivityPermissionStatus,
   AppReport,
   AppReportStatus,
+  RefreshSignal,
+  ModerationLog,
 } from '../types/index.ts';
 
 const DEFAULT_DATA_FILE = path.resolve(process.cwd(), 'data', 'tamvesta-data.json');
@@ -266,35 +268,24 @@ export interface StudentPreset {
 }
 
 export const OFFICIAL_STUDENT_LIST: StudentPreset[] = [
-  // SMP (14 Siswa)
-  { username: 'siswa.smp7a.002', initialPassword: 'Siswa7A002', name: 'Bunga Pertiwi', kelas: 'VII-A SMP', gender: 'Perempuan' },
-  { username: 'siswa.smp7a.003', initialPassword: 'Siswa7A003', name: 'Cahya Ramadhan', kelas: 'VII-A SMP', gender: 'Laki-laki' },
-  { username: 'siswa.smp7b.001', initialPassword: 'Siswa7B001', name: 'Dinda Aulia', kelas: 'VII-B SMP', gender: 'Perempuan' },
-  { username: 'siswa.smp7b.002', initialPassword: 'Siswa7B002', name: 'Eka Prasetyo', kelas: 'VII-B SMP', gender: 'Laki-laki' },
-  { username: 'siswa.smp8a.001', initialPassword: 'Siswa8A001', name: 'Fajar Nugroho', kelas: 'VIII-A SMP', gender: 'Laki-laki' },
-  { username: 'siswa.smp8a.002', initialPassword: 'Siswa8A002', name: 'Gita Kusuma', kelas: 'VIII-A SMP', gender: 'Perempuan' },
-  { username: 'siswa.smp8a.003', initialPassword: 'Siswa8A003', name: 'Hendra Wijaya', kelas: 'VIII-A SMP', gender: 'Laki-laki' },
-  { username: 'siswa.smp8b.001', initialPassword: 'Siswa8B001', name: 'Indah Lestari', kelas: 'VIII-B SMP', gender: 'Perempuan' },
-  { username: 'siswa.smp8b.002', initialPassword: 'Siswa8B002', name: 'Joko Susilo', kelas: 'VIII-B SMP', gender: 'Laki-laki' },
-  { username: 'siswa.smp9a.001', initialPassword: 'Siswa9A001', name: 'Kartika Dewi', kelas: 'IX-A SMP', gender: 'Perempuan' },
-  { username: 'siswa.smp9a.002', initialPassword: 'Siswa9A002', name: 'Lukman Hakim', kelas: 'IX-A SMP', gender: 'Laki-laki' },
-  { username: 'siswa.smp9a.003', initialPassword: 'Siswa9A003', name: 'Melati Sari', kelas: 'IX-A SMP', gender: 'Perempuan' },
-  { username: 'siswa.smp9b.001', initialPassword: 'Siswa9B001', name: 'Nanda Putra', kelas: 'IX-B SMP', gender: 'Laki-laki' },
-  { username: 'siswa.smp9b.002', initialPassword: 'Siswa9B002', name: 'Olivia Putri', kelas: 'IX-B SMP', gender: 'Perempuan' },
+  // Akun siswa dikosongkan agar diisi langsung oleh Administrasi / Tata Usaha
+];
 
-  // SD (12 Siswa)
-  { username: 'siswa.sd1a.001', initialPassword: 'Siswa1A001', name: 'Putri Rahayu', kelas: 'I-A SD', gender: 'Perempuan' },
-  { username: 'siswa.sd1a.002', initialPassword: 'Siswa1A002', name: 'Qori Ananda', kelas: 'I-A SD', gender: 'Perempuan' },
-  { username: 'siswa.sd2a.001', initialPassword: 'Siswa2A001', name: 'Rizky Maulana', kelas: 'II-A SD', gender: 'Laki-laki' },
-  { username: 'siswa.sd2a.002', initialPassword: 'Siswa2A002', name: 'Siti Aminah', kelas: 'II-A SD', gender: 'Perempuan' },
-  { username: 'siswa.sd3a.001', initialPassword: 'Siswa3A001', name: 'Taufik Hidayat', kelas: 'III-A SD', gender: 'Laki-laki' },
-  { username: 'siswa.sd3a.002', initialPassword: 'Siswa3A002', name: 'Umi Kalsum', kelas: 'III-A SD', gender: 'Perempuan' },
-  { username: 'siswa.sd4a.001', initialPassword: 'Siswa4A001', name: 'Vino Pratama', kelas: 'IV-A SD', gender: 'Laki-laki' },
-  { username: 'siswa.sd4a.002', initialPassword: 'Siswa4A002', name: 'Wulan Sari', kelas: 'IV-A SD', gender: 'Perempuan' },
-  { username: 'siswa.sd5a.001', initialPassword: 'Siswa5A001', name: 'Xena Maharani', kelas: 'V-A SD', gender: 'Perempuan' },
-  { username: 'siswa.sd5a.002', initialPassword: 'Siswa5A002', name: 'Yoga Santoso', kelas: 'V-A SD', gender: 'Laki-laki' },
-  { username: 'siswa.sd6a.001', initialPassword: 'Siswa6A001', name: 'Zahra Aulia', kelas: 'VI-A SD', gender: 'Perempuan' },
-  { username: 'siswa.sd6a.002', initialPassword: 'Siswa6A002', name: 'Aldi Firmansyah', kelas: 'VI-A SD', gender: 'Laki-laki' },
+export const OLD_DEMO_USERNAMES: string[] = [
+  'siswa.smp7a.001', 'siswa.smp7a.002', 'siswa.smp7a.003',
+  'siswa.smp7b.001', 'siswa.smp7b.002',
+  'siswa.smp8a.001', 'siswa.smp8a.002', 'siswa.smp8a.003',
+  'siswa.smp8b.001', 'siswa.smp8b.002',
+  'siswa.smp9a.001', 'siswa.smp9a.002', 'siswa.smp9a.003',
+  'siswa.smp9b.001', 'siswa.smp9b.002',
+  'siswa.sd1a.001', 'siswa.sd1a.002',
+  'siswa.sd2a.001', 'siswa.sd2a.002',
+  'siswa.sd3a.001', 'siswa.sd3a.002',
+  'siswa.sd4a.001', 'siswa.sd4a.002',
+  'siswa.sd5a.001', 'siswa.sd5a.002',
+  'siswa.sd6a.001', 'siswa.sd6a.002',
+  'guru.matematika', 'guru.bahasa', 'kepala.sekolah', 'panitia.osis',
+  'alvaro1234', 'itskimzz', 'tamansiswa1'
 ];
 
 export function getInitialData(): DatabaseSchema {
@@ -505,8 +496,9 @@ class DatabaseManager {
           const cleanGh = (ghUser.username || '').toLowerCase().replace(/^@+/, '');
           const isDeleted = (this.data.deletedUserIds || []).some(
             (did) => did === ghUser.id || did.toLowerCase() === cleanGh || did.toLowerCase() === (ghUser.username || '').toLowerCase()
-          ) || cleanGh === 'siswa.smp7a.001' || (ghUser.name || '').toLowerCase() === 'ahmad fauzi';
+          ) || OLD_DEMO_USERNAMES.includes(cleanGh) || (ghUser.id && ghUser.id.startsWith('user_siswa_siswa_')) || (ghUser.name || '').toLowerCase() === 'ahmad fauzi';
           if (isDeleted) return; // Akun terhapus permanen
+          if (ghUser.id?.startsWith('user_siswa_siswa_') || OLD_DEMO_USERNAMES.includes(cleanGh)) return; // Blokir akun siswa contoh lama
           const existing = this.data.users.find(
             (u) => u.id === ghUser.id || (u.username || '').toLowerCase().replace(/^@+/, '') === cleanGh
           );
@@ -521,7 +513,7 @@ class DatabaseManager {
             if (ghUser.phone) existing.phone = ghUser.phone;
             if (ghUser.email) existing.email = ghUser.email;
             if (ghUser.bio) existing.bio = ghUser.bio;
-            if (ghUser.profilePhoto) existing.profilePhoto = ghUser.profilePhoto;
+            if ((ghUser as any).profilePhoto) (existing as any).profilePhoto = (ghUser as any).profilePhoto;
             if (ghUser.avatarUrl && (!existing.avatarUrl || existing.avatarUrl.includes('dicebear.com'))) existing.avatarUrl = ghUser.avatarUrl;
             if (ghUser.name) existing.name = ghUser.name;
             if (ghUser.kelas) existing.kelas = ghUser.kelas;
@@ -790,6 +782,10 @@ class DatabaseManager {
           lostFoundItems: parsed.lostFoundItems || [],
           activityPermissions: parsed.activityPermissions || [],
           appReports: parsed.appReports || [],
+          deletedUserIds: (parsed.deletedUserIds || []).filter((did: string) => {
+            const clean = (did || '').toLowerCase().replace(/^@+/, '');
+            return OLD_DEMO_USERNAMES.includes(clean) || did.startsWith('user_siswa_siswa_');
+          }),
         };
       }
     } catch (err) {
@@ -1043,15 +1039,29 @@ class DatabaseManager {
   }
 
   public getAllStudents(): User[] {
-    return this.data.users.filter((u) => u.role === 'siswa');
+    const deletedList = this.data.deletedUserIds || [];
+    return this.data.users
+      .filter((u) => u.role === 'siswa')
+      .filter((u) => {
+        const un = (u.username || '').toLowerCase();
+        if (deletedList.includes(u.id) || deletedList.includes(u.username) || deletedList.includes(un)) return false;
+        if (u.id.startsWith('user_siswa_siswa_') || OLD_DEMO_USERNAMES.includes(un)) return false;
+        return true;
+      });
   }
 
   public getAllUsers(): User[] {
-    return this.data.users;
+    const deletedList = this.data.deletedUserIds || [];
+    return this.data.users.filter((u) => {
+      const un = (u.username || '').toLowerCase();
+      if (deletedList.includes(u.id) || deletedList.includes(u.username) || deletedList.includes(un)) return false;
+      if (u.id.startsWith('user_siswa_siswa_') || OLD_DEMO_USERNAMES.includes(un)) return false;
+      return true;
+    });
   }
 
   public getUsers(): User[] {
-    return this.data.users;
+    return this.getAllUsers();
   }
 
   public getStaffUsers(): User[] {
@@ -1085,10 +1095,13 @@ class DatabaseManager {
     incomingUsers.forEach((incoming) => {
       if (!incoming || !incoming.username) return;
       const cleanUn = (incoming.username || '').trim().toLowerCase().replace(/^@+/, '');
-      const isDeleted = (this.data.deletedUserIds || []).some(
-        (did) => did === incoming.id || did.toLowerCase() === cleanUn || did.toLowerCase() === (incoming.username || '').toLowerCase()
-      ) || cleanUn === 'siswa.smp7a.001' || (incoming.name || '').toLowerCase() === 'ahmad fauzi';
-      if (isDeleted) return; // Akun terhapus permanen tidak boleh dibangkitkan kembali
+      if (OLD_DEMO_USERNAMES.includes(cleanUn) || incoming.id?.startsWith('user_siswa_siswa_') || (incoming.name || '').toLowerCase() === 'ahmad fauzi') return;
+
+      // Hapus dari deletedUserIds agar akun terdaftar admin tidak pernah diblokir
+      this.data.deletedUserIds = (this.data.deletedUserIds || []).filter(
+        (did) => did !== incoming.id && did.toLowerCase() !== cleanUn && did.toLowerCase() !== (incoming.username || '').toLowerCase()
+      );
+
       const existing = this.data.users.find(
         (u) => u.id === incoming.id || (u.username || '').trim().toLowerCase().replace(/^@+/, '') === cleanUn
       );
@@ -1164,6 +1177,11 @@ class DatabaseManager {
     const id = `stu_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const pass = hashPassword(userData.password.trim());
     const qrToken = generateQrToken(id, cleanUsername);
+
+    // Hapus dari deletedUserIds jika username didaftarkan ulang
+    this.data.deletedUserIds = (this.data.deletedUserIds || []).filter(
+      (did) => did !== id && did.toLowerCase() !== cleanUsername
+    );
 
     const newUser: User = {
       id,
@@ -1859,6 +1877,8 @@ class DatabaseManager {
     authorUsername: string;
     authorKelas?: string;
     authorAvatar?: string;
+    authorIsVerified?: boolean;
+    authorIsAlumni?: boolean;
     caption: string;
     mediaType: 'photo' | 'video' | 'none';
     mediaUrl?: string;
@@ -1866,7 +1886,7 @@ class DatabaseManager {
   }): StudentPost {
     const authorUser = this.findUserById(payload.authorId) || this.findUserByUsername(payload.authorUsername);
     const isDev = authorUser?.isDeveloper || authorUser?.role === 'support' || payload.authorUsername.toLowerCase() === 'tamvesta';
-    const isVer = authorUser?.isVerified || isDev;
+    const isVer = payload.authorIsVerified !== undefined ? payload.authorIsVerified : (authorUser?.isVerified || isDev);
 
     const newPost: StudentPost = {
       id: `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -1876,6 +1896,7 @@ class DatabaseManager {
       authorKelas: payload.authorKelas || '',
       authorAvatar: payload.authorAvatar || '',
       authorIsVerified: isVer,
+      authorIsAlumni: payload.authorIsAlumni !== undefined ? payload.authorIsAlumni : !!authorUser?.isAlumni,
       authorIsDeveloper: isDev,
       authorBadgeType: isDev ? 'developer' : (isVer ? 'blue' : undefined),
       isPinned: false,
@@ -2074,7 +2095,7 @@ class DatabaseManager {
       .filter((p) => p.authorId === user.id)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const { passwordHash, salt, initialPassword, ...safeUser } = user;
+    const { passwordHash, salt, initialPassword, password, ...safeUser } = user;
     return {
       user: safeUser,
       posts,
@@ -2084,15 +2105,17 @@ class DatabaseManager {
   }
 
   // -------------------------------------------------------------
-  // STORIES (Hanya diisi oleh akun terdaftar - Permanen)
+  // STORIES (Hanya diisi oleh akun terdaftar - Kedaluwarsa Otomatis 24 Jam)
   // -------------------------------------------------------------
   getStories(): Story[] {
     if (!Array.isArray(this.data.stories)) {
       this.data.stories = [];
     }
 
+    const now = Date.now();
     return [...this.data.stories]
       .filter((s) => !s.id.startsWith('story_seed_'))
+      .filter((s) => !s.expiresAt || new Date(s.expiresAt).getTime() > now)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
@@ -2113,8 +2136,8 @@ class DatabaseManager {
     }
 
     const now = new Date();
-    // Far future expiration so it never expires: year 2099 (permanent story)
-    const expiresAt = '2099-12-31T23:59:59.999Z';
+    // Kedaluwarsa otomatis setelah 24 jam sesuai ketentuan
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
 
     const newStory: Story = {
       id: `story_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -2327,9 +2350,9 @@ class DatabaseManager {
   createNotification(data: {
     title: string;
     message: string;
-    type: 'announcement' | 'subject_change' | 'general' | 'tuition' | 'article' | 'social_reply' | 'social_comment';
+    type: AppNotification['type'];
     isImportant?: boolean;
-    linkType?: 'announcement' | 'subject' | 'quiz' | 'tuition' | 'article' | 'post' | 'none';
+    linkType?: AppNotification['linkType'];
     linkId?: string;
     targetRole?: UserRole;
     targetClass?: string;
@@ -3094,7 +3117,7 @@ class DatabaseManager {
     return newNote;
   }
 
-  deleteNote(userId: string): boolean {
+  deleteStudentNote(userId: string): boolean {
     if (!Array.isArray(this.data.studentNotes)) return false;
     const initialLen = this.data.studentNotes.length;
     this.data.studentNotes = this.data.studentNotes.filter((n) => n.userId !== userId);

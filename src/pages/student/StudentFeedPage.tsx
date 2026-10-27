@@ -244,8 +244,9 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   const handleTogglePinPost = async (postId: string) => {
     try {
       const res = await api.togglePinPost(postId);
+      const isPinned = res?.post?.isPinned ?? (res as any)?.isPinned;
       setPosts((prev) =>
-        prev.map((p) => (p.id === postId ? { ...p, isPinned: res.isPinned } : p))
+        prev.map((p) => (p.id === postId ? { ...p, isPinned } : p))
       );
       await loadFeedData(true);
     } catch (err: any) {
@@ -914,16 +915,16 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             <Sparkles className="w-7 h-7 text-emerald-600" />
           </div>
           <div>
-            <h3 className="text-sm font-black text-slate-900">Belum Ada Postingan Siswa</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              Jadilah yang pertama membagikan cerita belajar atau karya seni di Tamvesta!
+            <h3 className="text-base font-bold text-slate-900">Belum Ada Postingan Siswa</h3>
+            <p className="text-sm text-slate-500 max-w-sm mx-auto mt-1">
+              Jadilah yang pertama membagikan cerita belajar atau karya seni di TAMVESTA!
             </p>
           </div>
           <button
             onClick={() => setIsCreatePostOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition"
+            className="inline-flex items-center gap-1.5 px-4.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-md transition active:scale-95"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Buat Postingan Pertama</span>
           </button>
         </div>

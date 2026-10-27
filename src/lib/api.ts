@@ -4,6 +4,8 @@ import {
   savePermanentAvatar,
   getPermanentBio,
   savePermanentBio,
+  DEMO_STUDENT_USERNAMES,
+  getAdminExplicitlyDeletedIds,
 } from './offlineStore.ts';
 import type {
   User,
@@ -122,15 +124,13 @@ const isStandalone = typeof window !== 'undefined' && (
 
 /**
  * Resolves a relative endpoint like '/api/auth/login' to the full URL.
- * Priority: (1) if browser is directly accessing server port, relative path.
- * (2) configured/default server URL (e.g. http://192.168.1.2:3000).
+ * Priority: (1) if browser is directly accessing via HTTP/HTTPS, use relative path or custom server URL.
+ * (2) configured/default server URL for standalone APK.
  */
 function resolveUrl(endpoint: string): string {
-  if (
-    typeof window !== 'undefined' &&
-    window.location.protocol.startsWith('http') &&
-    (window.location.port === '3000' || window.location.hostname === '192.168.1.2')
-  ) {
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    const custom = localStorage.getItem(SERVER_URL_KEY);
+    if (custom) return `${custom.replace(/\/+$/, '')}${endpoint}`;
     return endpoint;
   }
   const base = getServerUrl();
@@ -194,6 +194,16 @@ export const api = {
       }
     } catch (_) {}
     return null;
+  },
+
+  getPublicUsers: async (): Promise<User[]> => {
+    try {
+      const res = await tryServerRequest<{ users: User[] }>('/api/users/public');
+      if (Array.isArray(res?.users) && res.users.length > 0) {
+        return res.users;
+      }
+    } catch (_) {}
+    return offlineStore.getAllUsers();
   },
 
   // Bulk sync local users to cloud server
@@ -475,12 +485,13 @@ export const api = {
 
     const localStudents = offlineStore.getStudents();
     const studentMap = new Map<string, User>();
-    const deletedIds = offlineStore.getDeletedUserIds();
+    const explicitDeleted = getAdminExplicitlyDeletedIds();
 
     // 1. Put all local students first so newly created accounts are ALWAYS included immediately
     localStudents.forEach((ls) => {
       const cleanU = (ls.username || '').toLowerCase().replace(/^@+/, '');
-      if (!deletedIds.includes(ls.id) && !deletedIds.includes(cleanU) && !deletedIds.includes((ls.username || '').toLowerCase())) {
+      if (ls.id.startsWith('user_siswa_siswa_') || DEMO_STUDENT_USERNAMES.includes(cleanU)) return;
+      if (!explicitDeleted.includes(ls.id.toLowerCase()) && !explicitDeleted.includes(cleanU) && !explicitDeleted.includes((ls.username || '').toLowerCase())) {
         const permAvatar = getPermanentAvatar(ls.id, ls.username);
         const permBio = getPermanentBio(ls.id, ls.username);
         studentMap.set(cleanU, {
@@ -495,7 +506,8 @@ export const api = {
     if (Array.isArray(serverStudents) && serverStudents.length > 0) {
       serverStudents.forEach((ss) => {
         const cleanU = (ss.username || '').toLowerCase().replace(/^@+/, '');
-        if (!deletedIds.includes(ss.id) && !deletedIds.includes(cleanU) && !deletedIds.includes((ss.username || '').toLowerCase())) {
+        if (ss.id.startsWith('user_siswa_siswa_') || DEMO_STUDENT_USERNAMES.includes(cleanU)) return;
+        if (!explicitDeleted.includes(ss.id.toLowerCase()) && !explicitDeleted.includes(cleanU) && !explicitDeleted.includes((ss.username || '').toLowerCase())) {
           const existing = studentMap.get(cleanU);
           const permAvatar = getPermanentAvatar(ss.id, ss.username);
           const permBio = getPermanentBio(ss.id, ss.username);
@@ -1215,13 +1227,36 @@ export const api = {
     }
   },
 
-  deleteNote: async (id: string) => {
+  deleteNote: async (id?: string) => {
+    if (id) {
+      try {
+        return await tryServerRequest<{ message: string }>(`/api/notes/${id}`, {
+          method: 'DELETE',
+        });
+      } catch (_) {
+        return offlineStore.deleteNote(id);
+      }
+    }
     try {
-      return await tryServerRequest<{ message: string }>(`/api/notes/${id}`, {
+      const res = await tryServerRequest<{ success: boolean }>('/api/notes', {
         method: 'DELETE',
       });
+      return res?.success ?? true;
     } catch (_) {
-      return offlineStore.deleteNote(id);
+      const curId = offlineStore.getCurrentUserId() || '';
+      return offlineStore.deleteStudentNote(curId);
+    }
+  },
+
+  deleteStudentNote: async (): Promise<boolean> => {
+    try {
+      const res = await tryServerRequest<{ success: boolean }>('/api/notes', {
+        method: 'DELETE',
+      });
+      return res?.success ?? true;
+    } catch (_) {
+      const curId = offlineStore.getCurrentUserId() || '';
+      return offlineStore.deleteStudentNote(curId);
     }
   },
 
@@ -2113,7 +2148,7 @@ export const api = {
 
   addGameBot: async (code: string) => {
     try {
-      const res = await tryServerRequest(`/api/games/rooms/${encodeURIComponent(code)}/bot`, {
+      const res = await tryServerRequest<{ success: boolean; room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/bot`, {
         method: 'POST',
       });
       return res.room;
@@ -2144,7 +2179,7 @@ export const api = {
 
   removeGameBot: async (code: string) => {
     try {
-      const res = await tryServerRequest(`/api/games/rooms/${encodeURIComponent(code)}/bot`, {
+      const res = await tryServerRequest<{ success: boolean; room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/bot`, {
         method: 'DELETE',
       });
       return res.room;
@@ -2274,18 +2309,6 @@ export const api = {
         userKelas: curUser?.kelas,
         text,
       });
-    }
-  },
-
-  deleteNote: async (): Promise<boolean> => {
-    try {
-      const res = await tryServerRequest<{ success: boolean }>('/api/notes', {
-        method: 'DELETE',
-      });
-      return res.success;
-    } catch (_) {
-      const curId = offlineStore.getCurrentUserId() || '';
-      return offlineStore.deleteNote(curId);
     }
   },
 

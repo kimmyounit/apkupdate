@@ -661,6 +661,11 @@ export const DirectMessagesPage: React.FC<DirectMessagesPageProps> = ({
               <div className="min-w-0">
                 <h3 className="text-sm font-black text-slate-900 truncate flex items-center gap-1.5">
                   <span className="truncate">{activePartner.partnerName}</span>
+                  {(activePartner.partnerUsername?.toLowerCase() === 'tamvesta' ||
+                    availableUsers.find((u) => u.id === activePartnerId)?.isDeveloper ||
+                    availableUsers.find((u) => u.id === activePartnerId)?.role === 'support') && (
+                    <VerifiedBadge size="sm" isDeveloper={true} />
+                  )}
                 </h3>
                 <p className="text-[11px] text-emerald-600 font-semibold truncate">
                   @{activePartner.partnerUsername || 'pengguna'}
@@ -1218,20 +1223,37 @@ export const DirectMessagesPage: React.FC<DirectMessagesPageProps> = ({
                 type="text"
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
-                placeholder="Cari siswa, guru, atau staf..."
+                placeholder="Cari berdasarkan username atau nama..."
                 className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             {/* Daftar Pengguna */}
             <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-              {availableUsers
-                .filter(
-                  (u) =>
-                    u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-                    u.username.toLowerCase().includes(userSearchQuery.toLowerCase())
-                )
-                .map((contact) => (
+              {(() => {
+                const cleanQuery = userSearchQuery.trim().toLowerCase().replace(/^@+/, '');
+                const filtered = availableUsers.filter((u) => {
+                  if (!cleanQuery) return true;
+                  const nameMatch = (u.name || '').toLowerCase().includes(cleanQuery);
+                  const usernameMatch = (u.username || '').toLowerCase().replace(/^@+/, '').includes(cleanQuery);
+                  return nameMatch || usernameMatch;
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="py-12 px-4 text-center space-y-2">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                        <AlertCircle className="w-6 h-6" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-700">Pengguna Tidak Ditemukan</p>
+                      <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                        Tidak ada akun dengan username atau nama "{userSearchQuery}" di database TAMVESTA.
+                      </p>
+                    </div>
+                  );
+                }
+
+                return filtered.map((contact) => (
                   <div
                     key={contact.id}
                     onClick={() => {
@@ -1248,16 +1270,20 @@ export const DirectMessagesPage: React.FC<DirectMessagesPageProps> = ({
                     <div className="min-w-0 flex-1">
                       <h4 className="text-xs font-bold text-slate-900 truncate flex items-center gap-1">
                         <span className="truncate">{contact.name}</span>
-                        {contact.isVerified && (
-                          <VerifiedBadge size="sm" isDeveloper={contact.role === 'support'} />
+                        {(contact.isVerified || contact.role === 'support' || contact.username?.toLowerCase() === 'tamvesta') && (
+                          <VerifiedBadge
+                            size="sm"
+                            isDeveloper={contact.role === 'support' || contact.isDeveloper || contact.username?.toLowerCase() === 'tamvesta'}
+                          />
                         )}
                       </h4>
                       <p className="text-[10px] text-slate-400 truncate">
-                        @{contact.username} • {contact.kelas || contact.jabatan || 'Warga Sekolah'}
+                        @{contact.username} • {contact.role === 'support' ? 'Developer Resmi TAMVESTA' : (contact.kelas || contact.jabatan || 'Warga Sekolah')}
                       </p>
                     </div>
                   </div>
-                ))}
+                ));
+              })()}
             </div>
           </div>
         </div>

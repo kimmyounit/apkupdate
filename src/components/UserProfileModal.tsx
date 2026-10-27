@@ -58,7 +58,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     profileUser?.isDeveloper ||
     profileUser?.role === 'support';
   const displayFollowers = isSupportOrDev
-    ? profileUser?.followersCountDisplay || '1,1M'
+    ? profileUser?.followersCountDisplay || '1,1 Juta'
     : followersCount;
   const canModerate =
     Boolean(currentUser &&

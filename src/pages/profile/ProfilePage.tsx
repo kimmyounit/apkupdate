@@ -487,7 +487,7 @@ export const ProfilePage: React.FC = () => {
               <div>
                 <span className="font-black text-slate-900">
                   {user.username?.toLowerCase() === 'tamvesta' || user.isDeveloper || user.role === 'support'
-                    ? user.followersCountDisplay || '1,1M'
+                    ? user.followersCountDisplay || '1,1 Juta'
                     : followersCount}
                 </span>{' '}
                 <span className="text-slate-500">Pengikut</span>

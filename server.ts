@@ -48,10 +48,10 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Helper to sanitize user object (remove hash & salt)
+// Helper to sanitize user object (remove hash, salt, initialPassword, password)
 function sanitizeUser(user: any) {
   if (!user) return null;
-  const { passwordHash, salt, ...safeUser } = user;
+  const { passwordHash, salt, initialPassword, password, ...safeUser } = user;
   return safeUser;
 }
 
@@ -62,7 +62,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 // -------------------------------------------------------------
-// Public user sync — APK baru download semua akun aktif (tanpa hash/salt)
+// Public user sync — APK baru download semua akun aktif (tanpa hash/salt/password)
 // Digunakan HP siswa yang baru install untuk dapat akun yang sudah dibuat admin
 const handlePublicUserSync = async (_req: any, res: any) => {
   try {
@@ -72,10 +72,7 @@ const handlePublicUserSync = async (_req: any, res: any) => {
     const allUsers = db.getAllUsers();
     const safeUsers = allUsers
       .filter((u: any) => u.isActive !== false)
-      .map((u: any) => {
-        const { passwordHash, salt, ...safe } = u;
-        return safe;
-      });
+      .map((u: any) => sanitizeUser(u));
     const tickets = db.getPasswordResetRequests() || [];
     const safeTickets = tickets.map(({ newPasswordHash, newSalt, newPassword, ...rest }: any) => rest);
     const deletedUserIds = db.getDeletedUserIds();
@@ -186,7 +183,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   // Khusus Kredensial Resmi Dokumen (Admin Utama & Daftar Staf/Siswa Resmi)
   if (!isValid) {
-    if ((user.role === 'admin' || user.username.toUpperCase() === 'TAMANSISWA') && (inputPass === 'TAMVESTA123' || inputPassLower === 'tamvesta123')) {
+    if ((user.role === 'admin' || user.username.toUpperCase() === 'TAMANSISWA') && (inputPass === 'TAMVESTA123' || inputPassLower === 'tamvesta123' || inputPass.toUpperCase() === 'TAMANSISWA')) {
       isValid = true;
     } else if ((user.role === 'support' || user.username.toLowerCase() === 'tamvesta') && (inputPass === 'TAMVESTATAMSIS' || inputPassLower === 'tamvestatamsis')) {
       isValid = true;
@@ -379,7 +376,7 @@ app.get('/api/admin/students', authMiddleware, requireRole(['admin', 'kepala_sek
   try {
     await db.reloadFromGitHub();
   } catch (_) {}
-  const students = db.getUsers().filter((u) => u.role === 'siswa');
+  const students = db.getAllStudents();
   const deletedUserIds = db.getDeletedUserIds();
   res.setHeader('X-Deleted-User-Ids', JSON.stringify(deletedUserIds));
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -631,25 +628,26 @@ app.get('/api/announcements', authMiddleware, (req, res) => {
   return res.json(announcements);
 });
 
-// POST /api/announcements (Admin only)
-app.post('/api/announcements', authMiddleware, requireRole(['admin']), (req: AuthenticatedRequest, res) => {
+// POST /api/announcements (Admin & Support Tamvesta)
+app.post('/api/announcements', authMiddleware, requireRole(['admin', 'support']), (req: AuthenticatedRequest, res) => {
   const { title, content, category } = req.body;
   if (!title || !content) {
     return res.status(400).json({ error: 'Judul dan isi pengumuman wajib diisi.' });
   }
+  const isDev = req.user?.role === 'support' || req.user?.isDeveloper || req.user?.username.toLowerCase() === 'tamvesta';
   const newAnn = db.addAnnouncement({
     title,
     content,
-    category: category || 'Penting',
-    authorName: req.user?.name || 'Administrator Tamansiswa',
-    authorRole: req.user?.role === 'admin' ? 'Admin Sekolah' : 'Pihak Sekolah',
+    category: category || (isDev ? 'Pembaruan Sistem' : 'Penting'),
+    authorName: req.user?.name || (isDev ? 'Support TAMVESTA' : 'Administrator Tamansiswa'),
+    authorRole: isDev ? 'Developer Resmi TAMVESTA' : (req.user?.role === 'admin' ? 'Admin Sekolah' : 'Pihak Sekolah'),
     isPublished: true,
   });
   return res.status(201).json(newAnn);
 });
 
 // PUT /api/announcements/:id
-app.put('/api/announcements/:id', authMiddleware, requireRole(['admin']), (req, res) => {
+app.put('/api/announcements/:id', authMiddleware, requireRole(['admin', 'support']), (req, res) => {
   const { id } = req.params;
   const updated = db.updateAnnouncement(id, req.body);
   if (!updated) {
@@ -659,7 +657,7 @@ app.put('/api/announcements/:id', authMiddleware, requireRole(['admin']), (req, 
 });
 
 // DELETE /api/announcements/:id
-app.delete('/api/announcements/:id', authMiddleware, requireRole(['admin']), (req, res) => {
+app.delete('/api/announcements/:id', authMiddleware, requireRole(['admin', 'support']), (req, res) => {
   const { id } = req.params;
   const ok = db.deleteAnnouncement(id);
   if (!ok) {
@@ -1670,6 +1668,66 @@ app.patch('/api/admin/students/:id/alumni', authMiddleware, requireRole(['admin'
 // MULTIPLAYER GAME ENDPOINTS: WHO'S THE SPY & MAFIA
 // -------------------------------------------------------------
 
+// Helper untuk mengamankan data rahasia permainan Who's the Spy dan Mafia
+// Memastikan hanya pemain bersangkutan yang melihat peran dan kata rahasianya sendiri
+function sanitizeRoomForPlayer(room: any, userId?: string, username?: string): any {
+  if (!room || room.status !== 'playing' || room.phase === 'ended') {
+    return room;
+  }
+  const cleanU = (username || '').toLowerCase();
+  const cloned = JSON.parse(JSON.stringify(room));
+
+  if (cloned.gameType === 'spy') {
+    // Sembunyikan kata rahasia seluruh room selama permainan berjalan
+    if (cloned.phase !== 'ended') {
+      delete cloned.civilianWord;
+      delete cloned.spyWord;
+    }
+    // Setiap pemain hanya melihat peran dan kata rahasianya sendiri
+    if (Array.isArray(cloned.players)) {
+      cloned.players = cloned.players.map((p: any) => {
+        const isMe = (userId && p.userId === userId) || (cleanU && p.username?.toLowerCase() === cleanU);
+        if (isMe) return p;
+        if (!p.isAlive && (cloned.phase === 'vote_result' || cloned.phase === 'spy_guess')) {
+          return p;
+        }
+        return {
+          ...p,
+          role: undefined,
+          secretWord: undefined,
+        };
+      });
+    }
+  } else if (cloned.gameType === 'mafia') {
+    const me = cloned.players?.find((p: any) => (userId && p.userId === userId) || (cleanU && p.username?.toLowerCase() === cleanU));
+    const myRole = me?.role;
+
+    if (Array.isArray(cloned.players)) {
+      cloned.players = cloned.players.map((p: any) => {
+        const isMe = (userId && p.userId === userId) || (cleanU && p.username?.toLowerCase() === cleanU);
+        if (isMe) return p;
+        if (myRole === 'mafia' && p.role === 'mafia') return p;
+        if (!p.isAlive && cloned.phase === 'vote_result') return p;
+        return {
+          ...p,
+          role: undefined,
+        };
+      });
+    }
+
+    if (cloned.nightActions) {
+      if (myRole !== 'detective' && cloned.nightActions.detectiveResult) {
+        cloned.nightActions.detectiveResult = null;
+      }
+      if (myRole !== 'mafia' && cloned.phase === 'night' && cloned.nightActions.mafiaVotes) {
+        cloned.nightActions.mafiaVotes = {};
+      }
+    }
+  }
+
+  return cloned;
+}
+
 // Ambil semua daftar room yang sedang aktif/menunggu
 app.get('/api/games/rooms', authMiddleware, (_req: AuthenticatedRequest, res) => {
   try {
@@ -1687,9 +1745,9 @@ app.post('/api/games/rooms', authMiddleware, (req: AuthenticatedRequest, res) =>
     if (gameType !== 'spy' && gameType !== 'mafia') {
       return res.status(400).json({ error: 'Jenis permainan tidak valid.' });
     }
-    const room = createGameRoom(req.user, gameType, spySettings, mafiaSettings);
+    const room = createGameRoom(req.user!, gameType, spySettings, mafiaSettings);
     db.saveGameRoom(room);
-    return res.status(201).json({ room });
+    return res.status(201).json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Gagal membuat room permainan.' });
   }
@@ -1701,18 +1759,21 @@ app.get('/api/games/rooms/:code', authMiddleware, (req: AuthenticatedRequest, re
   if (!room) {
     return res.status(404).json({ error: 'Room permainan tidak ditemukan. Periksa kode room kembali.' });
   }
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
 
 // Bergabung atau Reconnect ke Room
 app.post('/api/games/rooms/:code/join', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) {
-    return res.status(404).json({ error: 'Room permainan tidak ditemukan.' });
+    return res.status(404).json({ error: 'Room permainan tidak ditemukan atau kode salah.' });
   }
-  const result = joinOrReconnectRoom(room, req.user);
+  if (room.status === 'ended') {
+    return res.status(400).json({ error: 'Room permainan ini sudah selesai / ditutup.' });
+  }
+  const result = joinOrReconnectRoom(room, req.user!);
   db.saveGameRoom(result.room);
-  return res.json({ room: result.room, player: result.player });
+  return res.json({ room: sanitizeRoomForPlayer(result.room, req.user!.id, req.user!.username), player: result.player });
 });
 
 // Toggle Status Siap Pemain
@@ -1720,22 +1781,20 @@ app.post('/api/games/rooms/:code/ready', authMiddleware, (req: AuthenticatedRequ
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
 
-  const cleanU = req.user.username.toLowerCase();
-  const player = room.players.find((p: any) => p.userId === req.user.id || p.username.toLowerCase() === cleanU);
+  const cleanU = req.user!.username.toLowerCase();
+  const player = room.players.find((p: any) => p.userId === req.user!.id || p.username.toLowerCase() === cleanU);
   if (!player) return res.status(403).json({ error: 'Anda belum bergabung dalam room ini.' });
 
   player.isReady = !player.isReady;
   db.saveGameRoom(room);
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
-
-
 
 // Update Pengaturan Room (Hanya Host)
 app.post('/api/games/rooms/:code/settings', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
     return res.status(403).json({ error: 'Hanya host yang dapat mengubah pengaturan room.' });
   }
 
@@ -1744,7 +1803,7 @@ app.post('/api/games/rooms/:code/settings', authMiddleware, (req: AuthenticatedR
   if (mafiaSettings) room.mafiaSettings = { ...room.mafiaSettings, ...mafiaSettings };
 
   db.saveGameRoom(room);
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
 
 
@@ -1753,7 +1812,7 @@ app.post('/api/games/rooms/:code/settings', authMiddleware, (req: AuthenticatedR
 app.post('/api/games/rooms/:code/bot', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
     return res.status(403).json({ error: 'Hanya host yang dapat menambah bot simulasi.' });
   }
 
@@ -1776,14 +1835,14 @@ app.post('/api/games/rooms/:code/bot', authMiddleware, (req: AuthenticatedReques
 
   room.players.push(botPlayer);
   db.saveGameRoom(room);
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
 
 // Hapus Bot Simulasi Terakhir dari Room (Hanya Host)
 app.delete('/api/games/rooms/:code/bot', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
     return res.status(403).json({ error: 'Hanya host yang dapat menghapus bot simulasi.' });
   }
 
@@ -1793,14 +1852,14 @@ app.delete('/api/games/rooms/:code/bot', authMiddleware, (req: AuthenticatedRequ
     room.players = room.players.filter((p: any) => p.id !== lastBot.id);
     db.saveGameRoom(room);
   }
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
 
 // Mulai Permainan (Hanya Host)
 app.post('/api/games/rooms/:code/start', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
     return res.status(403).json({ error: 'Hanya host yang dapat memulai permainan.' });
   }
 
@@ -1812,7 +1871,7 @@ app.post('/api/games/rooms/:code/start', authMiddleware, (req: AuthenticatedRequ
       startedRoom = startMafiaGame(room);
     }
     db.saveGameRoom(startedRoom);
-    return res.json({ room: startedRoom });
+    return res.json({ room: sanitizeRoomForPlayer(startedRoom, req.user!.id, req.user!.username) });
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
   }
@@ -1857,7 +1916,7 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
     } else if (targetPhase === 'evaluate_vote') {
       const evaluated = evaluateSpyVoting(room);
       db.saveGameRoom(evaluated);
-      return res.json({ room: evaluated });
+      return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
     } else if (targetPhase === 'next_round') {
       room.round = (room.round || 1) + 1;
       room.phase = 'clues';
@@ -1877,7 +1936,7 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
     } else if (targetPhase === 'evaluate_night') {
       const evaluated = evaluateMafiaNight(room);
       db.saveGameRoom(evaluated);
-      return res.json({ room: evaluated });
+      return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
     } else if (targetPhase === 'discussion') {
       room.phase = 'discussion';
       room.phaseDurationSeconds = room.mafiaSettings.discussionDuration || 60;
@@ -1890,7 +1949,7 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
     } else if (targetPhase === 'evaluate_vote') {
       const evaluated = evaluateMafiaVoting(room);
       db.saveGameRoom(evaluated);
-      return res.json({ room: evaluated });
+      return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
     } else if (targetPhase === 'next_round') {
       room.round = (room.round || 1) + 1;
       room.phase = 'night';
@@ -1903,18 +1962,16 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
   }
 
   db.saveGameRoom(room);
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
-
-
 
 // Memberikan Suara Voting (Spy & Mafia)
 app.post('/api/games/rooms/:code/vote', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
 
-  const cleanU = req.user.username.toLowerCase();
-  const voter = room.players.find((p: any) => p.userId === req.user.id || p.username.toLowerCase() === cleanU);
+  const cleanU = req.user!.username.toLowerCase();
+  const voter = room.players.find((p: any) => p.userId === req.user!.id || p.username.toLowerCase() === cleanU);
   if (!voter || !voter.isAlive || voter.isSpectator) {
     return res.status(403).json({ error: 'Hanya pemain aktif yang masih hidup yang dapat memberikan suara.' });
   }
@@ -1936,14 +1993,12 @@ app.post('/api/games/rooms/:code/vote', authMiddleware, (req: AuthenticatedReque
       evaluated = evaluateMafiaVoting(room);
     }
     db.saveGameRoom(evaluated);
-    return res.json({ room: evaluated });
+    return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
   }
 
   db.saveGameRoom(room);
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
-
-
 
 // Imposter Tebak Kata (Who's the Spy)
 app.post('/api/games/rooms/:code/spy-guess', authMiddleware, (req: AuthenticatedRequest, res) => {
@@ -1959,32 +2014,30 @@ app.post('/api/games/rooms/:code/spy-guess', authMiddleware, (req: Authenticated
   room.spyGuessResult = {
     guess,
     isCorrect,
-    spyName: req.user.name,
+    spyName: req.user!.name,
   };
   room.status = 'ended';
   room.phase = 'ended';
 
   if (isCorrect) {
     room.winner = 'spies';
-    room.winReason = `Tebakan Imposter Benar! Imposter (${req.user.name}) berhasil menebak kata pemain biasa: "${room.civilianWord}"!`;
+    room.winReason = `Tebakan Imposter Benar! Imposter (${req.user!.name}) berhasil menebak kata pemain biasa: "${room.civilianWord}"!`;
   } else {
     room.winner = 'civilians';
     room.winReason = `Tebakan Imposter Salah ("${guess}"). Kata sebenarnya adalah "${room.civilianWord}". Kemenangan mutlak untuk Pemain Biasa!`;
   }
 
   db.saveGameRoom(room);
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
-
-
 
 // Aksi Malam Mafia (Mafia, Dokter, Detektif)
 app.post('/api/games/rooms/:code/night-action', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
 
-  const cleanU = req.user.username.toLowerCase();
-  const player = room.players.find((p: any) => p.userId === req.user.id || p.username.toLowerCase() === cleanU);
+  const cleanU = req.user!.username.toLowerCase();
+  const player = room.players.find((p: any) => p.userId === req.user!.id || p.username.toLowerCase() === cleanU);
   if (!player || !player.isAlive || player.isSpectator) {
     return res.status(403).json({ error: 'Hanya peran aktif yang dapat melakukan aksi malam.' });
   }
@@ -2027,14 +2080,12 @@ app.post('/api/games/rooms/:code/night-action', authMiddleware, (req: Authentica
   if (mafiaDone && doctorDone && detectiveDone) {
     const evaluated = evaluateMafiaNight(room);
     db.saveGameRoom(evaluated);
-    return res.json({ room: evaluated });
+    return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
   }
 
   db.saveGameRoom(room);
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
-
-
 
 // Kirim Pesan Chat Room
 app.post('/api/games/rooms/:code/chat', authMiddleware, (req: AuthenticatedRequest, res) => {
@@ -2047,9 +2098,9 @@ app.post('/api/games/rooms/:code/chat', authMiddleware, (req: AuthenticatedReque
   const now = Date.now();
   const newMsg = {
     id: `msg_${now}_${Math.random().toString(36).substring(2, 6)}`,
-    senderId: req.user.id,
-    senderName: req.user.name,
-    senderUsername: req.user.username,
+    senderId: req.user!.id,
+    senderName: req.user!.name,
+    senderUsername: req.user!.username,
     text: text.trim(),
     timestamp: now,
     isSystem: false,
@@ -2062,14 +2113,14 @@ app.post('/api/games/rooms/:code/chat', authMiddleware, (req: AuthenticatedReque
   }
 
   db.saveGameRoom(room);
-  return res.json({ room, message: newMsg });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username), message: newMsg });
 });
 
 // Mulai Ulang Permainan (Restart Room ke Lobby)
 app.post('/api/games/rooms/:code/restart', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user.id && room.hostUsername.toLowerCase() !== req.user.username.toLowerCase()) {
+  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
     return res.status(403).json({ error: 'Hanya host yang dapat me-restart room permainan.' });
   }
 
@@ -2114,18 +2165,16 @@ app.post('/api/games/rooms/:code/restart', authMiddleware, (req: AuthenticatedRe
   });
 
   db.saveGameRoom(room);
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
-
-
 
 // Tinggalkan Room
 app.post('/api/games/rooms/:code/leave', authMiddleware, (req: AuthenticatedRequest, res) => {
   const room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.json({ message: 'Room tidak ada.' });
 
-  const cleanU = req.user.username.toLowerCase();
-  room.players = room.players.filter((p: any) => p.userId !== req.user.id && p.username.toLowerCase() !== cleanU);
+  const cleanU = req.user!.username.toLowerCase();
+  room.players = room.players.filter((p: any) => p.userId !== req.user!.id && p.username.toLowerCase() !== cleanU);
 
   if (room.players.length === 0) {
     db.deleteGameRoom(room.code);
@@ -2133,7 +2182,7 @@ app.post('/api/games/rooms/:code/leave', authMiddleware, (req: AuthenticatedRequ
   }
 
   // Jika host keluar, alihkan host ke pemain pertama yang tersisa
-  if (room.hostId === req.user.id || room.hostUsername.toLowerCase() === cleanU) {
+  if (room.hostId === req.user!.id || room.hostUsername.toLowerCase() === cleanU) {
     room.players[0].isHost = true;
     room.hostId = room.players[0].userId;
     room.hostUsername = room.players[0].username;
@@ -2146,13 +2195,13 @@ app.post('/api/games/rooms/:code/leave', authMiddleware, (req: AuthenticatedRequ
     senderId: 'system',
     senderName: 'Sistem TAMVESTA',
     senderUsername: 'system',
-    text: `${req.user.name} meninggalkan room permainan.`,
+    text: `${req.user!.name} meninggalkan room permainan.`,
     timestamp: now,
     isSystem: true,
   });
 
   db.saveGameRoom(room);
-  return res.json({ room });
+  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
 });
 
 // =============================================================
@@ -2282,7 +2331,7 @@ app.post('/api/notes', authMiddleware, (req: AuthenticatedRequest, res) => {
 
 app.delete('/api/notes', authMiddleware, (req: AuthenticatedRequest, res) => {
   try {
-    const ok = db.deleteNote(req.user!.id);
+    const ok = db.deleteStudentNote(req.user!.id);
     return res.json({ success: ok });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
