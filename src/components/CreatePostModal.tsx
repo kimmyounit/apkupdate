@@ -12,7 +12,9 @@ import {
   Heart,
   MessageCircle,
   Share2,
+  Pin,
 } from 'lucide-react';
+import { VerifiedBadge } from './VerifiedBadge.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../lib/api.ts';
 import type { StudentPost } from '../types/index.ts';
@@ -29,11 +31,18 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   onPostCreated,
 }) => {
   const { user } = useAuth();
+  const isSupport =
+    user?.role === 'support' ||
+    user?.isDeveloper ||
+    user?.username?.toLowerCase() === 'tamvesta' ||
+    user?.id === 'user_support_tamvesta';
+
   const [caption, setCaption] = useState('');
   const [mediaType, setMediaType] = useState<'photo' | 'video' | 'none'>('none');
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaName, setMediaName] = useState<string>('');
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isPinned, setIsPinned] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -123,6 +132,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
         mediaType: mediaType === 'none' ? undefined : mediaType,
         mediaUrl: mediaUrl || undefined,
         mediaName: mediaName || undefined,
+        isPinned: isSupport ? isPinned : undefined,
       });
 
       onPostCreated(created);
@@ -142,14 +152,32 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black">
-              +
+        <div
+          className={`flex items-center justify-between px-6 py-4 border-b ${
+            isSupport
+              ? 'bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-transparent border-amber-200'
+              : 'bg-slate-50/70 border-slate-100'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <span
+              className={`w-8 h-8 rounded-xl flex items-center justify-center font-black ${
+                isSupport
+                  ? 'bg-amber-500 text-slate-900 shadow-sm'
+                  : 'bg-emerald-100 text-emerald-700'
+              }`}
+            >
+              {isSupport ? <Sparkles className="w-4 h-4 fill-slate-900" /> : '+'}
             </span>
             <div>
-              <h3 className="text-base font-black text-slate-900">Buat Postingan Siswa</h3>
-              <p className="text-[11px] text-slate-500 font-medium">Bagikan momen & kegiatan Tamansiswa Batam</p>
+              <h3 className="text-base font-black text-slate-900">
+                {isSupport ? 'Siarkan Pesan Resmi Support' : 'Buat Postingan Siswa'}
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium">
+                {isSupport
+                  ? 'Disiarkan ke feed beranda seluruh siswa dengan lencana resmi Developer'
+                  : 'Bagikan momen & kegiatan Tamansiswa Batam'}
+              </p>
             </div>
           </div>
           <button
@@ -174,18 +202,56 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
             <img
               src={
                 user?.avatarUrl ||
-                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.name || 'Siswa')}&backgroundColor=0284c7`
+                (isSupport
+                  ? '/assets/tamvesta_mascot.jpg'
+                  : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.name || 'Siswa')}&backgroundColor=0284c7`)
               }
               alt={user?.name}
-              className="w-11 h-11 rounded-2xl object-cover border border-slate-200 shadow-sm"
+              className={`w-11 h-11 rounded-2xl object-cover border shadow-sm ${
+                isSupport ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-slate-200'
+              }`}
             />
             <div>
-              <p className="text-sm font-black text-slate-900 leading-tight">{user?.name}</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-sm font-black text-slate-900 leading-tight">{user?.name}</p>
+                {isSupport ? (
+                  <VerifiedBadge size="xs" isDeveloper={true} />
+                ) : (
+                  user?.isVerified && <VerifiedBadge size="xs" />
+                )}
+              </div>
               <p className="text-xs text-slate-500">
-                @{user?.username} • <span className="text-emerald-700 font-bold">{user?.kelas || 'Siswa Tamvesta'}</span>
+                @{user?.username} •{' '}
+                <span className={isSupport ? 'text-amber-800 font-bold' : 'text-emerald-700 font-bold'}>
+                  {isSupport ? 'Developer & Support Resmi TAMVESTA' : (user?.kelas || 'Siswa Tamvesta')}
+                </span>
               </p>
             </div>
           </div>
+
+          {/* Opsi Sematkan di Paling Atas (Khusus Akun Support) */}
+          {isSupport && (
+            <div className="p-3 bg-amber-50/80 border border-amber-300 rounded-2xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-amber-500/20 text-amber-800 rounded-xl">
+                  <Pin className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900">Sematkan Postingan (Pinned Post)</p>
+                  <p className="text-[11px] text-slate-500">Tampilkan di posisi teratas feed beranda siswa</p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={isPinned}
+                  onChange={(e) => setIsPinned(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+          )}
 
           {/* Switch Tab: Edit vs Preview */}
           <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
@@ -220,7 +286,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 <textarea
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
-                  placeholder="Apa kabar hari ini di Tamansiswa? Bagikan kegiatan belajar, tugas kelompok, pesan motivasi, atau karya terbarumu..."
+                  placeholder={
+                    isSupport
+                      ? 'Tulis pengumuman resmi, rilis fitur baru, update aplikasi, atau pesan penting untuk seluruh siswa Tamansiswa Batam...'
+                      : 'Apa kabar hari ini di Tamansiswa? Bagikan kegiatan belajar, tugas kelompok, pesan motivasi, atau karya terbarumu...'
+                  }
                   rows={4}
                   className="w-full p-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm text-slate-800 placeholder-slate-400 resize-none bg-slate-50/50"
                   maxLength={1000}
@@ -381,14 +451,18 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
             type="button"
             onClick={handlePublish}
             disabled={loading}
-            className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-lg shadow-emerald-600/20 transition flex items-center gap-2 active:scale-95 disabled:opacity-50"
+            className={`px-6 py-2.5 rounded-xl text-xs font-black shadow-lg transition flex items-center gap-2 active:scale-95 disabled:opacity-50 ${
+              isSupport
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 shadow-amber-500/25'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+            }`}
           >
             {loading ? (
               <span>Menerbitkan...</span>
             ) : (
               <>
                 <Send className="w-3.5 h-3.5" />
-                <span>Posting</span>
+                <span>{isSupport ? 'Siarkan Pesan Support' : 'Posting'}</span>
               </>
             )}
           </button>

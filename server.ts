@@ -1018,7 +1018,7 @@ app.get('/api/posts', optionalAuthMiddleware, async (req, res) => {
 
 // POST /api/posts - Terbitkan postingan baru
 app.post('/api/posts', authMiddleware, async (req: AuthenticatedRequest, res) => {
-  const { caption, mediaType, mediaUrl, mediaName } = req.body;
+  const { caption, mediaType, mediaUrl, mediaName, isPinned } = req.body;
 
   if (!caption?.trim() && !mediaUrl) {
     return res.status(400).json({ error: 'Keterangan caption atau media foto/video wajib diisi.' });
@@ -1032,14 +1032,21 @@ app.post('/api/posts', authMiddleware, async (req: AuthenticatedRequest, res) =>
   const validMediaType: 'photo' | 'video' | 'none' =
     mediaType === 'photo' || mediaType === 'video' ? mediaType : 'none';
 
+  const isDev =
+    req.user!.role === 'support' ||
+    req.user!.isDeveloper ||
+    req.user!.username.toLowerCase() === 'tamvesta' ||
+    req.user!.id === 'user_support_tamvesta';
+
   const newPost = db.addPost({
     authorId: req.user!.id,
     authorName: req.user!.name,
     authorUsername: req.user!.username,
-    authorKelas: req.user!.kelas || '',
-    authorAvatar: req.user!.avatarUrl || '',
-    authorIsVerified: !!req.user!.isVerified,
+    authorKelas: isDev ? 'Developer & Support Resmi' : (req.user!.kelas || ''),
+    authorAvatar: req.user!.avatarUrl || (isDev ? '/assets/tamvesta_mascot.jpg' : ''),
+    authorIsVerified: !!req.user!.isVerified || isDev,
     authorIsAlumni: !!req.user!.isAlumni,
+    isPinned: isDev ? (isPinned !== false) : !!isPinned,
     caption: caption || '',
     mediaType: validMediaType,
     mediaUrl: mediaUrl || undefined,

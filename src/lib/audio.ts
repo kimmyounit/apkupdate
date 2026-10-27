@@ -309,3 +309,44 @@ export function playQuizExitAlertSound(): void {
     console.warn('Audio exit alert error:', err);
   }
 }
+
+/**
+ * Suara denting notifikasi resmi (Notification Chime) untuk pengumuman & pesan support
+ */
+export function playNotificationChime(): void {
+  try {
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+    const masterGain = createMasterGain(ctx);
+    if (!masterGain) return;
+
+    const now = ctx.currentTime;
+    const chimeNotes = [
+      { freq: 587.33, start: 0.00, dur: 0.18, vol: 0.5 }, // D5
+      { freq: 880.00, start: 0.12, dur: 0.35, vol: 0.65 }, // A5
+    ];
+
+    chimeNotes.forEach(({ freq, start, dur, vol }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + start);
+
+      gain.gain.setValueAtTime(vol, now + start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now + start);
+      osc.stop(now + start + dur);
+    });
+
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate([120, 80, 160]);
+      } catch (_) {}
+    }
+  } catch (err) {
+    console.warn('Audio notification chime error:', err);
+  }
+}

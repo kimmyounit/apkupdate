@@ -14,6 +14,12 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { api } from '../lib/api.ts';
+import {
+  isNotificationSupported,
+  getNotificationPermission,
+  requestNotificationPermission,
+  type NotificationPermissionState,
+} from '../lib/notificationService.ts';
 import type { AppNotification } from '../types/index.ts';
 
 interface NotificationsModalProps {
@@ -36,6 +42,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
   const [notifications, setNotifications] = useState<(AppNotification & { isRead: boolean })[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [loading, setLoading] = useState(true);
+  const [notifPerm, setNotifPerm] = useState<NotificationPermissionState>(() => getNotificationPermission());
 
   const loadNotifications = async () => {
     try {
@@ -158,6 +165,28 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Device Notification Activation Banner */}
+        {isNotificationSupported() && notifPerm !== 'granted' && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-amber-700 shrink-0 animate-pulse" />
+              <p className="text-xs text-amber-900 font-semibold leading-tight">
+                Aktifkan notifikasi perangkat agar pengumuman langsung masuk ke HP Anda.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                const res = await requestNotificationPermission();
+                setNotifPerm(res);
+              }}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black shadow-xs shrink-0 transition active:scale-95"
+            >
+              Izinkan
+            </button>
+          </div>
+        )}
 
         {/* Filter & Bulk Actions Bar */}
         <div className="p-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between gap-2">

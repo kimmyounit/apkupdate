@@ -1879,27 +1879,29 @@ class DatabaseManager {
     authorAvatar?: string;
     authorIsVerified?: boolean;
     authorIsAlumni?: boolean;
+    isPinned?: boolean;
     caption: string;
     mediaType: 'photo' | 'video' | 'none';
     mediaUrl?: string;
     mediaName?: string;
   }): StudentPost {
     const authorUser = this.findUserById(payload.authorId) || this.findUserByUsername(payload.authorUsername);
-    const isDev = authorUser?.isDeveloper || authorUser?.role === 'support' || payload.authorUsername.toLowerCase() === 'tamvesta';
+    const isDev = authorUser?.isDeveloper || authorUser?.role === 'support' || payload.authorUsername.toLowerCase() === 'tamvesta' || payload.authorId === 'user_support_tamvesta';
     const isVer = payload.authorIsVerified !== undefined ? payload.authorIsVerified : (authorUser?.isVerified || isDev);
+    const isPinnedPost = payload.isPinned !== undefined ? payload.isPinned : isDev;
 
     const newPost: StudentPost = {
       id: `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       authorId: payload.authorId,
       authorName: payload.authorName,
       authorUsername: payload.authorUsername,
-      authorKelas: payload.authorKelas || '',
-      authorAvatar: payload.authorAvatar || '',
+      authorKelas: payload.authorKelas || (isDev ? 'Developer & Support Resmi' : ''),
+      authorAvatar: payload.authorAvatar || (isDev ? '/assets/tamvesta_mascot.jpg' : ''),
       authorIsVerified: isVer,
       authorIsAlumni: payload.authorIsAlumni !== undefined ? payload.authorIsAlumni : !!authorUser?.isAlumni,
       authorIsDeveloper: isDev,
       authorBadgeType: isDev ? 'developer' : (isVer ? 'blue' : undefined),
-      isPinned: false,
+      isPinned: isPinnedPost,
       caption: payload.caption.trim(),
       mediaType: payload.mediaType || 'none',
       mediaUrl: payload.mediaUrl,
@@ -1914,6 +1916,26 @@ class DatabaseManager {
     }
 
     this.data.posts.unshift(newPost);
+
+    // Otomatis buat notifikasi resmi untuk seluruh siswa saat Support memposting
+    if (isDev) {
+      if (!Array.isArray(this.data.notifications)) {
+        this.data.notifications = [];
+      }
+      this.data.notifications.unshift({
+        id: `notif_support_post_${Date.now()}`,
+        title: '📢 Pesan Resmi Support TAMVESTA',
+        message: payload.caption.length > 90 ? payload.caption.substring(0, 90) + '...' : payload.caption,
+        type: 'announcement',
+        isImportant: true,
+        linkType: 'announcement',
+        linkId: newPost.id,
+        createdAt: new Date().toISOString(),
+        readBy: [],
+        deletedBy: [],
+      });
+    }
+
     this.save();
     return newPost;
   }

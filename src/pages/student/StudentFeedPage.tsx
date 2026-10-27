@@ -77,6 +77,11 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
   onOpenReports,
 }) => {
   const { user, refreshUser, logout } = useAuth();
+  const isSupportUser =
+    user?.role === 'support' ||
+    user?.isDeveloper ||
+    user?.username?.toLowerCase() === 'tamvesta' ||
+    user?.id === 'user_support_tamvesta';
   const [posts, setPosts] = useState<StudentPost[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
@@ -852,33 +857,62 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* 3. QUICK CREATE POST PROMPT */}
+      {/* 3. QUICK CREATE POST PROMPT (Disesuaikan untuk Akun Support) */}
       {/* ------------------------------------------------------------- */}
-      <div className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-xs flex items-center gap-3">
-        <img
-          src={
-            user?.avatarUrl ||
-            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-              user?.name || 'Siswa'
-            )}&backgroundColor=0284c7`
-          }
-          alt={user?.name}
-          className="w-10 h-10 rounded-2xl object-cover border border-slate-200"
-        />
-        <button
-          onClick={() => setIsCreatePostOpen(true)}
-          className="flex-1 text-left px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs sm:text-sm text-slate-500 transition font-medium truncate"
-        >
-          Bagikan cerita atau kegiatan belajarmu hari ini...
-        </button>
-        <button
-          onClick={() => setIsCreatePostOpen(true)}
-          className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition"
-          title="Tambah Foto atau Video"
-        >
-          <ImageIcon className="w-4 h-4" />
-        </button>
-      </div>
+      {isSupportUser ? (
+        <div className="rounded-3xl p-4 sm:p-5 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-500 text-slate-900 shadow-xl border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-900/10 border border-slate-900/15 flex items-center justify-center shrink-0">
+              <Sparkles className="w-6 h-6 text-slate-900 fill-slate-900" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-base font-black">Panel Siaran Developer & Support TAMVESTA</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-900 text-amber-300 font-black uppercase">
+                  Akun Developer Resmi
+                </span>
+              </div>
+              <p className="text-xs text-slate-900/80 font-semibold mt-0.5">
+                Posting pesan atau pengumuman yang akan langsung masuk ke feed seluruh siswa Tamansiswa Batam.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsCreatePostOpen(true)}
+            className="px-4.5 py-2.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-amber-300 rounded-2xl text-xs font-black shadow-lg flex items-center justify-center gap-2 transition shrink-0"
+          >
+            <Plus className="w-4 h-4 text-amber-300 stroke-[3]" />
+            <span>Siarkan Pesan Support</span>
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-xs flex items-center gap-3">
+          <img
+            src={
+              user?.avatarUrl ||
+              `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                user?.name || 'Siswa'
+              )}&backgroundColor=0284c7`
+            }
+            alt={user?.name}
+            className="w-10 h-10 rounded-2xl object-cover border border-slate-200"
+          />
+          <button
+            onClick={() => setIsCreatePostOpen(true)}
+            className="flex-1 text-left px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs sm:text-sm text-slate-500 transition font-medium truncate"
+          >
+            Bagikan cerita atau kegiatan belajarmu hari ini...
+          </button>
+          <button
+            onClick={() => setIsCreatePostOpen(true)}
+            className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition"
+            title="Tambah Foto atau Video"
+          >
+            <ImageIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* ------------------------------------------------------------- */}
       {/* 4. FEED HEADER & REFRESH */}
@@ -935,12 +969,42 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
             const isLiked = user ? post.likes.includes(user.id) : false;
             const isFollowing = followingIds.includes(post.authorId);
             const isCommentsOpen = !!expandedComments[post.id];
+            const isSupportPost =
+              post.authorIsDeveloper ||
+              (post as any).authorBadgeType === 'developer' ||
+              post.authorUsername?.toLowerCase() === 'tamvesta' ||
+              post.authorId === 'user_support_tamvesta';
 
             return (
               <article
                 key={post.id}
-                className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden"
+                className={`rounded-3xl overflow-hidden transition-all duration-200 ${
+                  isSupportPost
+                    ? 'bg-gradient-to-b from-amber-50/70 via-white to-white border-2 border-amber-400 shadow-xl shadow-amber-500/10 ring-1 ring-amber-400/30'
+                    : 'bg-white border border-slate-200/90 shadow-xs'
+                }`}
               >
+                {/* Official Support Post Top Banner */}
+                {isSupportPost && (
+                  <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-500 text-slate-900 px-4 py-2 flex items-center justify-between text-xs font-black shadow-inner">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-slate-900/15 flex items-center justify-center">
+                        <Sparkles className="w-3.5 h-3.5 text-slate-900 fill-slate-900" />
+                      </div>
+                      <span className="tracking-wide">PESAN & PENGUMUMAN RESMI SUPPORT TAMVESTA</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {post.isPinned && (
+                        <span className="px-2 py-0.5 rounded-full bg-slate-900 text-amber-300 text-[10px] font-black flex items-center gap-1">
+                          <Pin className="w-2.5 h-2.5 fill-amber-300" /> DIPIN
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 rounded-full bg-white/70 text-slate-900 text-[10px] font-extrabold uppercase">
+                        Info Resmi
+                      </span>
+                    </div>
+                  </div>
+                )}
                 {/* Post Author Header */}
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">

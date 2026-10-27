@@ -967,7 +967,7 @@ export const api = {
     return merged;
   },
 
-  createPost: async (data: { caption: string; mediaUrl?: string; mediaType?: 'photo' | 'video'; mediaName?: string }) => {
+  createPost: async (data: { caption: string; mediaUrl?: string; mediaType?: 'photo' | 'video'; mediaName?: string; isPinned?: boolean }) => {
     try {
       const res = await tryServerRequest<StudentPost>('/api/posts', {
         method: 'POST',

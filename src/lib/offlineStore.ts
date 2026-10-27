@@ -935,20 +935,29 @@ export const offlineStore = {
     return post;
   },
 
-  createPost(data: { caption: string; mediaUrl?: string; mediaType?: 'photo' | 'video' }) {
+  createPost(data: { caption: string; mediaUrl?: string; mediaType?: 'photo' | 'video'; isPinned?: boolean }) {
     const db = loadDB();
     const user = this.getCurrentUser();
     if (!user) throw new Error('Login diperlukan');
+
+    const isDev =
+      user.role === 'support' ||
+      user.isDeveloper ||
+      user.username.toLowerCase() === 'tamvesta' ||
+      user.id === 'user_support_tamvesta';
 
     const newPost: StudentPost = {
       id: 'post_' + Date.now(),
       authorId: user.id,
       authorName: user.name,
       authorUsername: user.username,
-      authorAvatar: user.avatarUrl,
-      authorKelas: user.kelas || '',
-      authorIsVerified: !!user.isVerified,
+      authorAvatar: user.avatarUrl || (isDev ? '/assets/tamvesta_mascot.jpg' : undefined),
+      authorKelas: isDev ? 'Developer & Support Resmi' : (user.kelas || ''),
+      authorIsVerified: !!user.isVerified || isDev,
+      authorIsDeveloper: isDev,
+      authorBadgeType: isDev ? 'developer' : (user.isVerified ? 'blue' : undefined),
       authorIsAlumni: !!user.isAlumni,
+      isPinned: isDev ? (data.isPinned !== false) : !!data.isPinned,
       caption: data.caption,
       mediaUrl: data.mediaUrl,
       mediaType: data.mediaType ?? 'none',
@@ -958,6 +967,24 @@ export const offlineStore = {
     };
 
     db.posts = [newPost, ...(db.posts || [])];
+
+    // Buat notifikasi resmi untuk akun support agar masuk ke feed & notifikasi siswa
+    if (isDev) {
+      if (!Array.isArray(db.notifications)) db.notifications = [];
+      db.notifications.unshift({
+        id: 'notif_support_post_' + Date.now(),
+        title: '📢 Pesan Resmi Support TAMVESTA',
+        message: data.caption.length > 90 ? data.caption.substring(0, 90) + '...' : data.caption,
+        type: 'announcement',
+        isImportant: true,
+        linkType: 'announcement',
+        linkId: newPost.id,
+        createdAt: new Date().toISOString(),
+        readBy: [],
+        deletedBy: [],
+      });
+    }
+
     saveDB(db);
     return newPost;
   },

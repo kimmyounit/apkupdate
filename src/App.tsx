@@ -11,6 +11,8 @@ import { SatpamDashboard } from './pages/satpam/SatpamDashboard.tsx';
 import { ScannerPage } from './pages/attendance/ScannerPage.tsx';
 import { PasswordChangeModal } from './components/PasswordChangeModal.tsx';
 import { WelcomeAnimation } from './components/WelcomeAnimation.tsx';
+import { NotificationPermissionModal } from './components/NotificationPermissionModal.tsx';
+import { startNotificationSync } from './lib/notificationService.ts';
 import { School } from 'lucide-react';
 
 interface ErrorBoundaryProps {
@@ -90,6 +92,12 @@ function AppContent() {
     }
   });
 
+  // Sinkronisasi otomatis notifikasi pengumuman sekolah & pesan support berkala
+  React.useEffect(() => {
+    const stopSync = startNotificationSync();
+    return () => stopSync();
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
@@ -104,7 +112,12 @@ function AppContent() {
   }
 
   if (!user) {
-    return <Login />;
+    return (
+      <>
+        <Login />
+        <NotificationPermissionModal />
+      </>
+    );
   }
 
   // Safe normalized user role
@@ -178,6 +191,9 @@ function AppContent() {
           </ErrorBoundary>
         )}
       </main>
+
+      {/* Global Notification Permission Prompt */}
+      <NotificationPermissionModal />
     </div>
   );
 }
