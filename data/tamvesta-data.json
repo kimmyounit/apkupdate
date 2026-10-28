@@ -16,6 +16,23 @@
       "updatedAt": "2026-10-24T08:22:45.298Z"
     },
     {
+      "id": "user_siswa_siswa_smp7a_002",
+      "username": "siswa.smp7a.002",
+      "name": "Bunga Pertiwi",
+      "role": "siswa",
+      "kelas": "VII-A SMP",
+      "gender": "Perempuan",
+      "initialPassword": "Siswa7A002",
+      "passwordHash": "ecf000a1f3f71f553369e71389a4ef281d77a7899521c5c1cba2013a5e552a84249139cc3603a8a110589db062b9b3645b3a955906506754ebaa385c7a85179c",
+      "salt": "319cb080d8075f5c285297a01674fb70",
+      "mustChangePassword": false,
+      "isActive": true,
+      "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
+      "createdAt": "2026-10-24T08:22:46.353Z",
+      "updatedAt": "2026-10-24T08:22:46.353Z",
+      "password": "Siswa7A002"
+    },
+    {
       "id": "user_siswa_siswa_smp7a_003",
       "username": "siswa.smp7a.003",
       "name": "Cahya Ramadhan",
@@ -873,7 +890,42 @@
   "posts": [],
   "stories": [],
   "notes": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif_welcome",
+      "title": "Selamat Datang di TAMVESTA Mobile!",
+      "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
+      "type": "general",
+      "isImportant": true,
+      "linkType": "none",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-28T00:33:57.100Z"
+    },
+    {
+      "id": "notif_announcement_1",
+      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
+      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
+      "type": "announcement",
+      "isImportant": true,
+      "linkType": "announcement",
+      "linkId": "ann_1",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-27T23:33:57.101Z"
+    },
+    {
+      "id": "notif_subject_1",
+      "title": "Pembaruan Jadwal: Matematika Wajib",
+      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
+      "type": "subject_change",
+      "isImportant": false,
+      "linkType": "subject",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-27T22:33:57.101Z"
+    }
+  ],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
@@ -888,9 +940,5 @@
   "studentNotes": [],
   "lostFoundItems": [],
   "activityPermissions": [],
-  "appReports": [],
-  "deletedUserIds": [
-    "user_siswa_siswa_smp7a_002",
-    "siswa.smp7a.002"
-  ]
+  "appReports": []
 }
