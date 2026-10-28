@@ -900,7 +900,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-28T00:33:57.100Z"
+      "createdAt": "2026-10-28T00:35:01.258Z"
     },
     {
       "id": "notif_announcement_1",
@@ -912,7 +912,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-27T23:33:57.101Z"
+      "createdAt": "2026-10-27T23:35:01.259Z"
     },
     {
       "id": "notif_subject_1",
@@ -923,7 +923,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-27T22:33:57.101Z"
+      "createdAt": "2026-10-27T22:35:01.259Z"
     }
   ],
   "articles": [],
