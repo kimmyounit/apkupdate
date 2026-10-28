@@ -29,7 +29,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_002:e4abdc5b1667c546",
       "createdAt": "2026-10-24T08:22:46.353Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.353Z",
       "password": "Siswa7A002"
     },
     {
@@ -46,7 +46,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7a_003:a8b1bf53ef854371",
       "createdAt": "2026-10-24T08:22:46.372Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.372Z",
       "password": "Siswa7A003"
     },
     {
@@ -63,7 +63,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7b_001:7c216e93f287a1bb",
       "createdAt": "2026-10-24T08:22:46.391Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.391Z",
       "password": "Siswa7B001"
     },
     {
@@ -80,7 +80,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp7b_002:2457918d2abf2cb9",
       "createdAt": "2026-10-24T08:22:46.404Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.404Z",
       "password": "Siswa7B002"
     },
     {
@@ -97,7 +97,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_001:966df39795446bcf",
       "createdAt": "2026-10-24T08:22:46.424Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.424Z",
       "password": "Siswa8A001"
     },
     {
@@ -114,7 +114,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_002:5d5a0c75dfc6eeb4",
       "createdAt": "2026-10-24T08:22:46.442Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.442Z",
       "password": "Siswa8A002"
     },
     {
@@ -131,7 +131,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8a_003:d788251d1283e2fb",
       "createdAt": "2026-10-24T08:22:46.472Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.472Z",
       "password": "Siswa8A003"
     },
     {
@@ -148,7 +148,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8b_001:cda0a40be6d66724",
       "createdAt": "2026-10-24T08:22:46.490Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.490Z",
       "password": "Siswa8B001"
     },
     {
@@ -165,7 +165,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp8b_002:f9d6c04a69c27b5d",
       "createdAt": "2026-10-24T08:22:46.509Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.509Z",
       "password": "Siswa8B002"
     },
     {
@@ -182,7 +182,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_001:86e5c0c96dcb84e0",
       "createdAt": "2026-10-24T08:22:46.527Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.527Z",
       "password": "Siswa9A001"
     },
     {
@@ -199,7 +199,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_002:372888ff50d80ec5",
       "createdAt": "2026-10-24T08:22:46.548Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.548Z",
       "password": "Siswa9A002"
     },
     {
@@ -216,7 +216,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9a_003:603d6ac4d8c9b9c0",
       "createdAt": "2026-10-24T08:22:46.567Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.567Z",
       "password": "Siswa9A003"
     },
     {
@@ -233,7 +233,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9b_001:e0ea9879ea551c2d",
       "createdAt": "2026-10-24T08:22:46.578Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.578Z",
       "password": "Siswa9B001"
     },
     {
@@ -250,7 +250,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_smp9b_002:4fc87e276cfb7953",
       "createdAt": "2026-10-24T08:22:46.595Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.595Z",
       "password": "Siswa9B002"
     },
     {
@@ -267,7 +267,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd1a_001:7cc93e2358bdb31b",
       "createdAt": "2026-10-24T08:22:46.614Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.614Z",
       "password": "Siswa1A001"
     },
     {
@@ -284,7 +284,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd1a_002:5892a39733f6eb6f",
       "createdAt": "2026-10-24T08:22:46.630Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.630Z",
       "password": "Siswa1A002"
     },
     {
@@ -301,7 +301,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd2a_001:8ea5f1306268a6be",
       "createdAt": "2026-10-24T08:22:46.652Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.652Z",
       "password": "Siswa2A001"
     },
     {
@@ -318,7 +318,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd2a_002:891e2c141386e350",
       "createdAt": "2026-10-24T08:22:46.669Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.669Z",
       "password": "Siswa2A002"
     },
     {
@@ -335,7 +335,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd3a_001:2c0301dcc53eae1e",
       "createdAt": "2026-10-24T08:22:46.679Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.679Z",
       "password": "Siswa3A001"
     },
     {
@@ -352,7 +352,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd3a_002:5960a14aca5268d6",
       "createdAt": "2026-10-24T08:22:46.713Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.713Z",
       "password": "Siswa3A002"
     },
     {
@@ -369,7 +369,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd4a_001:6aeb9b32d1bf55eb",
       "createdAt": "2026-10-24T08:22:46.724Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.724Z",
       "password": "Siswa4A001"
     },
     {
@@ -386,7 +386,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd4a_002:a283bc69a415a513",
       "createdAt": "2026-10-24T08:22:46.740Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.740Z",
       "password": "Siswa4A002"
     },
     {
@@ -403,7 +403,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd5a_001:4e8c898ff4dfe3dc",
       "createdAt": "2026-10-24T08:22:46.760Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.760Z",
       "password": "Siswa5A001"
     },
     {
@@ -420,7 +420,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd5a_002:fc9fbc93082b55fa",
       "createdAt": "2026-10-24T08:22:46.776Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.776Z",
       "password": "Siswa5A002"
     },
     {
@@ -437,7 +437,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd6a_001:7e0fcd4061dde883",
       "createdAt": "2026-10-24T08:22:46.792Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.792Z",
       "password": "Siswa6A001"
     },
     {
@@ -454,7 +454,7 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_siswa_siswa_sd6a_002:43a3e7f44cf5224d",
       "createdAt": "2026-10-24T08:22:46.804Z",
-      "updatedAt": "2026-10-28T00:33:38.090Z",
+      "updatedAt": "2026-10-24T08:22:46.804Z",
       "password": "Siswa6A002"
     },
     {
@@ -900,7 +900,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-28T00:33:37.385Z"
+      "createdAt": "2026-10-28T00:34:17.106Z"
     },
     {
       "id": "notif_announcement_1",
@@ -912,7 +912,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-27T23:33:37.385Z"
+      "createdAt": "2026-10-27T23:34:17.106Z"
     },
     {
       "id": "notif_subject_1",
@@ -923,7 +923,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-27T22:33:37.385Z"
+      "createdAt": "2026-10-27T22:34:17.106Z"
     }
   ],
   "articles": [],
