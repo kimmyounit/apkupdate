@@ -364,24 +364,6 @@
   "attendanceRecords": [],
   "passwordResetRequests": [
     {
-      "id": "pr_1793377899590",
-      "ticketNumber": "TKT-994704",
-      "userId": "stu_1793373992097_jv1v1",
-      "username": "graniat",
-      "name": "Alvaro Pratama Herlen",
-      "kelas": "Kelas 8",
-      "role": "siswa",
-      "reason": "Pengajuan ganti sandi berkala",
-      "status": "approved",
-      "newPasswordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
-      "newSalt": "7e1e10ed5203669f3d107fecf5f68dfa",
-      "newPassword": "Paro Pratama1",
-      "createdAt": "2026-10-30T16:31:39.590Z",
-      "processedAt": "2026-10-30T16:56:17.016Z",
-      "processedBy": "Administrator Tamansiswa Batam",
-      "adminNote": "Telah Disetujui"
-    },
-    {
       "id": "pr_1793379084239",
       "ticketNumber": "TKT-574403",
       "userId": "stu_1793377010945_uzghx",
@@ -398,6 +380,24 @@
       "processedAt": "2026-10-30T16:56:16.713Z",
       "processedBy": "Administrator Tamansiswa Batam",
       "adminNote": "Telah Disetujui"
+    },
+    {
+      "id": "pr_1793377899590",
+      "ticketNumber": "TKT-994704",
+      "userId": "stu_1793373992097_jv1v1",
+      "username": "graniat",
+      "name": "Alvaro Pratama Herlen",
+      "kelas": "Kelas 8",
+      "role": "siswa",
+      "reason": "Pengajuan ganti sandi berkala",
+      "status": "approved",
+      "newPasswordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
+      "newSalt": "7e1e10ed5203669f3d107fecf5f68dfa",
+      "newPassword": "Paro Pratama1",
+      "createdAt": "2026-10-30T16:31:39.590Z",
+      "processedAt": "2026-10-30T16:56:17.016Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "Telah Disetujui"
     }
   ],
   "posts": [],
@@ -405,38 +405,28 @@
   "notes": [],
   "notifications": [
     {
-      "id": "notif_welcome",
-      "title": "Selamat Datang di TAMVESTA Mobile!",
-      "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
-      "type": "general",
-      "isImportant": true,
-      "linkType": "none",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-30T16:58:21.704Z"
-    },
-    {
-      "id": "notif_announcement_1",
-      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
-      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
-      "type": "announcement",
-      "isImportant": true,
-      "linkType": "announcement",
-      "linkId": "ann_1",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-30T15:58:21.704Z"
-    },
-    {
-      "id": "notif_subject_1",
-      "title": "Pembaruan Jadwal: Matematika Wajib",
-      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
-      "type": "subject_change",
+      "id": "notif_1793379377024_1dbk9",
+      "title": "Pengajuan Ganti Sandi di-ACC",
+      "message": "Pengajuan ganti sandi Anda (Tiket: TKT-994704) telah di-ACC oleh Admin. Kata sandi baru Anda telah aktif dan dapat langsung digunakan.",
+      "type": "security",
       "isImportant": false,
-      "linkType": "subject",
+      "linkType": "none",
+      "targetUserId": "stu_1793373992097_jv1v1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T14:58:21.704Z"
+      "createdAt": "2026-10-30T16:56:17.024Z"
+    },
+    {
+      "id": "notif_1793379376721_pyklm",
+      "title": "Pengajuan Ganti Sandi di-ACC",
+      "message": "Pengajuan ganti sandi Anda (Tiket: TKT-574403) telah di-ACC oleh Admin. Kata sandi baru Anda telah aktif dan dapat langsung digunakan.",
+      "type": "security",
+      "isImportant": false,
+      "linkType": "none",
+      "targetUserId": "stu_1793377010945_uzghx",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-30T16:56:16.721Z"
     }
   ],
   "articles": [],
@@ -447,7 +437,22 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793379377025_wg5x",
+      "userKelas": "-",
+      "timestamp": "2026-10-30T16:56:17.025Z",
+      "formattedTime": "16.56.17 WIB",
+      "status": "received"
+    },
+    {
+      "id": "sig_1793379376749_du6t",
+      "userKelas": "-",
+      "timestamp": "2026-10-30T16:56:16.722Z",
+      "formattedTime": "16.56.16 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
