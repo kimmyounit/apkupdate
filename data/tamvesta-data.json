@@ -360,7 +360,28 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [],
+  "quizzes": [
+    {
+      "title": "Papapapa",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-8135",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793384286895",
+      "createdAt": "2026-10-30T18:18:06.895Z"
+    }
+  ],
   "quizAttempts": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
@@ -433,7 +454,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:43:16.962Z"
+      "createdAt": "2026-10-30T17:42:55.620Z"
     },
     {
       "id": "notif_announcement_1",
@@ -445,7 +466,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:43:16.962Z"
+      "createdAt": "2026-10-30T16:42:55.620Z"
     },
     {
       "id": "notif_subject_1",
@@ -456,7 +477,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:43:16.962Z"
+      "createdAt": "2026-10-30T15:42:55.620Z"
     }
   ],
   "articles": [],
