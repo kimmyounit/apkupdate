@@ -360,11 +360,39 @@
   "quizAttempts": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
-  "passwordResetRequests": [],
+  "passwordResetRequests": [
+    {
+      "id": "pr_1793377899590",
+      "ticketNumber": "TKT-994704",
+      "userId": "stu_1793373992097_jv1v1",
+      "username": "graniat",
+      "name": "Alvaro Pratama Herlen",
+      "kelas": "Kelas 8",
+      "role": "siswa",
+      "reason": "Pengajuan ganti sandi berkala",
+      "status": "pending",
+      "newPasswordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
+      "newSalt": "7e1e10ed5203669f3d107fecf5f68dfa",
+      "newPassword": "Paro Pratama1",
+      "createdAt": "2026-10-30T16:31:39.590Z"
+    }
+  ],
   "posts": [],
   "stories": [],
   "notes": [],
   "notifications": [
+    {
+      "id": "notif_1793377899590_izanl",
+      "title": "Pengajuan Ganti Sandi Baru",
+      "message": "Alvaro Pratama Herlen (Kelas 8) mengajukan ganti sandi (Tiket: TKT-994704).",
+      "type": "security",
+      "isImportant": false,
+      "linkType": "none",
+      "targetRole": "admin",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-30T16:31:39.590Z"
+    },
     {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
