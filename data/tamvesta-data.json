@@ -376,7 +376,8 @@
       "isOfficial": true,
       "isCustom": true,
       "source": "admin",
-      "isDemo": false
+      "isDemo": false,
+      "isVerified": true
     },
     {
       "id": "stu_1793384638396_vxd3b",
@@ -404,28 +405,7 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [
-    {
-      "title": "Tik",
-      "subjectId": "sub_general",
-      "subjectName": "Audisi ",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [],
-      "isActive": true,
-      "token": "TVQ-9428",
-      "sourceType": "google_forms",
-      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "active",
-      "id": "quiz_1793382557550",
-      "createdAt": "2026-10-30T17:49:17.550Z"
-    }
-  ],
+  "quizzes": [],
   "quizAttempts": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
@@ -498,7 +478,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:45:29.356Z"
+      "createdAt": "2026-10-30T17:42:18.658Z"
     },
     {
       "id": "notif_announcement_1",
@@ -510,7 +490,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:45:29.356Z"
+      "createdAt": "2026-10-30T16:42:18.660Z"
     },
     {
       "id": "notif_subject_1",
@@ -521,7 +501,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:45:29.356Z"
+      "createdAt": "2026-10-30T15:42:18.660Z"
     }
   ],
   "articles": [],
@@ -532,15 +512,7 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [
-    {
-      "id": "sig_1793384582118_zqxp",
-      "userKelas": "-",
-      "timestamp": "2026-10-30T18:23:02.089Z",
-      "formattedTime": "18.23.02 WIB",
-      "status": "received"
-    }
-  ],
+  "refreshSignals": [],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
