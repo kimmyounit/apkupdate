@@ -7,8 +7,8 @@
       "role": "admin",
       "jabatan": "Administrator Utama TAMVESTA",
       "initialPassword": "TAMVESTA123",
-      "passwordHash": "2ccc18d423b246deb11b3df245994724a9089d976d6a1d14e267364b76fe6f9890cf9a788d8c6ddf1b93077a14f2108d9b8f07bfc6751f233c598d7d0a401a34",
-      "salt": "099ddec42079e758783b6c55a8f1c56f",
+      "passwordHash": "3c45143948b7e591394fac89f644d80300b0d4a6fcb219defb549cbd389e4c64962045490ea231327fbe2108fd210ed4ff1396718244256df8167bad8db4a649",
+      "salt": "c2a9bdc50de1c5448314494b91b939f5",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_admin_tamansiswa:785efa956b468c8f",
@@ -70,8 +70,8 @@
       "role": "admin",
       "jabatan": "Operator Dapodik Sekolah",
       "initialPassword": "Tamvesta!B2604",
-      "passwordHash": "2ccc18d423b246deb11b3df245994724a9089d976d6a1d14e267364b76fe6f9890cf9a788d8c6ddf1b93077a14f2108d9b8f07bfc6751f233c598d7d0a401a34",
-      "salt": "099ddec42079e758783b6c55a8f1c56f",
+      "passwordHash": "3c45143948b7e591394fac89f644d80300b0d4a6fcb219defb549cbd389e4c64962045490ea231327fbe2108fd210ed4ff1396718244256df8167bad8db4a649",
+      "salt": "c2a9bdc50de1c5448314494b91b939f5",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
@@ -295,8 +295,8 @@
       "jabatan": "Developer Resmi TAMVESTA",
       "initialPassword": "TAMVESTATAMSIS",
       "password": "TAMVESTATAMSIS",
-      "passwordHash": "b6ac7ad351650238a58cdb3ebde9ebefc5f3ab9deb94febb1335683f9b2c10b7b3665e1abd0fd111930b252a5cf4884a853b727967fefbff90995653603e4d6b",
-      "salt": "0e85b73c939e1a173fce5b806157cc94",
+      "passwordHash": "9cdd0f26f3d35ca6982d4482805af534ebefb7e7f2b340f4e2c68bc460fa428a0e86036b0681f7c6a0ef190784f1e99d768117f182d05d0176cfa102d50cc4fd",
+      "salt": "844abd3dfd3a62e5658eec0a07efc7d2",
       "mustChangePassword": false,
       "isActive": true,
       "isVerified": true,
@@ -329,86 +329,7 @@
   "tuDocuments": [],
   "tuChatMessages": [],
   "tuMonthlyReports": [],
-  "gameRooms": [
-    {
-      "id": "room_1793366688409_7s33h",
-      "code": "SPY-924",
-      "gameType": "spy",
-      "hostId": "user_admin_tamansiswa",
-      "hostUsername": "TAMANSISWA",
-      "status": "waiting",
-      "phase": "lobby",
-      "round": 1,
-      "players": [
-        {
-          "id": "p_tamansiswa",
-          "userId": "user_admin_tamansiswa",
-          "username": "TAMANSISWA",
-          "name": "Administrator Tamansiswa Batam",
-          "isHost": true,
-          "isReady": true,
-          "isAlive": true,
-          "joinedAt": 1793366688409,
-          "lastSeenAt": 1793366688409
-        },
-        {
-          "id": "p_tamvesta_8676",
-          "userId": "user_support_tamvesta",
-          "username": "Tamvesta",
-          "name": "Support TAMVESTA",
-          "avatarUrl": "/assets/tamvesta_mascot.jpg",
-          "isHost": false,
-          "isReady": true,
-          "isAlive": true,
-          "isSpectator": false,
-          "joinedAt": 1793366688676,
-          "lastSeenAt": 1793366688676
-        }
-      ],
-      "spySettings": {
-        "playerCount": 4,
-        "spyCount": 1,
-        "category": "campuran",
-        "clueDuration": 30,
-        "discussionDuration": 60,
-        "votingDuration": 30,
-        "allowSpyGuess": true,
-        "tieRule": "no_elimination"
-      },
-      "mafiaSettings": {
-        "playerCount": 5,
-        "mafiaCount": 1,
-        "doctorCount": 1,
-        "detectiveCount": 1,
-        "nightDuration": 30,
-        "discussionDuration": 60,
-        "votingDuration": 30,
-        "tieRule": "no_elimination"
-      },
-      "chatMessages": [
-        {
-          "id": "msg_sys_1793366688409",
-          "senderId": "system",
-          "senderName": "Sistem TAMVESTA",
-          "senderUsername": "system",
-          "text": "Room SPY-924 berhasil dibuat oleh Administrator Tamansiswa Batam. Selamat bermain!",
-          "timestamp": 1793366688409,
-          "isSystem": true
-        },
-        {
-          "id": "msg_join_1793366688676",
-          "senderId": "system",
-          "senderName": "Sistem TAMVESTA",
-          "senderUsername": "system",
-          "text": "Support TAMVESTA (@Tamvesta) bergabung ke room.",
-          "timestamp": 1793366688676,
-          "isSystem": true
-        }
-      ],
-      "createdAt": 1793366688409,
-      "updatedAt": 1793366688975
-    }
-  ],
+  "gameRooms": [],
   "refreshSignals": [],
   "moderationLogs": [],
   "directMessages": [],
