@@ -801,7 +801,11 @@ export const api = {
   // Quizzes
   getQuizzes: async () => {
     try {
-      return await tryServerRequest<Quiz[]>('/api/quizzes');
+      const res = await tryServerRequest<Quiz[]>('/api/quizzes');
+      if (Array.isArray(res)) {
+        offlineStore.setQuizzes(res);
+      }
+      return res;
     } catch (_) {
       return offlineStore.getQuizzes();
     }
@@ -809,7 +813,11 @@ export const api = {
 
   getQuizById: async (id: string) => {
     try {
-      return await tryServerRequest<Quiz>(`/api/quizzes/${id}`);
+      const res = await tryServerRequest<Quiz>(`/api/quizzes/${id}`);
+      if (res && res.id) {
+        offlineStore.saveQuiz(res);
+      }
+      return res;
     } catch (_) {
       return offlineStore.getQuizById(id);
     }
@@ -817,12 +825,16 @@ export const api = {
 
   verifyQuizToken: async (payload: { token: string; studentName?: string; password?: string }) => {
     try {
-      return await tryServerRequest<{ success: boolean; quiz: Quiz }>('/api/quizzes/verify-token', {
+      const res = await tryServerRequest<{ success: boolean; quiz: Quiz }>('/api/quizzes/verify-token', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+      if (res && res.quiz) {
+        offlineStore.saveQuiz(res.quiz);
+      }
+      return res;
     } catch (_) {
-      return offlineStore.verifyQuizToken('', payload.token);
+      return offlineStore.verifyQuizToken(payload.token, payload.password);
     }
   },
 
@@ -839,12 +851,49 @@ export const api = {
 
   createQuiz: async (data: Partial<Quiz>) => {
     try {
-      return await tryServerRequest<Quiz>('/api/quizzes', {
+      const res = await tryServerRequest<Quiz>('/api/quizzes', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      if (res && res.id) {
+        offlineStore.saveQuiz(res);
+      }
+      return res;
+    } catch (_) {
+      const localQuiz = {
+        id: 'quiz_' + Date.now(),
+        title: data.title || '',
+        subjectId: data.subjectId || '',
+        subjectName: data.subjectName || '',
+        durationMinutes: data.durationMinutes || 60,
+        token: data.token || `TVQ-${Math.floor(1000 + Math.random() * 9000)}`,
+        questions: data.questions || [],
+        isActive: data.isActive !== false,
+        status: data.status || 'active',
+        createdAt: new Date().toISOString(),
+      } as Quiz;
+      offlineStore.saveQuiz(localQuiz);
+      return localQuiz;
+    }
+  },
+
+  reportQuizViolation: async (quizId: string, data: { studentName: string; violationType: string; violationDetail: string }) => {
+    try {
+      return await tryServerRequest<{ success: boolean; violation?: any }>(`/api/quizzes/${quizId}/violation`, {
         method: 'POST',
         body: JSON.stringify(data),
       });
     } catch (_) {
-      return { id: 'quiz_' + Date.now(), title: data.title || '', subjectId: data.subjectId || '', subjectName: data.subjectName || '', durationMinutes: data.durationMinutes || 60, questions: data.questions || [] } as Quiz;
+      return { success: false };
+    }
+  },
+
+  getQuizViolations: async (quizId?: string) => {
+    try {
+      const query = quizId ? `?quizId=${quizId}` : '';
+      return await tryServerRequest<any[]>(`/api/quizzes/violations${query}`);
+    } catch (_) {
+      return [];
     }
   },
 

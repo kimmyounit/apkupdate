@@ -84,6 +84,7 @@ export interface DatabaseSchema {
   lostFoundItems?: LostFoundItem[];
   activityPermissions?: ActivityPermission[];
   appReports?: AppReport[];
+  quizViolations?: QuizViolation[];
 }
 
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
@@ -436,6 +437,7 @@ export function getInitialData(): DatabaseSchema {
     lostFoundItems: [],
     activityPermissions: [],
     appReports: [],
+    quizViolations: [],
   };
 }
 
@@ -612,6 +614,35 @@ class DatabaseManager {
       }
       if (Array.isArray(parsed.appReports)) {
         this.data.appReports = parsed.appReports;
+      }
+      if (Array.isArray(parsed.quizzes)) {
+        const quizMap = new Map<string, Quiz>();
+        (this.data.quizzes || []).forEach((q) => { if (q.id) quizMap.set(q.id, q); });
+        parsed.quizzes.forEach((q: Quiz) => {
+          if (q.id && !quizMap.has(q.id)) {
+            quizMap.set(q.id, q);
+          } else if (q.id && quizMap.has(q.id)) {
+            const existing = quizMap.get(q.id)!;
+            quizMap.set(q.id, { ...existing, ...q });
+          }
+        });
+        this.data.quizzes = Array.from(quizMap.values());
+      }
+      if (Array.isArray(parsed.quizAttempts)) {
+        const attemptMap = new Map<string, QuizAttempt>();
+        (this.data.quizAttempts || []).forEach((a) => { if (a.id) attemptMap.set(a.id, a); });
+        parsed.quizAttempts.forEach((a: QuizAttempt) => {
+          if (a.id && !attemptMap.has(a.id)) attemptMap.set(a.id, a);
+        });
+        this.data.quizAttempts = Array.from(attemptMap.values());
+      }
+      if (Array.isArray(parsed.quizViolations)) {
+        const violMap = new Map<string, any>();
+        (this.data.quizViolations || []).forEach((v) => { if (v.id) violMap.set(v.id, v); });
+        parsed.quizViolations.forEach((v: any) => {
+          if (v.id && !violMap.has(v.id)) violMap.set(v.id, v);
+        });
+        this.data.quizViolations = Array.from(violMap.values());
       }
       this.saveDataDirect(this.data);
     } catch (err) {
@@ -1633,16 +1664,23 @@ class DatabaseManager {
 
   // --- Quizzes & Tokens ---
   public getQuizzes(): Quiz[] {
-    return this.data.quizzes;
+    return this.data.quizzes || [];
   }
 
   public findQuizById(id: string): Quiz | undefined {
-    return this.data.quizzes.find((q) => q.id === id);
+    return (this.data.quizzes || []).find((q) => q.id === id);
   }
 
   public findQuizByToken(token: string): Quiz | undefined {
+    if (!token) return undefined;
     const clean = token.trim().toUpperCase();
-    return this.data.quizzes.find((q) => q.token?.toUpperCase() === clean);
+    const cleanNoSpecial = clean.replace(/[\s\-_]/g, '');
+    return (this.data.quizzes || []).find((q) => {
+      if (!q.token) return false;
+      const qToken = q.token.trim().toUpperCase();
+      const qTokenNoSpecial = qToken.replace(/[\s\-_]/g, '');
+      return qToken === clean || qTokenNoSpecial === cleanNoSpecial;
+    });
   }
 
   public verifyQuizAccess(payload: {
@@ -1660,7 +1698,7 @@ class DatabaseManager {
       return { success: false, error: 'Token quiz tidak ditemukan atau tidak valid. Silakan periksa kembali token yang diberikan oleh Guru.' };
     }
 
-    if (!quiz.isActive || quiz.status === 'inactive') {
+    if (quiz.isActive === false || quiz.status === 'inactive') {
       return { success: false, error: 'Quiz ini sedang tidak aktif atau telah ditutup oleh Guru.' };
     }
 
@@ -1671,6 +1709,44 @@ class DatabaseManager {
     }
 
     return { success: true, quiz };
+  }
+
+  public recordQuizViolation(violation: Omit<QuizViolation, 'id' | 'timestamp'>): QuizViolation {
+    const newViolation: QuizViolation = {
+      ...violation,
+      id: `violation_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: new Date().toISOString(),
+    };
+    if (!Array.isArray(this.data.quizViolations)) {
+      this.data.quizViolations = [];
+    }
+    this.data.quizViolations.unshift(newViolation);
+
+    if (this.data.quizViolations.length > 200) {
+      this.data.quizViolations = this.data.quizViolations.slice(0, 200);
+    }
+
+    this.save();
+
+    // Buat notifikasi peringatan pelanggaran ujian untuk Guru
+    this.createNotification({
+      title: '🚨 Pelanggaran Kuis Terdeteksi!',
+      message: `Siswa "${newViolation.studentName}" terdeteksi ${newViolation.violationDetail} saat mengerjakan kuis "${newViolation.quizTitle}".`,
+      type: 'quiz_violation',
+      linkType: 'quiz',
+      linkId: newViolation.quizId,
+      targetRole: 'guru',
+    });
+
+    return newViolation;
+  }
+
+  public getQuizViolations(quizId?: string, teacherId?: string): QuizViolation[] {
+    if (!Array.isArray(this.data.quizViolations)) return [];
+    let list = this.data.quizViolations;
+    if (quizId) list = list.filter((v) => v.quizId === quizId);
+    if (teacherId) list = list.filter((v) => !v.teacherId || v.teacherId === teacherId);
+    return list;
   }
 
   public addQuiz(quiz: Omit<Quiz, 'id' | 'createdAt'>): Quiz {

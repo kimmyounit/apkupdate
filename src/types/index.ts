@@ -159,6 +159,7 @@ export interface Quiz {
   title: string;
   subjectId: string;
   subjectName: string;
+  teacherId?: string;
   teacherName: string;
   description: string;
   durationMinutes: number;
@@ -173,6 +174,20 @@ export interface Quiz {
   isActive: boolean;
   status?: 'active' | 'inactive' | 'scheduled';
   createdAt: string;
+}
+
+export interface QuizViolation {
+  id: string;
+  quizId: string;
+  quizTitle: string;
+  studentId: string;
+  studentName: string;
+  studentUsername?: string;
+  teacherId?: string;
+  teacherName?: string;
+  violationType: 'tab_switch' | 'window_blur' | 'attempt_exit' | 'fullscreen_exit';
+  violationDetail: string;
+  timestamp: string;
 }
 
 export interface QuizAttempt {
@@ -453,7 +468,9 @@ export interface AppNotification {
     | 'note'
     | 'lost_found'
     | 'permission'
-    | 'app_report';
+    | 'app_report'
+    | 'quiz'
+    | 'quiz_violation';
   isImportant?: boolean;
   linkType?: 'announcement' | 'subject' | 'quiz' | 'tuition' | 'article' | 'post' | 'dm' | 'reports' | 'none';
   linkId?: string;

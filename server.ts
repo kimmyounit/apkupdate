@@ -694,17 +694,23 @@ app.delete('/api/announcements/:id', authMiddleware, requireRole(['admin', 'supp
 // -------------------------------------------------------------
 
 // GET /api/quizzes
-app.get('/api/quizzes', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.get('/api/quizzes', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
   const quizzes = db.getQuizzes();
   if (req.user?.role === 'siswa') {
-    // Only return active quizzes for students
-    return res.json(quizzes.filter((q) => q.isActive));
+    // Return active quizzes for students
+    return res.json(quizzes.filter((q) => q.isActive !== false && q.status !== 'inactive'));
   }
   return res.json(quizzes);
 });
 
 // GET /api/quizzes/:id
-app.get('/api/quizzes/:id', authMiddleware, (req, res) => {
+app.get('/api/quizzes/:id', authMiddleware, async (req, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
   const { id } = req.params;
   const quiz = db.findQuizById(id);
   if (!quiz) {
@@ -714,7 +720,10 @@ app.get('/api/quizzes/:id', authMiddleware, (req, res) => {
 });
 
 // POST /api/quizzes/verify-token (Siswa memasukkan nama dan token untuk akses kuis)
-app.post('/api/quizzes/verify-token', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.post('/api/quizzes/verify-token', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
   const { token, studentName, password } = req.body;
   const result = db.verifyQuizAccess({ token, studentName, password });
   if (!result.success) {
@@ -733,7 +742,7 @@ app.post('/api/quizzes/generate-token', authMiddleware, requireRole(['admin', 'g
 });
 
 // POST /api/quizzes (Admin & Guru)
-app.post('/api/quizzes', authMiddleware, requireRole(['admin', 'guru']), (req: AuthenticatedRequest, res) => {
+app.post('/api/quizzes', authMiddleware, requireRole(['admin', 'guru']), async (req: AuthenticatedRequest, res) => {
   const {
     title,
     subjectId,
@@ -769,6 +778,7 @@ app.post('/api/quizzes', authMiddleware, requireRole(['admin', 'guru']), (req: A
     title,
     subjectId: subjectId || 'sub_general',
     subjectName: subjectName || 'Umum',
+    teacherId: req.user?.id || 'guru_user',
     teacherName: req.user?.name || 'Guru Pengampu',
     description: description || '',
     durationMinutes: Number(durationMinutes) || 15,
@@ -784,7 +794,53 @@ app.post('/api/quizzes', authMiddleware, requireRole(['admin', 'guru']), (req: A
     status: status || (isActive !== false ? 'active' : 'inactive'),
   });
 
+  // Kirim notifikasi siaran ke seluruh siswa bahwa ada kuis baru
+  try {
+    db.createNotification({
+      title: '📢 Quiz Baru Tersedia!',
+      message: `${req.user?.name || 'Guru'} telah menerbitkan quiz: "${title}" (${subjectName || 'Umum'}). Token: ${newQuiz.token}`,
+      type: 'quiz',
+      linkType: 'quiz',
+      linkId: newQuiz.id,
+      targetRole: 'siswa',
+    });
+  } catch (_) {}
+
   return res.status(201).json(newQuiz);
+});
+
+// POST /api/quizzes/:id/violation (Siswa melanggar aturan ujian / tab switch / minimize)
+app.post('/api/quizzes/:id/violation', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const { studentName, violationType, violationDetail } = req.body;
+  const quiz = db.findQuizById(id);
+  if (!quiz) {
+    return res.status(404).json({ error: 'Quiz tidak ditemukan.' });
+  }
+
+  const violation = db.recordQuizViolation({
+    quizId: id,
+    quizTitle: quiz.title,
+    studentId: req.user?.id || 'siswa_user',
+    studentName: studentName || req.user?.name || 'Siswa',
+    studentUsername: req.user?.username || '',
+    teacherId: quiz.teacherId,
+    teacherName: quiz.teacherName,
+    violationType: violationType || 'tab_switch',
+    violationDetail: violationDetail || 'Beralih tab / membuka aplikasi lain saat ujian berlangsung',
+  });
+
+  return res.status(201).json({ success: true, violation });
+});
+
+// GET /api/quizzes/violations (Guru & Admin pantau pelanggaran ujian real-time)
+app.get('/api/quizzes/violations', authMiddleware, requireRole(['guru', 'admin']), async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
+  const quizId = req.query.quizId as string;
+  const violations = db.getQuizViolations(quizId);
+  return res.json(violations);
 });
 
 // PUT /api/quizzes/:id (Admin & Guru)

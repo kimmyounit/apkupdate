@@ -18,6 +18,9 @@ import {
   ShieldAlert,
   Sparkles,
   Lock,
+  Radio,
+  Wifi,
+  BookOpen,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '../../lib/api.ts';
@@ -72,6 +75,33 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChang
   // Result state
   const [quizResult, setQuizResult] = useState<QuizAttempt | null>(null);
 
+  // Real-Time Quizzes & Server Signal State
+  const [activeQuizzesList, setActiveQuizzesList] = useState<Quiz[]>([]);
+  const [isRealtimeSignalLive, setIsRealtimeSignalLive] = useState(true);
+
+  // Poll available quizzes every 3.5 seconds from server
+  useEffect(() => {
+    let isMounted = true;
+    const fetchQuizzes = async () => {
+      try {
+        const list = await api.getQuizzes();
+        if (isMounted && Array.isArray(list)) {
+          setActiveQuizzesList(list.filter((q) => q.isActive !== false && q.status !== 'inactive'));
+          setIsRealtimeSignalLive(true);
+        }
+      } catch (_) {
+        if (isMounted) setIsRealtimeSignalLive(false);
+      }
+    };
+
+    fetchQuizzes();
+    const interval = setInterval(fetchQuizzes, 3500);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   // Inform parent when component unmounts or quiz ends
   useEffect(() => {
     return () => {
@@ -99,10 +129,26 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChang
       window.history.pushState({ quizActive: true }, '');
       playQuizExitAlertSound();
       setShowExitWarning(true);
+
+      // Laporkan pelanggaran ke server & dashboard guru
+      if (activeQuiz && activeQuiz.id) {
+        api.reportQuizViolation(activeQuiz.id, {
+          studentName: studentName || user?.name || 'Siswa',
+          violationType: 'attempt_exit',
+          violationDetail: 'Mencoba menekan tombol kembali / keluar dari aplikasi saat ujian',
+        }).catch(() => {});
+      }
     };
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       playQuizExitAlertSound();
+      if (activeQuiz && activeQuiz.id) {
+        api.reportQuizViolation(activeQuiz.id, {
+          studentName: studentName || user?.name || 'Siswa',
+          violationType: 'attempt_exit',
+          violationDetail: 'Mencoba menutup browser / keluar dari halaman ujian',
+        }).catch(() => {});
+      }
       e.preventDefault();
       e.returnValue = 'PERINGATAN UJIAN: Kuis sedang berlangsung! Dilarang keluar sebelum selesai.';
       return e.returnValue;
@@ -113,6 +159,15 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChang
         // Tab switch or app minimized
         playQuizExitAlertSound();
         setShowExitWarning(true);
+
+        // Laporkan pelanggaran beralih tab ke dashboard guru secara real-time
+        if (activeQuiz && activeQuiz.id) {
+          api.reportQuizViolation(activeQuiz.id, {
+            studentName: studentName || user?.name || 'Siswa',
+            violationType: 'tab_switch',
+            violationDetail: 'Beralih tab / membuka aplikasi lain saat ujian berlangsung',
+          }).catch(() => {});
+        }
       }
     };
 
@@ -658,53 +713,127 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChang
         </div>
       </div>
 
+      {/* Real-time Server Signal Status */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <span className="relative flex h-3 w-3">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isRealtimeSignalLive ? 'bg-emerald-400' : 'bg-amber-400'} opacity-75`} />
+            <span className={`relative inline-flex rounded-full h-3 w-3 ${isRealtimeSignalLive ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+          </span>
+          <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <Radio className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{isRealtimeSignalLive ? 'Sinyal Server Ujian Aktif • Real-Time Terhubung' : 'Menghubungkan ke Server Ujian...'}</span>
+          </span>
+        </div>
+        <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+          {activeQuizzesList.length} Kuis Aktif
+        </span>
+      </div>
+
       {!isFormOpen ? (
         /* LANDING VIEW: MAIN PROMINENT BUTTON "YUK QUIZ!" */
-        <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm max-w-xl mx-auto text-center space-y-8 animate-in fade-in duration-200">
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 flex items-center justify-center mx-auto shadow-xl shadow-amber-500/25 animate-pulse">
-            <Sparkles className="w-12 h-12 stroke-[2.5]" />
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm max-w-xl mx-auto text-center space-y-8 animate-in fade-in duration-200">
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 flex items-center justify-center mx-auto shadow-xl shadow-amber-500/25 animate-pulse">
+              <Sparkles className="w-12 h-12 stroke-[2.5]" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-xs font-extrabold tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 uppercase">
+                SIAP UJI KEMAMPUANMU?
+              </span>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+                Ruang Quiz & Evaluasi Belajar
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                Tekan tombol di bawah untuk memasukkan token kuis yang Anda peroleh dari guru mata pelajaran.
+              </p>
+            </div>
+
+            {/* MAIN PROMINENT BUTTON "YUK QUIZ!" */}
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  setVerifyError(null);
+                  setIsFormOpen(true);
+                }}
+                className="w-full py-4 sm:py-5 px-8 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 rounded-2xl font-black text-xl sm:text-2xl shadow-xl shadow-amber-500/30 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 tracking-wider group cursor-pointer"
+              >
+                <Sparkles className="w-6 h-6 text-slate-950 group-hover:rotate-12 transition-transform" />
+                <span>YUK QUIZ!</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-slate-100 text-left text-xs text-slate-600">
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <strong className="block text-slate-900 font-bold mb-0.5">1. Siapkan Token</strong>
+                <span className="text-[11px] text-slate-500">Minta token dari guru pengampu.</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <strong className="block text-slate-900 font-bold mb-0.5">2. Masuk Quiz</strong>
+                <span className="text-[11px] text-slate-500">Validasi nama dan kode akses.</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <strong className="block text-slate-900 font-bold mb-0.5">3. Kerjakan Soal</strong>
+                <span className="text-[11px] text-slate-500">Jawab sebelum waktu habis.</span>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <span className="text-xs font-extrabold tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 uppercase">
-              SIAP UJI KEMAMPUANMU?
-            </span>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-              Ruang Quiz & Evaluasi Belajar
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-              Tekan tombol di bawah untuk memasukkan token kuis yang Anda peroleh dari guru mata pelajaran.
-            </p>
-          </div>
+          {/* LIST OF ACTIVE QUIZZES BROADCAST FROM TEACHERS */}
+          {activeQuizzesList.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                  <Radio className="w-4 h-4 text-emerald-600 animate-pulse" />
+                  <span>Kuis yang Sedang Dibuka Guru Saat Ini</span>
+                </h3>
+                <span className="text-xs text-slate-500 font-medium">Klik untuk isi token otomatis</span>
+              </div>
 
-          {/* MAIN PROMINENT BUTTON "YUK QUIZ!" */}
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                setVerifyError(null);
-                setIsFormOpen(true);
-              }}
-              className="w-full py-4 sm:py-5 px-8 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 rounded-2xl font-black text-xl sm:text-2xl shadow-xl shadow-amber-500/30 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 tracking-wider group"
-            >
-              <Sparkles className="w-6 h-6 text-slate-950 group-hover:rotate-12 transition-transform" />
-              <span>YUK QUIZ!</span>
-            </button>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {activeQuizzesList.map((q) => (
+                  <div
+                    key={q.id}
+                    className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-xs hover:shadow-md transition space-y-3 flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase">
+                          {q.subjectName || 'Umum'}
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg">
+                          Token: {q.token}
+                        </span>
+                      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-slate-100 text-left text-xs text-slate-600">
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-              <strong className="block text-slate-900 font-bold mb-0.5">1. Siapkan Token</strong>
-              <span className="text-[11px] text-slate-500">Minta token dari guru pengampu.</span>
+                      <h4 className="text-sm font-black text-slate-900 line-clamp-1">{q.title}</h4>
+                      {q.description && (
+                        <p className="text-xs text-slate-500 line-clamp-2">{q.description}</p>
+                      )}
+
+                      <div className="flex items-center gap-2 text-[11px] text-slate-600 font-semibold pt-1">
+                        <UserIcon className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Dibuat oleh: <strong className="text-slate-800">{q.teacherName || 'Guru Pengampu'}</strong></span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setQuizToken(q.token);
+                        setIsFormOpen(true);
+                        setVerifyError(null);
+                      }}
+                      className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs transition flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                    >
+                      <Key className="w-3.5 h-3.5" />
+                      <span>Gunakan Token & Mulai Kuis</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-              <strong className="block text-slate-900 font-bold mb-0.5">2. Masuk Quiz</strong>
-              <span className="text-[11px] text-slate-500">Validasi nama dan kode akses.</span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-              <strong className="block text-slate-900 font-bold mb-0.5">3. Kerjakan Soal</strong>
-              <span className="text-[11px] text-slate-500">Jawab sebelum waktu habis.</span>
-            </div>
-          </div>
+          )}
         </div>
       ) : (
         /* ENTRANCE FORM: NAMA, TOKEN, KATA SANDI & TOMBOL "MASUK QUIZ" */

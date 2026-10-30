@@ -1324,6 +1324,29 @@ export const offlineStore = {
     return db.quizzes || [];
   },
 
+  setQuizzes(quizzes: Quiz[]) {
+    if (!Array.isArray(quizzes)) return;
+    const db = loadDB();
+    const map = new Map<string, Quiz>();
+    (db.quizzes || []).forEach((q) => { if (q.id) map.set(q.id, q); });
+    quizzes.forEach((q) => { if (q.id) map.set(q.id, q); });
+    db.quizzes = Array.from(map.values());
+    saveDB(db);
+  },
+
+  saveQuiz(quiz: Quiz) {
+    if (!quiz || !quiz.id) return;
+    const db = loadDB();
+    if (!Array.isArray(db.quizzes)) db.quizzes = [];
+    const idx = db.quizzes.findIndex((q) => q.id === quiz.id);
+    if (idx >= 0) {
+      db.quizzes[idx] = { ...db.quizzes[idx], ...quiz };
+    } else {
+      db.quizzes.unshift(quiz);
+    }
+    saveDB(db);
+  },
+
   getQuizById(id: string): Quiz {
     const db = loadDB();
     const q = (db.quizzes || []).find((x) => x.id === id);
@@ -1331,12 +1354,44 @@ export const offlineStore = {
     return q;
   },
 
-  verifyQuizToken(quizId: string, token: string) {
-    const q = this.getQuizById(quizId);
-    if (!q.token || q.token.toUpperCase() === token.trim().toUpperCase()) {
-      return { success: true, quiz: q };
+  verifyQuizToken(tokenOrQuizId: string, tokenOrPassword?: string) {
+    const db = loadDB();
+    const quizzes = db.quizzes || [];
+
+    // Support both signatures: verifyQuizToken(token, password) OR verifyQuizToken(quizId, token)
+    let token = tokenOrQuizId;
+    let password = tokenOrPassword;
+
+    // Check if tokenOrQuizId was passed as a quizId and second param was token
+    const byId = quizzes.find((x) => x.id === tokenOrQuizId);
+    if (byId && tokenOrPassword) {
+      token = tokenOrPassword;
+      password = undefined;
     }
-    throw new Error('Token kuis salah');
+
+    const cleanToken = (token || '').trim().toUpperCase();
+    const cleanNoSpecial = cleanToken.replace(/[\s\-_]/g, '');
+
+    const q = quizzes.find((x) => {
+      if (!x.token) return false;
+      const t = x.token.trim().toUpperCase();
+      const tNoSpecial = t.replace(/[\s\-_]/g, '');
+      return t === cleanToken || tNoSpecial === cleanNoSpecial;
+    });
+
+    if (!q) {
+      throw new Error('Token quiz tidak ditemukan atau tidak valid. Silakan periksa kembali token yang diberikan oleh Guru.');
+    }
+
+    if (q.isActive === false || q.status === 'inactive') {
+      throw new Error('Quiz ini sedang tidak aktif atau telah ditutup oleh Guru.');
+    }
+
+    if (q.password && q.password.trim() !== '' && q.password !== password) {
+      throw new Error('Password quiz salah. Silakan hubungi Guru pengampu.');
+    }
+
+    return { success: true, quiz: q };
   },
 
   submitQuizAttempt(quizId: string, answers: Record<string, string>) {

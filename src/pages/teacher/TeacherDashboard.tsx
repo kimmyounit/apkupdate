@@ -42,12 +42,16 @@ import {
   FolderDown,
   RefreshCw,
   Package,
+  ShieldAlert,
+  AlertTriangle,
+  Radio,
 } from 'lucide-react';
 import { LostFoundManagementPanel } from '../../components/LostFoundManagementPanel.tsx';
 import { api } from '../../lib/api.ts';
 import type {
   Quiz,
   QuizAttempt,
+  QuizViolation,
   Subject,
   TeacherArticle,
   ClassAttendanceEntry,
@@ -119,6 +123,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   const [searchAttempt, setSearchAttempt] = useState('');
   const [selectedQuizFilter, setSelectedQuizFilter] = useState<string>('all');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [violations, setViolations] = useState<QuizViolation[]>([]);
 
   // Create Quiz Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -262,18 +267,20 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   const loadData = async () => {
     setLoading(true);
     try {
-      const [qz, att, sb, artList, stuList] = await Promise.all([
+      const [qz, att, sb, artList, stuList, viols] = await Promise.all([
         api.getQuizzes(),
         api.getQuizAttempts(),
         api.getSubjects(),
         api.getArticles(),
         api.getStudents(),
+        api.getQuizViolations(),
       ]);
       setQuizzes(qz);
       setAttempts(att);
       setSubjects(sb);
       setArticles(artList);
       setAllStudents(stuList);
+      if (Array.isArray(viols)) setViolations(viols);
 
       if (sb.length > 0 && !quizForm.subjectName) {
         setQuizForm((prev) => ({ ...prev, subjectName: sb[0].name }));
@@ -288,6 +295,22 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   useEffect(() => {
     loadData();
   }, []);
+
+  // Real-time polling untuk kuis & pelanggaran ujian saat guru di tab kuis
+  useEffect(() => {
+    if (activeTab !== 'quizzes') return;
+    const interval = setInterval(async () => {
+      try {
+        const [viols, qz] = await Promise.all([
+          api.getQuizViolations(),
+          api.getQuizzes(),
+        ]);
+        if (Array.isArray(viols)) setViolations(viols);
+        if (Array.isArray(qz)) setQuizzes(qz);
+      } catch (_) {}
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [activeTab]);
 
   // When selected class or date changes, load class attendance
   useEffect(() => {
@@ -1560,6 +1583,50 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                 <span>+ Buat Quiz & Token Baru</span>
               </button>
             </div>
+
+            {/* LIVE PELANGGARAN UJIAN SISWA (REAL-TIME NOTIFIKASI) */}
+            {violations.length > 0 && (
+              <div className="bg-rose-50 border-2 border-rose-300 rounded-3xl p-5 shadow-sm space-y-3 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-rose-700 font-black text-sm">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
+                    </span>
+                    <ShieldAlert className="w-5 h-5 text-rose-600" />
+                    <span>Laporan Pelanggaran Ujian Siswa ({violations.length})</span>
+                  </div>
+                  <span className="text-[10px] uppercase font-black bg-rose-200/80 text-rose-800 px-2.5 py-0.5 rounded-full">
+                    Real-Time Signal
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {violations.map((v) => (
+                    <div
+                      key={v.id}
+                      className="bg-white p-3.5 rounded-2xl border border-rose-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <strong className="text-slate-900 text-xs font-black">{v.studentName}</strong>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 font-bold border border-rose-200">
+                            {v.violationDetail}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">
+                          Kuis: <strong className="text-slate-700">{v.quizTitle}</strong> • {new Date(v.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
+                        </p>
+                      </div>
+
+                      <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-lg border border-rose-100 shrink-0 self-start sm:self-auto">
+                        Terdeteksi Sistem
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {loading ? (
               <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-400 font-bold text-xs animate-pulse">
