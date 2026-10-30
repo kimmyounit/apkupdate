@@ -316,16 +316,16 @@
       "role": "siswa",
       "gender": "Laki-laki",
       "kelas": "Kelas 7",
-      "initialPassword": "passwordBaru789",
-      "password": "passwordBaru789",
-      "passwordHash": "1a3a6c21e8783c7bad84e7156b2a6c9b935a2996c2eeab2d6abb764e388304204f4879511103e652a8320ee979b735c378c5a81a4cbe1ddf1d3ca39006901447",
-      "salt": "264d2c9588c3de3d98c10077b8c82422",
+      "initialPassword": "123456",
+      "password": "123456",
+      "passwordHash": "72b22dbf2916c98ddd64c3a03c64ff37dee932397c458d61858155176b0343e6eb04ae4bba89f4034ef08b2076f0c0cfa1c57c458d3c4b901607d0f533063ac5",
+      "salt": "8f3fa1fe2719f8b4f4fc6e37af3c6530",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:stu_1793377010945_uzghx:50e2cbb5a801b0d6",
       "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Rian%20Pratama&backgroundColor=0284c7",
       "createdAt": "2026-10-30T16:16:50.945Z",
-      "updatedAt": "2026-10-30T16:56:16.720Z",
+      "updatedAt": "2026-10-30T17:09:05.024Z",
       "isOfficial": true,
       "isCustom": true,
       "source": "admin",
@@ -413,7 +413,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:58:20.743Z"
+      "createdAt": "2026-10-30T17:02:21.298Z"
     },
     {
       "id": "notif_announcement_1",
@@ -425,7 +425,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:58:20.745Z"
+      "createdAt": "2026-10-30T16:02:21.298Z"
     },
     {
       "id": "notif_subject_1",
@@ -436,7 +436,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T14:58:20.745Z"
+      "createdAt": "2026-10-30T15:02:21.298Z"
     }
   ],
   "articles": [],
