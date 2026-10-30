@@ -376,6 +376,29 @@
       "isOfficial": true,
       "isCustom": true,
       "source": "admin",
+      "isDemo": false,
+      "isVerified": true
+    },
+    {
+      "id": "stu_1793384638396_vxd3b",
+      "username": "key",
+      "name": "Kheisya Nachua Billa",
+      "role": "siswa",
+      "gender": "Perempuan",
+      "kelas": "Kelas 9",
+      "initialPassword": "123456",
+      "password": "123456",
+      "passwordHash": "a8a419063a9c8ec845b265622b064e887ebc986b65b6b7427a74c713704f28f7dbb89bc483a28e87da0a32114576c09ca3556bbc6f6e815b7918c20db98a46ed",
+      "salt": "73f888707c4da3b98fc0c4f617bc7c2d",
+      "mustChangePassword": false,
+      "isActive": true,
+      "qrToken": "TAMVESTA:STUDENT:stu_1793384638396_vxd3b:400314a3d6cf6e60",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Kheisya%20Nachua%20Billa&backgroundColor=0284c7",
+      "createdAt": "2026-10-30T18:23:58.396Z",
+      "updatedAt": "2026-10-30T18:23:58.396Z",
+      "isOfficial": true,
+      "isCustom": true,
+      "source": "admin",
       "isDemo": false
     }
   ],
@@ -455,7 +478,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:42:55.620Z"
+      "createdAt": "2026-10-30T17:42:25.745Z"
     },
     {
       "id": "notif_announcement_1",
@@ -467,7 +490,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:42:55.620Z"
+      "createdAt": "2026-10-30T16:42:25.745Z"
     },
     {
       "id": "notif_subject_1",
@@ -478,7 +501,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:42:55.620Z"
+      "createdAt": "2026-10-30T15:42:25.745Z"
     }
   ],
   "articles": [],
@@ -489,7 +512,25 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793384639123_chqn",
+      "userId": "user_admin_tamansiswa",
+      "userName": "Administrator Tamansiswa Batam",
+      "userUsername": "TAMANSISWA",
+      "userKelas": "-",
+      "timestamp": "2026-10-30T18:23:59.123Z",
+      "formattedTime": "18.23.59 WIB",
+      "status": "received"
+    },
+    {
+      "id": "sig_1793384638436_98s6",
+      "userKelas": "-",
+      "timestamp": "2026-10-30T18:23:58.404Z",
+      "formattedTime": "18.23.58 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
