@@ -376,14 +376,34 @@
       "isOfficial": true,
       "isCustom": true,
       "source": "admin",
-      "isDemo": false,
-      "isVerified": true
+      "isDemo": false
     }
   ],
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [],
+  "quizzes": [
+    {
+      "title": "Tik",
+      "subjectId": "sub_general",
+      "subjectName": "Audisi ",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-9428",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793382557550",
+      "createdAt": "2026-10-30T17:49:17.550Z"
+    }
+  ],
   "quizAttempts": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
@@ -456,7 +476,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:42:18.658Z"
+      "createdAt": "2026-10-30T17:45:29.356Z"
     },
     {
       "id": "notif_announcement_1",
@@ -468,7 +488,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:42:18.660Z"
+      "createdAt": "2026-10-30T16:45:29.356Z"
     },
     {
       "id": "notif_subject_1",
@@ -479,7 +499,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:42:18.660Z"
+      "createdAt": "2026-10-30T15:45:29.356Z"
     }
   ],
   "articles": [],
@@ -490,7 +510,15 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793384582118_zqxp",
+      "userKelas": "-",
+      "timestamp": "2026-10-30T18:23:02.089Z",
+      "formattedTime": "18.23.02 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
