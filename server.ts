@@ -342,22 +342,32 @@ app.get('/api/admin/password-reset-requests', authMiddleware, requireRole(['admi
 // POST /api/admin/password-reset-requests/:id/process (ACC / Tolak Tiket)
 app.post('/api/admin/password-reset-requests/:id/process', authMiddleware, requireRole(['admin']), async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
-  const { status, adminNote } = req.body;
+  let { status, adminNote } = req.body;
+  if (status === 'acc') status = 'approved';
   if (!status || (status !== 'approved' && status !== 'rejected')) {
     return res.status(400).json({ error: 'Status harus "approved" atau "rejected".' });
   }
 
-  const result = db.processPasswordResetRequest(id, req.user!, status, adminNote);
+  const result = db.processPasswordResetRequest(id, req.user!, status, adminNote || (status === 'approved' ? 'ACC' : 'Ditolak'));
   if (!result.success) {
     return res.status(400).json({ error: result.error });
   }
+
+  // Multi-device sync signal: Broadcast signal so the student's device and other admins receive the update immediately
+  try {
+    db.addRefreshSignal({
+      type: 'users',
+      source: 'admin',
+      message: `Tiket ganti sandi (${result.request?.name || result.request?.username}) telah di-ACC. Password baru telah aktif otomatis!`,
+    });
+  } catch (_) {}
 
   try {
     await db.saveAsync();
   } catch (_) {}
 
   return res.json({
-    message: status === 'approved' ? 'Pengajuan ganti sandi telah disetujui. Sandi akun siswa berhasil diperbarui!' : 'Pengajuan ganti sandi telah ditolak.',
+    message: status === 'approved' ? 'Pengajuan ganti sandi telah di-ACC. Sandi akun siswa berhasil otomatis diperbarui!' : 'Pengajuan ganti sandi telah ditolak.',
     request: result.request,
   });
 });

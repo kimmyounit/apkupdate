@@ -890,7 +890,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                   <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                     {studentTickets.map((tkt) => {
                       const isRejected = tkt.status === 'rejected';
-                      const isApproved = tkt.status === 'approved';
+                      const isApproved = tkt.status === 'approved' || (tkt.status as string) === 'acc';
 
                       return (
                         <div
@@ -914,7 +914,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                             </div>
 
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
                                 isRejected
                                   ? 'bg-rose-600 text-white shadow-xs'
                                   : isApproved
@@ -922,7 +922,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                                   : 'bg-amber-500 text-white animate-pulse'
                               }`}
                             >
-                              {isRejected ? 'DITOLAK' : isApproved ? 'DISETUJUI' : 'MENUNGGU VERIFIKASI'}
+                              {isRejected ? 'DITOLAK' : isApproved ? 'ACC' : 'MENUNGGU VERIFIKASI'}
                             </span>
                           </div>
 
@@ -951,8 +951,11 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                             <div className="p-2.5 bg-emerald-100/90 border border-emerald-200 rounded-lg text-[11px] text-emerald-900 space-y-1">
                               <div className="flex items-center gap-1.5 font-bold text-emerald-800">
                                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                                <span>Status: Disetujui oleh Admin</span>
+                                <span>Status: ACC (Disetujui oleh Admin)</span>
                               </div>
+                              <p className="text-[10px] text-emerald-700">
+                                Kata sandi baru Anda telah aktif dan otomatis diterapkan. Anda dapat masuk langsung menggunakan kata sandi baru.
+                              </p>
                               {tkt.processedAt && (
                                 <p className="text-[10px] text-emerald-700">
                                   Disetujui pada: {new Date(tkt.processedAt).toLocaleString('id-ID')}

@@ -864,11 +864,11 @@ export const ProfilePage: React.FC = () => {
                       <div className="font-bold text-slate-800 flex items-center gap-2">
                         <span>{tkt.ticketNumber || tkt.id}</span>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                          tkt.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
+                          tkt.status === 'approved' || tkt.status === 'acc' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
                           tkt.status === 'rejected' ? 'bg-rose-100 text-rose-800' :
                           'bg-amber-100 text-amber-800'
                         }`}>
-                          {tkt.status === 'approved' ? 'Disetujui' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
+                          {tkt.status === 'approved' || tkt.status === 'acc' ? 'ACC' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 mt-0.5">

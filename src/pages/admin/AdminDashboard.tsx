@@ -1097,18 +1097,32 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   };
 
   const handleApproveTicket = async (tkt: PasswordResetRequest) => {
-    if (!window.confirm(`Setujui pengajuan ganti sandi untuk ${tkt.name} (@${tkt.username})?\n\nPassword siswa akan diperbarui menjadi kata sandi baru yang diajukan.`)) {
-      return;
-    }
     setTicketProcessing(true);
     try {
-      const res = await api.processPasswordResetRequest(tkt.id, 'approved');
-      alert(res.message || 'Pengajuan ganti sandi telah disetujui.');
+      const res = await api.processPasswordResetRequest(tkt.id, 'approved', 'ACC');
+
+      // Update state seketika agar riwayat langsung berubah menjadi ACC
+      setResetRequests((prev) =>
+        prev.map((r) =>
+          r.id === tkt.id
+            ? { ...r, status: 'approved', processedAt: new Date().toISOString(), processedBy: 'Administrator', adminNote: 'ACC' }
+            : r
+        )
+      );
+
       const updatedReqs = await api.getPasswordResetRequests();
-      setResetRequests(updatedReqs || []);
-      const updatedStu = await api.getStudents();
-      setStudents(updatedStu);
+      if (Array.isArray(updatedReqs)) setResetRequests(updatedReqs);
+      const updatedStu = await api.getStudents(true);
+      if (Array.isArray(updatedStu)) setStudents(updatedStu);
+
       notifyMultiDeviceSync();
+      api.sendRefreshSignal({
+        type: 'users',
+        source: 'admin',
+        message: `Tiket ganti sandi ${tkt.name} (@${tkt.username}) berhasil di-ACC`,
+      }).catch(() => {});
+
+      alert(res.message || `Tiket pengajuan ganti sandi ${tkt.name} telah di-ACC. Password siswa berhasil otomatis aktif!`);
     } catch (err: any) {
       alert(err.message || 'Gagal memproses tiket.');
     } finally {
@@ -3403,7 +3417,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
               >
                 <option value="all">Semua Status Tiket</option>
                 <option value="pending">Menunggu Persetujuan</option>
-                <option value="approved">Disetujui</option>
+                <option value="approved">ACC (Disetujui)</option>
                 <option value="rejected">Ditolak</option>
               </select>
             </div>
@@ -3456,11 +3470,11 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                           </td>
                           <td className="p-3 text-center">
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
-                              tkt.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                              tkt.status === 'approved' || (tkt.status as string) === 'acc' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs' :
                               tkt.status === 'rejected' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
                               'bg-amber-100 text-amber-800 border border-amber-200 animate-pulse'
                             }`}>
-                              {tkt.status === 'approved' ? 'Disetujui' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
+                              {tkt.status === 'approved' || (tkt.status as string) === 'acc' ? 'ACC' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
                             </span>
                           </td>
                           <td className="p-3 text-center">
@@ -3479,9 +3493,11 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                                   <button
                                     onClick={() => handleApproveTicket(tkt)}
                                     disabled={ticketProcessing}
-                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black shadow-xs transition"
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black shadow-xs transition active:scale-95 flex items-center gap-1"
+                                    title="ACC dan aktifkan kata sandi baru siswa"
                                   >
-                                    ACC / Setujui
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    <span>ACC</span>
                                   </button>
 
                                   {/* Tolak button */}
@@ -3491,7 +3507,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                                       setRejectReasonText('');
                                     }}
                                     disabled={ticketProcessing}
-                                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-black shadow-xs transition"
+                                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-black shadow-xs transition active:scale-95"
                                   >
                                     Tolak
                                   </button>
@@ -4057,7 +4073,22 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                 <p><strong>Kelas:</strong> {ticketDetailModal.kelas || '-'}</p>
                 <p><strong>Waktu Diajukan:</strong> {new Date(ticketDetailModal.createdAt).toLocaleString('id-ID')}</p>
                 <p><strong>Alasan Pengajuan:</strong> {ticketDetailModal.reason || '-'}</p>
-                <p><strong>Status Tiket:</strong> <span className="font-bold uppercase">{ticketDetailModal.status}</span></p>
+                <p>
+                  <strong>Status Tiket:</strong>{' '}
+                  <span className={`px-2 py-0.5 rounded-md text-[11px] font-black ${
+                    ticketDetailModal.status === 'approved' || (ticketDetailModal.status as string) === 'acc'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : ticketDetailModal.status === 'rejected'
+                      ? 'bg-rose-100 text-rose-800'
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {ticketDetailModal.status === 'approved' || (ticketDetailModal.status as string) === 'acc'
+                      ? 'ACC'
+                      : ticketDetailModal.status === 'rejected'
+                      ? 'Ditolak'
+                      : 'Menunggu Persetujuan'}
+                  </span>
+                </p>
                 {ticketDetailModal.processedAt && (
                   <p><strong>Diproses Pada:</strong> {new Date(ticketDetailModal.processedAt).toLocaleString('id-ID')} oleh {ticketDetailModal.processedBy}</p>
                 )}

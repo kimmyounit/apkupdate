@@ -1432,7 +1432,7 @@ class DatabaseManager {
   public processPasswordResetRequest(
     requestId: string,
     adminUser: User,
-    status: 'approved' | 'rejected',
+    status: 'approved' | 'rejected' | 'acc',
     adminNote?: string
   ): { success: boolean; request?: PasswordResetRequest; error?: string } {
     const req = this.data.passwordResetRequests.find((r) => r.id === requestId);
@@ -1444,12 +1444,13 @@ class DatabaseManager {
     const user = this.findUserById(req.userId) || (req.username ? this.findUserByUsername(req.username) : null);
     if (!user) return { success: false, error: 'Pengguna akun tidak ditemukan.' };
 
-    req.status = status;
+    const effectiveStatus: 'approved' | 'rejected' = status === 'acc' || status === 'approved' ? 'approved' : 'rejected';
+    req.status = effectiveStatus;
     req.processedAt = new Date().toISOString();
     req.processedBy = adminUser.name;
-    req.adminNote = adminNote || (status === 'approved' ? 'Disetujui oleh Administrator' : 'Ditolak');
+    req.adminNote = adminNote || (effectiveStatus === 'approved' ? 'ACC' : 'Ditolak');
 
-    if (status === 'approved') {
+    if (effectiveStatus === 'approved') {
       if (req.newPassword) {
         const hashed = hashPassword(req.newPassword);
         user.passwordHash = req.newPasswordHash || hashed.hash;
@@ -1469,8 +1470,8 @@ class DatabaseManager {
       }
       // Send notification to student
       this.addNotification({
-        title: 'Pengajuan Ganti Sandi Disetujui',
-        message: `Pengajuan ganti sandi Anda (Tiket: ${req.ticketNumber || req.id}) telah DISETUJUI oleh Admin. Silakan masuk menggunakan kata sandi baru.`,
+        title: 'Pengajuan Ganti Sandi di-ACC',
+        message: `Pengajuan ganti sandi Anda (Tiket: ${req.ticketNumber || req.id}) telah di-ACC oleh Admin. Kata sandi baru Anda telah aktif dan dapat langsung digunakan.`,
         type: 'security',
         targetUserId: user.id,
       });

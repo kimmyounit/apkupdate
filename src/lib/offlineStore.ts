@@ -2011,18 +2011,19 @@ export const offlineStore = {
     return req;
   },
 
-  processPasswordResetRequest(id: string, status: 'approved' | 'rejected', adminNote?: string) {
+  processPasswordResetRequest(id: string, status: 'approved' | 'rejected' | 'acc', adminNote?: string) {
     const db = loadDB();
     if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
     const req = db.passwordResetRequests.find((r) => r.id === id || r.ticketNumber === id);
     if (!req) throw new Error('Tiket tidak ditemukan.');
     if (req.status !== 'pending') throw new Error('Tiket sudah diproses sebelumnya.');
-    req.status = status;
+    const effectiveStatus: 'approved' | 'rejected' = status === 'acc' || status === 'approved' ? 'approved' : 'rejected';
+    req.status = effectiveStatus;
     req.processedAt = new Date().toISOString();
     req.processedBy = 'Administrator';
-    req.adminNote = adminNote || (status === 'approved' ? 'Disetujui' : 'Ditolak');
+    req.adminNote = adminNote || (effectiveStatus === 'approved' ? 'ACC' : 'Ditolak');
 
-    if (status === 'approved' && req.newPassword) {
+    if (effectiveStatus === 'approved' && req.newPassword) {
       const user = db.users.find((u) =>
         u.id === req.userId ||
         (u.username && req.username && u.username.toLowerCase().replace(/^@+/, '') === req.username.toLowerCase().replace(/^@+/, ''))

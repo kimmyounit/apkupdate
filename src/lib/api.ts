@@ -459,22 +459,24 @@ export const api = {
     );
   },
 
-  processPasswordResetRequest: async (id: string, status: 'approved' | 'rejected', adminNote?: string) => {
+  processPasswordResetRequest: async (id: string, status: 'approved' | 'rejected' | 'acc', adminNote?: string) => {
+    const normalizedStatus = status === 'acc' ? 'approved' : status;
+    const finalNote = adminNote || (normalizedStatus === 'approved' ? 'ACC' : 'Ditolak');
     try {
       const serverRes = await tryServerRequest<{ message: string; request?: PasswordResetRequest }>(
         `/api/admin/password-reset-requests/${id}/process`,
         {
           method: 'POST',
-          body: JSON.stringify({ status, adminNote }),
+          body: JSON.stringify({ status: normalizedStatus, adminNote: finalNote }),
         }
       );
       try {
-        offlineStore.processPasswordResetRequest(id, status, adminNote);
+        offlineStore.processPasswordResetRequest(id, normalizedStatus, finalNote);
       } catch (_) {}
       return serverRes;
     } catch (_) {
-      const req = offlineStore.processPasswordResetRequest(id, status, adminNote);
-      return { message: `Pengajuan ganti sandi berhasil di-${status === 'approved' ? 'setujui' : 'tolak'}.`, request: req };
+      const req = offlineStore.processPasswordResetRequest(id, normalizedStatus, finalNote);
+      return { message: `Pengajuan ganti sandi berhasil di-${normalizedStatus === 'approved' ? 'ACC' : 'tolak'}.`, request: req };
     }
   },
 
