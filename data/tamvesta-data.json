@@ -308,6 +308,24 @@
       "qrToken": "TAMVESTA:STUDENT:user_support_tamvesta:dev_token",
       "createdAt": "2026-10-26T03:05:51.546Z",
       "updatedAt": "2026-10-26T03:05:51.566Z"
+    },
+    {
+      "id": "stu_1793370820436_ionxx",
+      "username": "graniat",
+      "name": "Alvaro Pratama Herlen",
+      "role": "siswa",
+      "gender": "Laki-laki",
+      "kelas": "Kelas 8",
+      "initialPassword": "123456",
+      "password": "123456",
+      "passwordHash": "167d4173792c859d12bf87cc4bc5800489a778dc1556a2b7e65d6565d54bffce09822a3d58b7253cbb6f48ec415319f5a0b02ca309e5ba67381ecf174e534329",
+      "salt": "1119139bcffe85457cf5f2154cac0d89",
+      "mustChangePassword": false,
+      "isActive": true,
+      "qrToken": "TAMVESTA:STUDENT:stu_1793370820436_ionxx:6e154619c730210c",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Alvaro%20Pratama%20Herlen&backgroundColor=0284c7",
+      "createdAt": "2026-10-30T14:33:40.436Z",
+      "updatedAt": "2026-10-30T14:33:40.436Z"
     }
   ],
   "subjects": [],
@@ -331,7 +349,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T14:32:52.418Z"
+      "createdAt": "2026-10-30T14:32:10.239Z"
     },
     {
       "id": "notif_announcement_1",
@@ -343,7 +361,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T13:32:52.418Z"
+      "createdAt": "2026-10-30T13:32:10.239Z"
     },
     {
       "id": "notif_subject_1",
@@ -354,7 +372,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T12:32:52.418Z"
+      "createdAt": "2026-10-30T12:32:10.239Z"
     }
   ],
   "articles": [],
