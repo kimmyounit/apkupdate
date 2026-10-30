@@ -585,9 +585,15 @@ class DatabaseManager {
           if (existingIdx === -1) {
             this.data.passwordResetRequests.unshift(req);
           } else {
+            const existing = this.data.passwordResetRequests[existingIdx];
+            // Jika tiket di memori sudah disetujui (approved), JANGAN timpa kembali ke pending oleh data lama GitHub!
+            const finalStatus = (existing.status === 'approved' && req.status === 'pending') ? 'approved' : (req.status || existing.status);
+            const finalNote = (existing.status === 'approved' && existing.adminNote) ? existing.adminNote : (req.adminNote || existing.adminNote);
             this.data.passwordResetRequests[existingIdx] = {
-              ...this.data.passwordResetRequests[existingIdx],
               ...req,
+              ...existing,
+              status: finalStatus,
+              adminNote: finalNote,
             };
           }
         });

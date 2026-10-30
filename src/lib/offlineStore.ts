@@ -1953,7 +1953,10 @@ export const offlineStore = {
     if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
     const idx = db.passwordResetRequests.findIndex((r) => r.id === req.id || r.ticketNumber === req.ticketNumber);
     if (idx >= 0) {
-      db.passwordResetRequests[idx] = { ...db.passwordResetRequests[idx], ...req };
+      const existing = db.passwordResetRequests[idx];
+      const finalStatus = (existing.status === 'approved' && req.status === 'pending') ? 'approved' : (req.status || existing.status);
+      const finalNote = (existing.status === 'approved' && existing.adminNote) ? existing.adminNote : (req.adminNote || existing.adminNote);
+      db.passwordResetRequests[idx] = { ...existing, ...req, status: finalStatus, adminNote: finalNote };
     } else {
       db.passwordResetRequests.unshift(req);
     }
