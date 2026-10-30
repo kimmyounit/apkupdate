@@ -1099,13 +1099,13 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   const handleApproveTicket = async (tkt: PasswordResetRequest) => {
     setTicketProcessing(true);
     try {
-      const res = await api.processPasswordResetRequest(tkt.id, 'approved', 'ACC');
+      const res = await api.processPasswordResetRequest(tkt.id, 'approved', 'Telah Disetujui');
 
-      // Update state seketika agar riwayat langsung berubah menjadi ACC
+      // Update state seketika agar riwayat langsung berubah menjadi Telah Disetujui
       setResetRequests((prev) =>
         prev.map((r) =>
           r.id === tkt.id
-            ? { ...r, status: 'approved', processedAt: new Date().toISOString(), processedBy: 'Administrator', adminNote: 'ACC' }
+            ? { ...r, status: 'approved', processedAt: new Date().toISOString(), processedBy: 'Administrator', adminNote: 'Telah Disetujui' }
             : r
         )
       );
@@ -1119,10 +1119,10 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       api.sendRefreshSignal({
         type: 'users',
         source: 'admin',
-        message: `Tiket ganti sandi ${tkt.name} (@${tkt.username}) berhasil di-ACC`,
+        message: `Tiket ganti sandi ${tkt.name} (@${tkt.username}) telah disetujui`,
       }).catch(() => {});
 
-      alert(res.message || `Tiket pengajuan ganti sandi ${tkt.name} telah di-ACC. Password siswa berhasil otomatis aktif!`);
+      alert(res.message || `Tiket pengajuan ganti sandi ${tkt.name} telah disetujui. Password baru siswa otomatis aktif!`);
     } catch (err: any) {
       alert(err.message || 'Gagal memproses tiket.');
     } finally {
@@ -3417,7 +3417,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
               >
                 <option value="all">Semua Status Tiket</option>
                 <option value="pending">Menunggu Persetujuan</option>
-                <option value="approved">ACC (Disetujui)</option>
+                <option value="approved">Telah Disetujui</option>
                 <option value="rejected">Ditolak</option>
               </select>
             </div>
@@ -3474,7 +3474,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                               tkt.status === 'rejected' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
                               'bg-amber-100 text-amber-800 border border-amber-200 animate-pulse'
                             }`}>
-                              {tkt.status === 'approved' || (tkt.status as string) === 'acc' ? 'ACC' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
+                              {tkt.status === 'approved' || (tkt.status as string) === 'acc' ? 'Telah Disetujui' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
                             </span>
                           </td>
                           <td className="p-3 text-center">
@@ -3489,15 +3489,15 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
 
                               {tkt.status === 'pending' && (
                                 <>
-                                  {/* ACC button */}
+                                  {/* Setujui button */}
                                   <button
                                     onClick={() => handleApproveTicket(tkt)}
                                     disabled={ticketProcessing}
                                     className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black shadow-xs transition active:scale-95 flex items-center gap-1"
-                                    title="ACC dan aktifkan kata sandi baru siswa"
+                                    title="Setujui dan aktifkan kata sandi baru siswa otomatis"
                                   >
                                     <CheckCircle2 className="w-3 h-3" />
-                                    <span>ACC</span>
+                                    <span>Setujui</span>
                                   </button>
 
                                   {/* Tolak button */}
@@ -4083,7 +4083,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                       : 'bg-amber-100 text-amber-800'
                   }`}>
                     {ticketDetailModal.status === 'approved' || (ticketDetailModal.status as string) === 'acc'
-                      ? 'ACC'
+                      ? 'Telah Disetujui'
                       : ticketDetailModal.status === 'rejected'
                       ? 'Ditolak'
                       : 'Menunggu Persetujuan'}

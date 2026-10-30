@@ -922,7 +922,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                                   : 'bg-amber-500 text-white animate-pulse'
                               }`}
                             >
-                              {isRejected ? 'DITOLAK' : isApproved ? 'ACC' : 'MENUNGGU VERIFIKASI'}
+                              {isRejected ? 'DITOLAK' : isApproved ? 'TELAH DISETUJUI' : 'MENUNGGU VERIFIKASI'}
                             </span>
                           </div>
 
@@ -951,7 +951,7 @@ export const StudentProfileModal: React.FC<Props> = ({ user: initialUser, isOpen
                             <div className="p-2.5 bg-emerald-100/90 border border-emerald-200 rounded-lg text-[11px] text-emerald-900 space-y-1">
                               <div className="flex items-center gap-1.5 font-bold text-emerald-800">
                                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                                <span>Status: ACC (Disetujui oleh Admin)</span>
+                                <span>Status: Telah Disetujui oleh Admin</span>
                               </div>
                               <p className="text-[10px] text-emerald-700">
                                 Kata sandi baru Anda telah aktif dan otomatis diterapkan. Anda dapat masuk langsung menggunakan kata sandi baru.

@@ -868,7 +868,7 @@ export const ProfilePage: React.FC = () => {
                           tkt.status === 'rejected' ? 'bg-rose-100 text-rose-800' :
                           'bg-amber-100 text-amber-800'
                         }`}>
-                          {tkt.status === 'approved' || tkt.status === 'acc' ? 'ACC' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
+                          {tkt.status === 'approved' || tkt.status === 'acc' ? 'Telah Disetujui' : tkt.status === 'rejected' ? 'Ditolak' : 'Menunggu Persetujuan'}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 mt-0.5">
