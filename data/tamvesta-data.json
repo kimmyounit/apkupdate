@@ -325,15 +325,14 @@
       "qrToken": "TAMVESTA:STUDENT:stu_1793377010945_uzghx:50e2cbb5a801b0d6",
       "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Rian%20Pratama&backgroundColor=0284c7",
       "createdAt": "2026-10-30T16:16:50.945Z",
-      "updatedAt": "2026-10-30T17:10:19.141Z",
+      "updatedAt": "2026-10-30T16:56:16.720Z",
       "isOfficial": true,
       "isCustom": true,
       "source": "admin",
       "isDemo": false,
       "passwordChanged": true,
       "phone": "494646499",
-      "email": "sjkslsksksnn@kimel.com",
-      "isVerified": true
+      "email": "sjkslsksksnn@kimel.com"
     },
     {
       "id": "stu_1793373992097_jv1v1",
@@ -426,32 +425,6 @@
   "notes": [],
   "notifications": [
     {
-      "id": "notif_1793380435626_zl621",
-      "title": "Pesan dari Rian Pratama",
-      "message": "Apa elo",
-      "type": "dm",
-      "isImportant": false,
-      "linkType": "dm",
-      "linkId": "stu_1793377010945_uzghx",
-      "targetUserId": "stu_1793373992097_jv1v1",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-30T17:13:55.626Z"
-    },
-    {
-      "id": "notif_1793380394162_t2x20",
-      "title": "Pesan dari Alvaro Pratama Herlen",
-      "message": "Hemmm",
-      "type": "dm",
-      "isImportant": false,
-      "linkType": "dm",
-      "linkId": "stu_1793373992097_jv1v1",
-      "targetUserId": "stu_1793377010945_uzghx",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-30T17:13:14.162Z"
-    },
-    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -460,7 +433,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:11:18.801Z"
+      "createdAt": "2026-10-30T16:59:19.879Z"
     },
     {
       "id": "notif_announcement_1",
@@ -472,7 +445,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:11:18.801Z"
+      "createdAt": "2026-10-30T15:59:19.879Z"
     },
     {
       "id": "notif_subject_1",
@@ -483,7 +456,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:11:18.801Z"
+      "createdAt": "2026-10-30T14:59:19.879Z"
     }
   ],
   "articles": [],
