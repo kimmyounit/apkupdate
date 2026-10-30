@@ -531,11 +531,16 @@ class DatabaseManager {
           if (!existing) {
             this.data.users.push(ghUser);
           } else {
-            if (ghUser.password) existing.password = ghUser.password;
-            if (ghUser.initialPassword) existing.initialPassword = ghUser.initialPassword;
-            if (ghUser.passwordHash) existing.passwordHash = ghUser.passwordHash;
-            if (ghUser.salt) existing.salt = ghUser.salt;
-            if (ghUser.passwordChanged !== undefined) existing.passwordChanged = ghUser.passwordChanged;
+            const memTime = new Date(existing.updatedAt || 0).getTime();
+            const ghTime = new Date(ghUser.updatedAt || 0).getTime();
+            // Hanya perbarui kredensial password dari GitHub jika data GitHub memang lebih baru daripada data di memori
+            if (ghTime >= memTime) {
+              if (ghUser.password) existing.password = ghUser.password;
+              if (ghUser.initialPassword) existing.initialPassword = ghUser.initialPassword;
+              if (ghUser.passwordHash) existing.passwordHash = ghUser.passwordHash;
+              if (ghUser.salt) existing.salt = ghUser.salt;
+              if (ghUser.passwordChanged !== undefined) existing.passwordChanged = ghUser.passwordChanged;
+            }
             if (ghUser.phone) existing.phone = ghUser.phone;
             if (ghUser.email) existing.email = ghUser.email;
             if (ghUser.bio) existing.bio = ghUser.bio;

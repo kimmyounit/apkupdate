@@ -137,12 +137,16 @@ app.post('/api/auth/login', async (req, res) => {
   const rawUsername = String(username).trim();
   const cleanUsername = rawUsername.toLowerCase().replace(/^@+/, '');
   const rawPassword = String(password).trim();
-  // Reload latest database from GitHub for real-time sync across devices
-  try {
-    await db.reloadFromGitHub();
-  } catch (_) {}
-
+  // Cek dulu pengguna yang ada di memori aktif
   let user = db.findUserByUsername(cleanUsername, rawPassword) || db.findUserByUsername(rawUsername, rawPassword);
+
+  // Jika belum ada di memori lokal (misal akun baru dibuat di perangkat lain), ambil dari cloud
+  if (!user) {
+    try {
+      await db.reloadFromGitHub();
+      user = db.findUserByUsername(cleanUsername, rawPassword) || db.findUserByUsername(rawUsername, rawPassword);
+    } catch (_) {}
+  }
 
   if (!user) {
     return res.status(401).json({ error: 'Username atau password tidak ditemukan.' });
