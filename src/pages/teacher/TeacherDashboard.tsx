@@ -857,7 +857,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
             </button>
           )}
 
-          {activeTab === 'quizzes' && (
+          {activeTab === 'quizzes' ? (
             <button
               onClick={() => {
                 handleGenerateToken();
@@ -866,7 +866,19 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
               className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>Buat Quiz & Token Baru</span>
+              <span>+ Buat Quiz & Token Baru</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setActiveTab('quizzes');
+                handleGenerateToken();
+                setShowCreateModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-2xl font-bold text-xs sm:text-sm transition active:scale-95"
+            >
+              <HelpCircle className="w-4 h-4 text-emerald-400" />
+              <span>+ Buat Quiz</span>
             </button>
           )}
 
@@ -1524,15 +1536,29 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* LEFT COLUMN: QUIZ LIST & TOKEN MANAGEMENT (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs">
               <div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900">
-                  Daftar Quiz & Token ({quizzes.length})
+                <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                  <span>Daftar Quiz & Token</span>
+                  <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-black">
+                    {quizzes.length}
+                  </span>
                 </h2>
                 <p className="text-xs text-slate-500">
                   Kelola status kuis, salin token untuk dibagikan ke siswa
                 </p>
               </div>
+
+              <button
+                onClick={() => {
+                  handleGenerateToken();
+                  setShowCreateModal(true);
+                }}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs shadow-md shadow-emerald-600/20 transition active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Buat Quiz & Token Baru</span>
+              </button>
             </div>
 
             {loading ? (
@@ -1540,12 +1566,28 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                 Memuat data kuis guru...
               </div>
             ) : quizzes.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3">
-                <HelpCircle className="w-12 h-12 text-slate-300 mx-auto" />
-                <h3 className="font-bold text-slate-700 text-sm">Belum Ada Quiz</h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Anda belum membuat quiz. Klik tombol <strong>"Buat Quiz & Token Baru"</strong> untuk mengatur kuis atau memasukkan tautan Google Forms.
-                </p>
+              <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center space-y-4 shadow-xs">
+                <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+                  <HelpCircle className="w-8 h-8" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-black text-slate-800 text-base">Belum Ada Quiz yang Dibuat</h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Buat kuis pilihan ganda, essay, atau tautan Google Forms dengan token akses untuk murid Anda sekarang.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    onClick={() => {
+                      handleGenerateToken();
+                      setShowCreateModal(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs shadow-lg shadow-emerald-600/25 transition active:scale-95 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Buat Quiz Pertama Sekarang</span>
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">

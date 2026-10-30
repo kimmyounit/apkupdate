@@ -675,173 +675,215 @@ export const DirectMessagesPage: React.FC<DirectMessagesPageProps> = ({
           </div>
 
           {/* Daftar Pesan Bubble */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-50/60">
+          <div className="flex-1 p-4 overflow-y-auto space-y-2 bg-slate-50/70">
             {loadingMessages ? (
               <div className="text-center text-xs text-slate-400 py-10">Memuat pesan...</div>
             ) : messages.length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-2">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-2 shadow-xs">
                   <Smile className="w-6 h-6" />
                 </div>
                 <p className="text-xs font-bold text-slate-700">Mulai kirim pesan ke {activePartner.partnerName}</p>
                 <p className="text-[10px] text-slate-400 mt-1">Kirim teks, foto kegiatan, video, atau voice note</p>
               </div>
             ) : (
-              messages.map((msg) => {
+              messages.map((msg, index) => {
                 const isMine = msg.senderId === user?.id;
 
+                const currentDate = new Date(msg.createdAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                });
+                const prevDate =
+                  index > 0
+                    ? new Date(messages[index - 1].createdAt).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                    : null;
+                const showDateHeader = index === 0 || currentDate !== prevDate;
+
                 return (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} group relative`}
-                  >
-                    {/* Story Reply Preview Card */}
-                    {msg.replyToStory && (
-                      <div className="mb-1 p-2 bg-slate-800 text-white rounded-2xl text-xs max-w-xs sm:max-w-sm flex items-center gap-2.5 shadow-md">
-                        <img
-                          src={msg.replyToStory.mediaUrl}
-                          alt="Story Preview"
-                          className="w-10 h-10 rounded-xl object-cover border border-white/20"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <span className="text-[10px] text-amber-300 font-bold block">Membalas Cerita:</span>
-                          <span className="text-[11px] truncate block text-slate-200">
-                            {msg.replyToStory.caption || 'Cerita Tamvesta'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Quoted Message */}
-                    {msg.replyToMessage && (
-                      <div className="mb-1 px-3 py-1.5 bg-slate-200/80 text-slate-700 rounded-xl text-[11px] max-w-xs border-l-4 border-emerald-600">
-                        <span className="font-bold text-[10px] text-emerald-700 block">
-                          {msg.replyToMessage.senderName}
-                        </span>
-                        <span className="truncate block">
-                          {msg.replyToMessage.text || 'Media'}
+                  <div key={msg.id} className="space-y-1">
+                    {showDateHeader && (
+                      <div className="flex justify-center my-3">
+                        <span className="px-3 py-0.5 bg-slate-200/80 text-slate-600 rounded-full text-[10px] font-bold shadow-2xs">
+                          {currentDate}
                         </span>
                       </div>
                     )}
 
-                    {/* Bubble Content */}
                     <div
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        setActiveActionMessageId(activeActionMessageId === msg.id ? null : msg.id);
-                      }}
-                      className={`relative px-4 py-2.5 rounded-3xl max-w-[82%] sm:max-w-md shadow-xs text-xs sm:text-sm select-text transition-all ${
-                        isMine
-                          ? 'bg-emerald-600 text-white rounded-br-xs'
-                          : 'bg-white text-slate-900 border border-slate-200/80 rounded-bl-xs'
-                      }`}
+                      className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} group relative`}
                     >
-                      {/* Photo Media */}
-                      {msg.mediaType === 'image' && msg.mediaUrl && (
-                        <div className="mb-1.5 rounded-2xl overflow-hidden cursor-pointer">
+                      {/* Story Reply Preview Card */}
+                      {msg.replyToStory && (
+                        <div
+                          className={`mb-1 p-2 rounded-2xl text-xs max-w-xs sm:max-w-sm flex items-center gap-2.5 shadow-sm border ${
+                            isMine
+                              ? 'bg-emerald-800 text-white border-emerald-700'
+                              : 'bg-slate-800 text-white border-slate-700'
+                          }`}
+                        >
                           <img
-                            src={msg.mediaUrl}
-                            alt="Foto"
-                            onClick={() => setLightboxMediaUrl(msg.mediaUrl || null)}
-                            className="max-h-60 w-full object-cover hover:scale-102 transition"
+                            src={msg.replyToStory.mediaUrl}
+                            alt="Story Preview"
+                            className="w-10 h-10 rounded-xl object-cover border border-white/20 shrink-0"
                           />
-                        </div>
-                      )}
-
-                      {/* Video Media */}
-                      {msg.mediaType === 'video' && msg.mediaUrl && (
-                        <div className="mb-1.5 rounded-2xl overflow-hidden bg-black">
-                          <video
-                            src={msg.mediaUrl}
-                            controls
-                            className="max-h-60 w-full object-contain"
-                          />
-                        </div>
-                      )}
-
-                      {/* Voice Note Audio */}
-                      {msg.mediaType === 'audio' && msg.mediaUrl && (
-                        <div className="flex items-center gap-3 py-1">
-                          <button
-                            onClick={() => togglePlayAudio(msg.id, msg.mediaUrl)}
-                            className={`w-9 h-9 rounded-full flex items-center justify-center transition ${
-                              isMine
-                                ? 'bg-white text-emerald-700 hover:bg-emerald-50'
-                                : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                            }`}
-                          >
-                            {playingAudioId === msg.id ? (
-                              <Pause className="w-4 h-4" />
-                            ) : (
-                              <Play className="w-4 h-4 ml-0.5" />
-                            )}
-                          </button>
-
-                          {/* Animated Waveform */}
-                          <div className="flex items-center gap-0.5 h-6 flex-1">
-                            {[40, 70, 90, 60, 100, 50, 80, 45, 95, 65, 30].map((h, i) => (
-                              <div
-                                key={i}
-                                style={{ height: `${h}%` }}
-                                className={`w-1 rounded-full transition-all ${
-                                  isMine ? 'bg-emerald-200' : 'bg-emerald-400'
-                                } ${playingAudioId === msg.id ? 'animate-pulse' : ''}`}
-                              />
-                            ))}
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] text-amber-300 font-bold block">
+                              Membalas Cerita:
+                            </span>
+                            <span className="text-[11px] truncate block text-slate-200">
+                              {msg.replyToStory.caption || 'Cerita Tamvesta'}
+                            </span>
                           </div>
+                        </div>
+                      )}
 
+                      {/* Quoted Message */}
+                      {msg.replyToMessage && (
+                        <div
+                          className={`mb-1 px-3 py-1.5 rounded-xl text-[11px] max-w-xs border-l-4 shadow-2xs ${
+                            isMine
+                              ? 'bg-emerald-700/80 text-white border-emerald-300'
+                              : 'bg-slate-100 text-slate-700 border-emerald-600'
+                          }`}
+                        >
                           <span
-                            className={`text-[10px] font-bold ${
-                              isMine ? 'text-emerald-100' : 'text-slate-500'
+                            className={`font-bold text-[10px] block ${
+                              isMine ? 'text-emerald-200' : 'text-emerald-700'
                             }`}
                           >
-                            {msg.audioDuration ? `${msg.audioDuration}s` : 'VN'}
+                            {msg.replyToMessage.senderName}
+                          </span>
+                          <span className="truncate block opacity-90">
+                            {msg.replyToMessage.text || 'Media'}
                           </span>
                         </div>
                       )}
 
-                      {/* Text */}
-                      {msg.text && (
-                        <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.text}</p>
-                      )}
-
-                      {/* Timestamp & Read Status */}
+                      {/* Bubble Content */}
                       <div
-                        className={`flex items-center justify-end gap-1 mt-1 text-[9px] ${
-                          isMine ? 'text-emerald-200' : 'text-slate-400'
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setActiveActionMessageId(activeActionMessageId === msg.id ? null : msg.id);
+                        }}
+                        className={`relative px-4 py-2.5 rounded-2xl max-w-[85%] sm:max-w-md shadow-xs text-xs sm:text-sm select-text transition-all ${
+                          isMine
+                            ? 'bg-emerald-600 text-white rounded-br-xs shadow-emerald-700/10'
+                            : 'bg-white text-slate-900 border border-slate-200/90 rounded-bl-xs shadow-slate-200/40'
                         }`}
                       >
-                        <span>
-                          {new Date(msg.createdAt).toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        {isMine && (
-                          <span>
-                            {msg.isRead ? (
-                              <CheckCheck className="w-3.5 h-3.5 text-amber-300" />
-                            ) : (
-                              <Check className="w-3.5 h-3.5" />
-                            )}
-                          </span>
+                        {/* Photo Media */}
+                        {msg.mediaType === 'image' && msg.mediaUrl && (
+                          <div className="mb-2 rounded-xl overflow-hidden cursor-pointer border border-black/5 bg-black/5">
+                            <img
+                              src={msg.mediaUrl}
+                              alt="Foto"
+                              onClick={() => setLightboxMediaUrl(msg.mediaUrl || null)}
+                              className="max-h-72 w-full object-cover hover:opacity-95 transition"
+                            />
+                          </div>
                         )}
-                      </div>
 
-                      {/* Long-press / Action toggle trigger */}
-                      <button
-                        onClick={() =>
-                          setActiveActionMessageId(
-                            activeActionMessageId === msg.id ? null : msg.id
-                          )
-                        }
-                        className={`absolute top-1 ${
-                          isMine ? '-left-6' : '-right-6'
-                        } opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-slate-600 transition`}
-                      >
-                        <Smile className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                        {/* Video Media */}
+                        {msg.mediaType === 'video' && msg.mediaUrl && (
+                          <div className="mb-2 rounded-xl overflow-hidden bg-black border border-black/10">
+                            <video
+                              src={msg.mediaUrl}
+                              controls
+                              className="max-h-72 w-full object-contain"
+                            />
+                          </div>
+                        )}
+
+                        {/* Voice Note Audio */}
+                        {msg.mediaType === 'audio' && msg.mediaUrl && (
+                          <div className="flex items-center gap-2.5 py-1 min-w-[200px] sm:min-w-[240px]">
+                            <button
+                              onClick={() => togglePlayAudio(msg.id, msg.mediaUrl)}
+                              className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-xs transition active:scale-95 ${
+                                isMine
+                                  ? 'bg-white text-emerald-700 hover:bg-emerald-50'
+                                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                              }`}
+                            >
+                              {playingAudioId === msg.id ? (
+                                <Pause className="w-4 h-4" />
+                              ) : (
+                                <Play className="w-4 h-4 ml-0.5" />
+                              )}
+                            </button>
+
+                            {/* Animated Waveform */}
+                            <div className="flex items-center gap-0.5 h-6 flex-1 px-1">
+                              {[40, 70, 90, 60, 100, 50, 80, 45, 95, 65, 30].map((h, i) => (
+                                <div
+                                  key={i}
+                                  style={{ height: `${h}%` }}
+                                  className={`w-1 rounded-full transition-all ${
+                                    isMine ? 'bg-emerald-200/80' : 'bg-emerald-500/80'
+                                  } ${playingAudioId === msg.id ? 'animate-pulse' : ''}`}
+                                />
+                              ))}
+                            </div>
+
+                            <span
+                              className={`text-[10px] font-bold tabular-nums shrink-0 ${
+                                isMine ? 'text-emerald-100' : 'text-slate-500'
+                              }`}
+                            >
+                              {msg.audioDuration ? `${msg.audioDuration}s` : 'VN'}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Text */}
+                        {msg.text && (
+                          <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.text}</p>
+                        )}
+
+                        {/* Timestamp & Read Status */}
+                        <div
+                          className={`flex items-center justify-end gap-1 mt-1 text-[9px] select-none ${
+                            isMine ? 'text-emerald-100' : 'text-slate-400'
+                          }`}
+                        >
+                          <span>
+                            {new Date(msg.createdAt).toLocaleTimeString('id-ID', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {isMine && (
+                            <span>
+                              {msg.isRead ? (
+                                <CheckCheck className="w-3.5 h-3.5 text-amber-300" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5 opacity-80" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Long-press / Action toggle trigger */}
+                        <button
+                          onClick={() =>
+                            setActiveActionMessageId(
+                              activeActionMessageId === msg.id ? null : msg.id
+                            )
+                          }
+                          className={`absolute top-1 ${
+                            isMine ? '-left-7' : '-right-7'
+                          } opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-slate-600 transition rounded-full hover:bg-slate-200/60`}
+                          title="Opsi pesan"
+                        >
+                          <Smile className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
 
                     {/* Emoji Reaction Badges Pill (Small at bottom of bubble) */}
                     {msg.reactions && Object.keys(msg.reactions).length > 0 && (
@@ -916,9 +958,10 @@ export const DirectMessagesPage: React.FC<DirectMessagesPageProps> = ({
                       </div>
                     )}
                   </div>
-                );
-              })
-            )}
+                </div>
+              );
+            })
+          )}
             <div ref={messagesEndRef} />
           </div>
 
