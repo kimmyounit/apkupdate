@@ -326,6 +326,24 @@
       "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Siswa%20Percobaan%20Baru&backgroundColor=0284c7",
       "createdAt": "2026-10-30T14:36:28.017Z",
       "updatedAt": "2026-10-30T14:36:28.017Z"
+    },
+    {
+      "id": "stu_1793371174930_qici8",
+      "username": "siswa.resmi.tamsis.1793371175498",
+      "name": "Rian Pratama",
+      "role": "siswa",
+      "gender": "Laki-laki",
+      "kelas": "VII-A SMP",
+      "initialPassword": "PasswordRian123",
+      "password": "PasswordRian123",
+      "passwordHash": "a05b0510d73eede99a32f3faa31b6ea8602056ff2f4abc20d24fcfe604019f6f563836fbf6ab86d12e32d995923b8bee2c481d9ddda9b2392730ca85d6390e68",
+      "salt": "57f6031936ade86989fd6078a47025a4",
+      "mustChangePassword": false,
+      "isActive": true,
+      "qrToken": "TAMVESTA:STUDENT:stu_1793371174930_qici8:0e4b09229ccf802c",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Rian%20Pratama&backgroundColor=0284c7",
+      "createdAt": "2026-10-30T14:39:34.930Z",
+      "updatedAt": "2026-10-30T14:39:34.930Z"
     }
   ],
   "subjects": [],
@@ -339,42 +357,7 @@
   "posts": [],
   "stories": [],
   "notes": [],
-  "notifications": [
-    {
-      "id": "notif_welcome",
-      "title": "Selamat Datang di TAMVESTA Mobile!",
-      "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
-      "type": "general",
-      "isImportant": true,
-      "linkType": "none",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-30T14:40:33.995Z"
-    },
-    {
-      "id": "notif_announcement_1",
-      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
-      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
-      "type": "announcement",
-      "isImportant": true,
-      "linkType": "announcement",
-      "linkId": "ann_1",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-30T13:40:33.995Z"
-    },
-    {
-      "id": "notif_subject_1",
-      "title": "Pembaruan Jadwal: Matematika Wajib",
-      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
-      "type": "subject_change",
-      "isImportant": false,
-      "linkType": "subject",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-30T12:40:33.995Z"
-    }
-  ],
+  "notifications": [],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
@@ -424,8 +407,6 @@
     "panitia.osis",
     "alvaro1234",
     "itskimzz",
-    "tamansiswa1",
-    "stu_1793371174930_qici8",
-    "siswa.resmi.tamsis.1793371175498"
+    "tamansiswa1"
   ]
 }
