@@ -313,7 +313,41 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [],
+  "quizzes": [
+    {
+      "title": "Kuis Uji Coba Real-Time",
+      "subjectId": "sub_matematika",
+      "subjectName": "Matematika",
+      "teacherName": "Administrator Tamansiswa Batam",
+      "description": "Kuis pecahan dan bilangan bulat",
+      "durationMinutes": 15,
+      "passingScore": 70,
+      "questions": [
+        {
+          "id": "q1",
+          "question": "Berapakah 25 x 4?",
+          "options": [
+            "75",
+            "100",
+            "125",
+            "150"
+          ],
+          "correctOptionIndex": 1,
+          "explanation": "25 dikali 4 sama dengan 100."
+        }
+      ],
+      "isActive": true,
+      "token": "TVQ-4660",
+      "sourceType": "interactive",
+      "externalUrl": "",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793366175291",
+      "createdAt": "2026-10-30T13:16:15.291Z"
+    }
+  ],
   "quizAttempts": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
