@@ -376,8 +376,7 @@
       "isOfficial": true,
       "isCustom": true,
       "source": "admin",
-      "isDemo": false,
-      "isVerified": true
+      "isDemo": false
     },
     {
       "id": "stu_1793384638396_vxd3b",
@@ -405,7 +404,28 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [],
+  "quizzes": [
+    {
+      "title": "Tik",
+      "subjectId": "sub_general",
+      "subjectName": "Audisi ",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-9428",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793382557550",
+      "createdAt": "2026-10-30T17:49:17.550Z"
+    }
+  ],
   "quizAttempts": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
@@ -478,7 +498,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:42:25.745Z"
+      "createdAt": "2026-10-30T17:45:29.356Z"
     },
     {
       "id": "notif_announcement_1",
@@ -490,7 +510,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:42:25.745Z"
+      "createdAt": "2026-10-30T16:45:29.356Z"
     },
     {
       "id": "notif_subject_1",
@@ -501,7 +521,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:42:25.745Z"
+      "createdAt": "2026-10-30T15:45:29.356Z"
     }
   ],
   "articles": [],
@@ -514,20 +534,10 @@
   "gameRooms": [],
   "refreshSignals": [
     {
-      "id": "sig_1793384639123_chqn",
-      "userId": "user_admin_tamansiswa",
-      "userName": "Administrator Tamansiswa Batam",
-      "userUsername": "TAMANSISWA",
+      "id": "sig_1793384582118_zqxp",
       "userKelas": "-",
-      "timestamp": "2026-10-30T18:23:59.123Z",
-      "formattedTime": "18.23.59 WIB",
-      "status": "received"
-    },
-    {
-      "id": "sig_1793384638436_98s6",
-      "userKelas": "-",
-      "timestamp": "2026-10-30T18:23:58.404Z",
-      "formattedTime": "18.23.58 WIB",
+      "timestamp": "2026-10-30T18:23:02.089Z",
+      "formattedTime": "18.23.02 WIB",
       "status": "received"
     }
   ],
