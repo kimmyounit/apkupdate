@@ -325,14 +325,15 @@
       "qrToken": "TAMVESTA:STUDENT:stu_1793377010945_uzghx:50e2cbb5a801b0d6",
       "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Rian%20Pratama&backgroundColor=0284c7",
       "createdAt": "2026-10-30T16:16:50.945Z",
-      "updatedAt": "2026-10-30T17:10:19.141Z",
+      "updatedAt": "2026-10-30T16:56:16.720Z",
       "isOfficial": true,
       "isCustom": true,
       "source": "admin",
       "isDemo": false,
       "passwordChanged": true,
       "phone": "494646499",
-      "email": "sjkslsksksnn@kimel.com"
+      "email": "sjkslsksksnn@kimel.com",
+      "isVerified": true
     },
     {
       "id": "stu_1793373992097_jv1v1",
@@ -366,24 +367,6 @@
   "attendanceRecords": [],
   "passwordResetRequests": [
     {
-      "id": "pr_1793379084239",
-      "ticketNumber": "TKT-574403",
-      "userId": "stu_1793377010945_uzghx",
-      "username": "siswa.rian.resmi",
-      "name": "Rian Pratama",
-      "kelas": "Kelas 7",
-      "role": "siswa",
-      "reason": "Pengajuan ganti sandi berkala",
-      "status": "approved",
-      "newPasswordHash": "1a3a6c21e8783c7bad84e7156b2a6c9b935a2996c2eeab2d6abb764e388304204f4879511103e652a8320ee979b735c378c5a81a4cbe1ddf1d3ca39006901447",
-      "newSalt": "264d2c9588c3de3d98c10077b8c82422",
-      "newPassword": "passwordBaru789",
-      "createdAt": "2026-10-30T16:51:24.239Z",
-      "processedAt": "2026-10-30T16:56:16.713Z",
-      "processedBy": "Administrator Tamansiswa Batam",
-      "adminNote": "Telah Disetujui"
-    },
-    {
       "id": "pr_1793377899590",
       "ticketNumber": "TKT-994704",
       "userId": "stu_1793373992097_jv1v1",
@@ -398,6 +381,24 @@
       "newPassword": "Paro Pratama1",
       "createdAt": "2026-10-30T16:31:39.590Z",
       "processedAt": "2026-10-30T16:56:17.016Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "Telah Disetujui"
+    },
+    {
+      "id": "pr_1793379084239",
+      "ticketNumber": "TKT-574403",
+      "userId": "stu_1793377010945_uzghx",
+      "username": "siswa.rian.resmi",
+      "name": "Rian Pratama",
+      "kelas": "Kelas 7",
+      "role": "siswa",
+      "reason": "Pengajuan ganti sandi berkala",
+      "status": "approved",
+      "newPasswordHash": "1a3a6c21e8783c7bad84e7156b2a6c9b935a2996c2eeab2d6abb764e388304204f4879511103e652a8320ee979b735c378c5a81a4cbe1ddf1d3ca39006901447",
+      "newSalt": "264d2c9588c3de3d98c10077b8c82422",
+      "newPassword": "passwordBaru789",
+      "createdAt": "2026-10-30T16:51:24.239Z",
+      "processedAt": "2026-10-30T16:56:16.713Z",
       "processedBy": "Administrator Tamansiswa Batam",
       "adminNote": "Telah Disetujui"
     }
@@ -415,7 +416,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:11:18.801Z"
+      "createdAt": "2026-10-30T16:58:20.743Z"
     },
     {
       "id": "notif_announcement_1",
@@ -427,7 +428,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:11:18.801Z"
+      "createdAt": "2026-10-30T15:58:20.745Z"
     },
     {
       "id": "notif_subject_1",
@@ -438,7 +439,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:11:18.801Z"
+      "createdAt": "2026-10-30T14:58:20.745Z"
     }
   ],
   "articles": [],
