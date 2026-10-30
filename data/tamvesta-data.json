@@ -355,12 +355,55 @@
       "phone": "0895410591097",
       "email": "paro.pratama.herlenn@gmail.com",
       "passwordChanged": true
+    },
+    {
+      "id": "stu_1793384582080_7ddbl",
+      "username": "aldongker",
+      "name": "Ibrahim Al Ashry",
+      "role": "siswa",
+      "gender": "Laki-laki",
+      "kelas": "Kelas 9",
+      "initialPassword": "123456",
+      "password": "123456",
+      "passwordHash": "f0320e943d32c0d49dcf3c55e6edd0e447d112500bd4c07f29197cff525b3f3af1868539b22bf795490c4ac903669192196ab89d859fbd517eb304b02f31b1b7",
+      "salt": "f3813b9374025ad1f3cfa7d2e9eafc8c",
+      "mustChangePassword": false,
+      "isActive": true,
+      "qrToken": "TAMVESTA:STUDENT:stu_1793384582080_7ddbl:afdc378c15556f3f",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Ibrahim%20Al%20Ashry&backgroundColor=0284c7",
+      "createdAt": "2026-10-30T18:23:02.080Z",
+      "updatedAt": "2026-10-30T18:23:02.080Z",
+      "isOfficial": true,
+      "isCustom": true,
+      "source": "admin",
+      "isDemo": false
     }
   ],
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [],
+  "quizzes": [
+    {
+      "title": "Tik",
+      "subjectId": "sub_general",
+      "subjectName": "Audisi ",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-9428",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793382557550",
+      "createdAt": "2026-10-30T17:49:17.550Z"
+    }
+  ],
   "quizAttempts": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
@@ -433,7 +476,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T18:12:19.744Z"
+      "createdAt": "2026-10-30T17:45:29.356Z"
     },
     {
       "id": "notif_announcement_1",
@@ -445,7 +488,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:12:19.746Z"
+      "createdAt": "2026-10-30T16:45:29.356Z"
     },
     {
       "id": "notif_subject_1",
@@ -456,7 +499,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:12:19.746Z"
+      "createdAt": "2026-10-30T15:45:29.356Z"
     }
   ],
   "articles": [],
@@ -469,13 +512,10 @@
   "gameRooms": [],
   "refreshSignals": [
     {
-      "id": "sig_1793384524853_duo4",
-      "userId": "stu_1793377010945_uzghx",
-      "userName": "Rian Pratama",
-      "userUsername": "siswa.rian.resmi",
-      "userKelas": "Kelas 7",
-      "timestamp": "2026-10-30T18:22:04.828Z",
-      "formattedTime": "18.22.04 WIB",
+      "id": "sig_1793384582118_zqxp",
+      "userKelas": "-",
+      "timestamp": "2026-10-30T18:23:02.089Z",
+      "formattedTime": "18.23.02 WIB",
       "status": "received"
     }
   ],
