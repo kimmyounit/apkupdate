@@ -426,22 +426,9 @@
   "notes": [],
   "notifications": [
     {
-      "id": "notif_1793380435626_zl621",
-      "title": "Pesan dari Rian Pratama",
-      "message": "Apa elo",
-      "type": "dm",
-      "isImportant": false,
-      "linkType": "dm",
-      "linkId": "stu_1793377010945_uzghx",
-      "targetUserId": "stu_1793373992097_jv1v1",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-30T17:13:55.626Z"
-    },
-    {
-      "id": "notif_1793380394162_t2x20",
+      "id": "notif_1793380451221_h9u98",
       "title": "Pesan dari Alvaro Pratama Herlen",
-      "message": "Hemmm",
+      "message": "Hlooooo",
       "type": "dm",
       "isImportant": false,
       "linkType": "dm",
@@ -449,7 +436,7 @@
       "targetUserId": "stu_1793377010945_uzghx",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:13:14.162Z"
+      "createdAt": "2026-10-30T17:14:11.221Z"
     },
     {
       "id": "notif_welcome",
@@ -460,7 +447,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:11:18.801Z"
+      "createdAt": "2026-10-30T17:11:12.700Z"
     },
     {
       "id": "notif_announcement_1",
@@ -472,7 +459,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:11:18.801Z"
+      "createdAt": "2026-10-30T16:11:12.700Z"
     },
     {
       "id": "notif_subject_1",
@@ -483,7 +470,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:11:18.801Z"
+      "createdAt": "2026-10-30T15:11:12.700Z"
     }
   ],
   "articles": [],
