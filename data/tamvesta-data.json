@@ -310,31 +310,6 @@
       "updatedAt": "2026-10-26T03:05:51.566Z"
     },
     {
-      "id": "stu_1793377010945_uzghx",
-      "username": "siswa.rian.resmi",
-      "name": "Rian Pratama",
-      "role": "siswa",
-      "gender": "Laki-laki",
-      "kelas": "Kelas 7",
-      "initialPassword": "123456",
-      "password": "123456",
-      "passwordHash": "72b22dbf2916c98ddd64c3a03c64ff37dee932397c458d61858155176b0343e6eb04ae4bba89f4034ef08b2076f0c0cfa1c57c458d3c4b901607d0f533063ac5",
-      "salt": "8f3fa1fe2719f8b4f4fc6e37af3c6530",
-      "mustChangePassword": false,
-      "isActive": true,
-      "qrToken": "TAMVESTA:STUDENT:stu_1793377010945_uzghx:50e2cbb5a801b0d6",
-      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Rian%20Pratama&backgroundColor=0284c7",
-      "createdAt": "2026-10-30T16:16:50.945Z",
-      "updatedAt": "2026-10-30T17:10:19.141Z",
-      "isOfficial": true,
-      "isCustom": true,
-      "source": "admin",
-      "isDemo": false,
-      "passwordChanged": true,
-      "phone": "494646499",
-      "email": "sjkslsksksnn@kimel.com"
-    },
-    {
       "id": "stu_1793373992097_jv1v1",
       "username": "graniat",
       "name": "Alvaro Pratama Herlen",
@@ -388,24 +363,6 @@
   "attendanceRecords": [],
   "passwordResetRequests": [
     {
-      "id": "pr_1793377899590",
-      "ticketNumber": "TKT-994704",
-      "userId": "stu_1793373992097_jv1v1",
-      "username": "graniat",
-      "name": "Alvaro Pratama Herlen",
-      "kelas": "Kelas 8",
-      "role": "siswa",
-      "reason": "Pengajuan ganti sandi berkala",
-      "status": "approved",
-      "newPasswordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
-      "newSalt": "7e1e10ed5203669f3d107fecf5f68dfa",
-      "newPassword": "Paro Pratama1",
-      "createdAt": "2026-10-30T16:31:39.590Z",
-      "processedAt": "2026-10-30T16:56:17.016Z",
-      "processedBy": "Administrator Tamansiswa Batam",
-      "adminNote": "Telah Disetujui"
-    },
-    {
       "id": "pr_1793379084239",
       "ticketNumber": "TKT-574403",
       "userId": "stu_1793377010945_uzghx",
@@ -420,6 +377,24 @@
       "newPassword": "passwordBaru789",
       "createdAt": "2026-10-30T16:51:24.239Z",
       "processedAt": "2026-10-30T16:56:16.713Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "Telah Disetujui"
+    },
+    {
+      "id": "pr_1793377899590",
+      "ticketNumber": "TKT-994704",
+      "userId": "stu_1793373992097_jv1v1",
+      "username": "graniat",
+      "name": "Alvaro Pratama Herlen",
+      "kelas": "Kelas 8",
+      "role": "siswa",
+      "reason": "Pengajuan ganti sandi berkala",
+      "status": "approved",
+      "newPasswordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
+      "newSalt": "7e1e10ed5203669f3d107fecf5f68dfa",
+      "newPassword": "Paro Pratama1",
+      "createdAt": "2026-10-30T16:31:39.590Z",
+      "processedAt": "2026-10-30T16:56:17.016Z",
       "processedBy": "Administrator Tamansiswa Batam",
       "adminNote": "Telah Disetujui"
     }
@@ -455,7 +430,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T18:17:58.098Z"
+      "createdAt": "2026-10-30T18:12:19.744Z"
     },
     {
       "id": "notif_announcement_1",
@@ -467,7 +442,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:17:58.098Z"
+      "createdAt": "2026-10-30T17:12:19.746Z"
     },
     {
       "id": "notif_subject_1",
@@ -478,7 +453,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:17:58.098Z"
+      "createdAt": "2026-10-30T16:12:19.746Z"
     }
   ],
   "articles": [],
@@ -489,7 +464,18 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793384524853_duo4",
+      "userId": "stu_1793377010945_uzghx",
+      "userName": "Rian Pratama",
+      "userUsername": "siswa.rian.resmi",
+      "userKelas": "Kelas 7",
+      "timestamp": "2026-10-30T18:22:04.828Z",
+      "formattedTime": "18.22.04 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
@@ -527,6 +513,8 @@
     "guru.matematika",
     "guru.bahasa",
     "kepala.sekolah",
-    "panitia.osis"
+    "panitia.osis",
+    "stu_1793377010945_uzghx",
+    "siswa.rian.resmi"
   ]
 }
