@@ -352,15 +352,7 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [
-    {
-      "id": "sig_1793377010983_8k2a",
-      "userKelas": "-",
-      "timestamp": "2026-10-30T16:16:50.953Z",
-      "formattedTime": "16.16.50 WIB",
-      "status": "received"
-    }
-  ],
+  "refreshSignals": [],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
@@ -398,6 +390,9 @@
     "guru.matematika",
     "guru.bahasa",
     "kepala.sekolah",
-    "panitia.osis"
+    "panitia.osis",
+    "alvaro1234",
+    "itskimzz",
+    "tamansiswa1"
   ]
 }
