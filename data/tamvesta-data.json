@@ -415,7 +415,9 @@
       "type": "subject_change",
       "isImportant": false,
       "linkType": "subject",
-      "readBy": [],
+      "readBy": [
+        "stu_1793373992097_jv1v1"
+      ],
       "deletedBy": [],
       "createdAt": "2026-10-30T14:32:18.137Z"
     }
