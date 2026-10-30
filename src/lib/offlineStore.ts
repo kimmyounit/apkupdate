@@ -150,8 +150,8 @@ export function isDemoStudent(u: { id?: string; username?: string; name?: string
   const id = (u.id || '').toLowerCase();
   const nm = (u.name || '').toLowerCase();
 
-  if (id.startsWith('user_siswa_siswa_') || id.startsWith('user_siswa_')) return true;
-  if (un.startsWith('siswa.')) return true;
+  // Hanya blokir akun demo bawaan lama dengan format ID 'user_siswa_siswa_'
+  if (id.startsWith('user_siswa_siswa_')) return true;
   if (DEMO_STUDENT_USERNAMES.includes(un)) return true;
   if (DEMO_STUDENT_NAMES.includes(nm)) return true;
   return false;
