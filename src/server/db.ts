@@ -285,8 +285,6 @@ export const OLD_DEMO_USERNAMES: string[] = [
   'siswa.sd5a.001', 'siswa.sd5a.002',
   'siswa.sd6a.001', 'siswa.sd6a.002',
   'guru.matematika', 'guru.bahasa', 'kepala.sekolah', 'panitia.osis',
-  'alvaro1234', 'itskimzz', 'itskimz', 'tamansiswa1',
-  'aldongker', 'graniat', 'kekey', 'siswa.tesnyata'
 ];
 
 export const DEMO_STUDENT_NAMES: string[] = [
@@ -296,12 +294,15 @@ export const DEMO_STUDENT_NAMES: string[] = [
   'nanda putra', 'olivia putri', 'putri rahayu', 'qori ananda',
   'rizky maulana', 'siti aminah', 'taufik hidayat', 'umi kalsum',
   'vino pratama', 'wulan sari', 'xena maharani', 'yoga santoso',
-  'zahra aulia', 'aldi firmansyah', 'ahmad fauzi',
-  'alvaro pratama herlen', 'ibrahim al ashry', 'kheisya nachua billa', 'tes siswa nyata'
+  'zahra aulia', 'aldi firmansyah',
 ];
 
-export function isDemoStudent(u: { id?: string; username?: string; name?: string; role?: string }): boolean {
+export function isDemoStudent(u: { id?: string; username?: string; name?: string; role?: string; isOfficial?: boolean; isCustom?: boolean; source?: string; isDemo?: boolean }): boolean {
   if (u.role && u.role !== 'siswa') return false;
+  // Akun resmi buatan Admin atau siswa permanen TIDAK PERNAH dianggap demo!
+  if ((u as any).isOfficial || (u as any).isCustom || (u as any).source === 'admin' || (u as any).isDemo === false) {
+    return false;
+  }
   const un = (u.username || '').toLowerCase().replace(/^@+/, '');
   const id = (u.id || '').toLowerCase();
   const nm = (u.name || '').toLowerCase();
@@ -1221,7 +1222,11 @@ class DatabaseManager {
       avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=0284c7`,
       createdAt: now,
       updatedAt: now,
-    };
+      isOfficial: true,
+      isCustom: true,
+      source: 'admin',
+      isDemo: false,
+    } as any;
 
     this.data.users.push(newUser);
     this.save();

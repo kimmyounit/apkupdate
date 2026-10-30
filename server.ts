@@ -426,6 +426,15 @@ app.post('/api/admin/students', authMiddleware, requireRole(['admin']), async (r
     return res.status(400).json({ error: result.error });
   }
 
+  // Multi-device sync signal: Broadcast signal so other devices (Android APK, Web) get instant notification
+  try {
+    db.addRefreshSignal({
+      type: 'users',
+      source: 'admin',
+      message: `Akun siswa baru (${result.user?.name || name}) berhasil ditambahkan oleh Administrasi`,
+    });
+  } catch (_) {}
+
   try {
     await db.saveAsync();
   } catch (_) {}

@@ -73,14 +73,6 @@ export const DEMO_STUDENT_USERNAMES: string[] = [
   'guru.bahasa',
   'kepala.sekolah',
   'panitia.osis',
-  'alvaro1234',
-  'itskimzz',
-  'itskimz',
-  'tamansiswa1',
-  'aldongker',
-  'graniat',
-  'kekey',
-  'siswa.tesnyata',
   'siswa.smp7a.001',
   'siswa.smp7a.002',
   'siswa.smp7a.003',
@@ -137,15 +129,14 @@ export const DEMO_STUDENT_NAMES: string[] = [
   'yoga santoso',
   'zahra aulia',
   'aldi firmansyah',
-  'ahmad fauzi',
-  'alvaro pratama herlen',
-  'ibrahim al ashry',
-  'kheisya nachua billa',
-  'tes siswa nyata',
 ];
 
-export function isDemoStudent(u: { id?: string; username?: string; name?: string; role?: string }): boolean {
+export function isDemoStudent(u: { id?: string; username?: string; name?: string; role?: string; isOfficial?: boolean; isCustom?: boolean; source?: string; isDemo?: boolean }): boolean {
   if (u.role && u.role !== 'siswa') return false;
+  // Akun resmi buatan Admin atau siswa permanen TIDAK PERNAH dianggap demo!
+  if ((u as any).isOfficial || (u as any).isCustom || (u as any).source === 'admin' || (u as any).isDemo === false) {
+    return false;
+  }
   const un = (u.username || '').toLowerCase().replace(/^@+/, '');
   const id = (u.id || '').toLowerCase();
   const nm = (u.name || '').toLowerCase();

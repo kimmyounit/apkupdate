@@ -941,7 +941,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
       setStudentFormSuccess(res.message || 'Akun siswa berhasil didaftarkan ke database.');
       handleResetStudentForm();
 
-      const updated = await api.getStudents();
+      const updated = await api.getStudents(true);
       if (Array.isArray(updated) && updated.length > 0) {
         if (
           createdStudent &&
@@ -957,6 +957,12 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
         }
       }
       notifyMultiDeviceSync();
+      // Send cloud refresh signal to all devices
+      api.sendRefreshSignal({
+        type: 'users',
+        source: 'admin',
+        message: `Akun siswa baru ${newStudentName.trim()} ditambahkan`,
+      }).catch(() => {});
     } catch (err: any) {
       setStudentFormError(err.message || 'Gagal mendaftarkan akun siswa.');
     } finally {
