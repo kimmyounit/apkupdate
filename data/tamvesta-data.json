@@ -376,7 +376,8 @@
       "isOfficial": true,
       "isCustom": true,
       "source": "admin",
-      "isDemo": false
+      "isDemo": false,
+      "isVerified": true
     }
   ],
   "subjects": [],
@@ -387,24 +388,6 @@
   "attendanceEvents": [],
   "attendanceRecords": [],
   "passwordResetRequests": [
-    {
-      "id": "pr_1793377899590",
-      "ticketNumber": "TKT-994704",
-      "userId": "stu_1793373992097_jv1v1",
-      "username": "graniat",
-      "name": "Alvaro Pratama Herlen",
-      "kelas": "Kelas 8",
-      "role": "siswa",
-      "reason": "Pengajuan ganti sandi berkala",
-      "status": "approved",
-      "newPasswordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
-      "newSalt": "7e1e10ed5203669f3d107fecf5f68dfa",
-      "newPassword": "Paro Pratama1",
-      "createdAt": "2026-10-30T16:31:39.590Z",
-      "processedAt": "2026-10-30T16:56:17.016Z",
-      "processedBy": "Administrator Tamansiswa Batam",
-      "adminNote": "Telah Disetujui"
-    },
     {
       "id": "pr_1793379084239",
       "ticketNumber": "TKT-574403",
@@ -420,6 +403,24 @@
       "newPassword": "passwordBaru789",
       "createdAt": "2026-10-30T16:51:24.239Z",
       "processedAt": "2026-10-30T16:56:16.713Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "Telah Disetujui"
+    },
+    {
+      "id": "pr_1793377899590",
+      "ticketNumber": "TKT-994704",
+      "userId": "stu_1793373992097_jv1v1",
+      "username": "graniat",
+      "name": "Alvaro Pratama Herlen",
+      "kelas": "Kelas 8",
+      "role": "siswa",
+      "reason": "Pengajuan ganti sandi berkala",
+      "status": "approved",
+      "newPasswordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
+      "newSalt": "7e1e10ed5203669f3d107fecf5f68dfa",
+      "newPassword": "Paro Pratama1",
+      "createdAt": "2026-10-30T16:31:39.590Z",
+      "processedAt": "2026-10-30T16:56:17.016Z",
       "processedBy": "Administrator Tamansiswa Batam",
       "adminNote": "Telah Disetujui"
     }
@@ -455,7 +456,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T18:17:58.098Z"
+      "createdAt": "2026-10-30T17:42:18.658Z"
     },
     {
       "id": "notif_announcement_1",
@@ -467,7 +468,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T17:17:58.098Z"
+      "createdAt": "2026-10-30T16:42:18.660Z"
     },
     {
       "id": "notif_subject_1",
@@ -478,7 +479,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:17:58.098Z"
+      "createdAt": "2026-10-30T15:42:18.660Z"
     }
   ],
   "articles": [],
