@@ -352,8 +352,7 @@
       "salt": "7e1e10ed5203669f3d107fecf5f68dfa",
       "phone": "0895410591097",
       "email": "paro.pratama.herlenn@gmail.com",
-      "passwordChanged": true,
-      "isVerified": true
+      "passwordChanged": true
     }
   ],
   "subjects": [],
@@ -414,7 +413,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T16:59:20.843Z"
+      "createdAt": "2026-10-30T17:07:16.032Z"
     },
     {
       "id": "notif_announcement_1",
@@ -426,7 +425,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T15:59:20.843Z"
+      "createdAt": "2026-10-30T16:07:16.032Z"
     },
     {
       "id": "notif_subject_1",
@@ -437,7 +436,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-30T14:59:20.843Z"
+      "createdAt": "2026-10-30T15:07:16.032Z"
     }
   ],
   "articles": [],
