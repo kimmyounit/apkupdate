@@ -403,25 +403,7 @@
       "adminNote": "Telah Disetujui"
     }
   ],
-  "posts": [
-    {
-      "id": "post_1793380339460_ugvfu",
-      "authorId": "stu_1793377010945_uzghx",
-      "authorName": "Rian Pratama",
-      "authorUsername": "siswa.rian.resmi",
-      "authorKelas": "Kelas 7",
-      "authorAvatar": "https://api.dicebear.com/7.x/initials/svg?seed=Rian%20Pratama&backgroundColor=0284c7",
-      "authorIsVerified": false,
-      "authorIsAlumni": false,
-      "authorIsDeveloper": false,
-      "isPinned": false,
-      "caption": "Hai",
-      "mediaType": "none",
-      "likes": [],
-      "comments": [],
-      "createdAt": "2026-10-30T17:12:19.460Z"
-    }
-  ],
+  "posts": [],
   "stories": [],
   "notes": [],
   "notifications": [
@@ -582,5 +564,8 @@
     "guru.bahasa",
     "kepala.sekolah",
     "panitia.osis"
+  ],
+  "deletedPostIds": [
+    "post_1793380339460_ugvfu"
   ]
 }
