@@ -29,7 +29,8 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_kepsek:d592cc82bedb9886",
       "createdAt": "2026-10-24T08:22:46.821Z",
       "updatedAt": "2026-10-24T08:22:46.821Z",
-      "password": "Tamvesta!B2601"
+      "password": "Tamvesta!B2601",
+      "isVerified": true
     },
     {
       "id": "user_staff_titus_yayasan",
@@ -77,8 +78,7 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
       "createdAt": "2026-10-24T08:22:46.865Z",
       "updatedAt": "2026-10-24T08:22:46.865Z",
-      "password": "Tamvesta!B2604",
-      "isVerified": false
+      "password": "Tamvesta!B2604"
     },
     {
       "id": "user_staff_haliza_tu",
@@ -428,6 +428,27 @@
   "announcements": [],
   "quizzes": [
     {
+      "title": "hh",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-4824",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793438004502",
+      "createdAt": "2026-10-31T09:13:24.502Z"
+    },
+    {
       "title": "ppp",
       "subjectId": "sub_general",
       "subjectName": "Matematika Peminatan",
@@ -460,27 +481,6 @@
       "status": "inactive",
       "id": "quiz_1793433581388",
       "createdAt": "2026-10-31T07:59:41.388Z"
-    },
-    {
-      "title": "hh",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [],
-      "isActive": true,
-      "token": "TVQ-4824",
-      "sourceType": "google_forms",
-      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "active",
-      "id": "quiz_1793438004502",
-      "createdAt": "2026-10-31T09:13:24.502Z"
     }
   ],
   "quizAttempts": [
@@ -576,7 +576,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:27:59.889Z"
+      "createdAt": "2026-10-31T14:26:48.012Z"
     },
     {
       "id": "notif_announcement_1",
@@ -588,7 +588,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T13:27:59.889Z"
+      "createdAt": "2026-10-31T13:26:48.012Z"
     },
     {
       "id": "notif_subject_1",
@@ -599,7 +599,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T12:27:59.889Z"
+      "createdAt": "2026-10-31T12:26:48.012Z"
     }
   ],
   "articles": [],
