@@ -1017,7 +1017,7 @@ class DatabaseManager {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
       fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave, null, 2), 'utf-8');
-      if (process.env.VERCEL) {
+      if (process.env.VERCEL || getGitHubToken()) {
         this.syncToGitHub(dataToSave).catch(() => {});
       }
     } catch (err) {
@@ -1037,7 +1037,7 @@ class DatabaseManager {
 
   public async saveAsync(): Promise<void> {
     this.saveDataDirect(this.data);
-    if (process.env.VERCEL) {
+    if (process.env.VERCEL || getGitHubToken()) {
       if (this.syncPromise) {
         try { await this.syncPromise; } catch (_) {}
       }

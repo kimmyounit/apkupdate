@@ -137,6 +137,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creatingLoading, setCreatingLoading] = useState(false);
   const [previewGoogleFormUrl, setPreviewGoogleFormUrl] = useState<string | null>(null);
+  const [quizToDelete, setQuizToDelete] = useState<Quiz | null>(null);
   const [quizForm, setQuizForm] = useState({
     title: '',
     subjectName: 'Matematika Peminatan',
@@ -457,8 +458,21 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     }
   };
 
-  const handleDeleteQuiz = async (id: string) => {
-    if (!confirm('Hapus quiz ini secara permanen beserta seluruh token, riwayat pengerjaan, dan catatan pelanggarannya?')) return;
+  const handleDeleteQuiz = (quizOrId: Quiz | string) => {
+    if (typeof quizOrId === 'object' && quizOrId !== null) {
+      setQuizToDelete(quizOrId);
+      return;
+    }
+    const target = quizzes.find((q) => q.id === quizOrId);
+    if (target) {
+      setQuizToDelete(target);
+      return;
+    }
+    confirmExecuteDelete(quizOrId);
+  };
+
+  const confirmExecuteDelete = async (id: string) => {
+    setQuizToDelete(null);
     try {
       await api.deleteQuiz(id);
       setQuizzes((prev) => prev.filter((q) => q.id !== id));
@@ -1840,9 +1854,9 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                         </button>
 
                         <button
-                          onClick={() => handleDeleteQuiz(quiz.id)}
-                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition"
-                          title="Hapus Kuis"
+                          onClick={() => setQuizToDelete(quiz)}
+                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition active:scale-95"
+                          title="Hapus Kuis Permanen"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -2730,6 +2744,42 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                 title="Preview Google Forms"
                 allow="autoplay"
               />
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL KONFIRMASI HAPUS KUIS PERMANEN */}
+      {quizToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto border border-rose-200 shadow-inner">
+              <Trash2 className="w-8 h-8 text-rose-600" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-base font-black text-slate-900">
+                Hapus Kuis Permanen?
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Kuis <strong className="text-slate-800">"{quizToDelete.title}"</strong> (Token: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono font-bold text-blue-700">{quizToDelete.token}</code>) akan dihapus secara permanen dari server dan perangkat. Seluruh riwayat nilai dan peserta akan dibersihkan selamanya.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setQuizToDelete(null)}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmExecuteDelete(quizToDelete.id)}
+                className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-md shadow-rose-600/25 transition active:scale-95"
+              >
+                Ya, Hapus Permanen
+              </button>
             </div>
           </div>
         </div>

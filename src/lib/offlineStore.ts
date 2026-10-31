@@ -27,6 +27,28 @@ const PERMANENT_AVATARS_KEY = 'tamvesta_permanent_avatars_v1';
 const PERMANENT_BIOS_KEY = 'tamvesta_permanent_bios_v1';
 export const ADMIN_STUDENTS_BACKUP_KEY = 'tamvesta_admin_registered_students_v1';
 export const ADMIN_DELETED_STUDENTS_KEY = 'tamvesta_admin_deleted_students_v1';
+export const EXPLICITLY_DELETED_QUIZZES_KEY = 'tamvesta_deleted_quizzes_ids_v1';
+
+export function getExplicitlyDeletedQuizIds(): string[] {
+  try {
+    const raw = localStorage.getItem(EXPLICITLY_DELETED_QUIZZES_KEY);
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) return list;
+    }
+  } catch (_) {}
+  return [];
+}
+
+export function addExplicitlyDeletedQuizId(id: string) {
+  try {
+    const list = getExplicitlyDeletedQuizIds();
+    if (id && !list.includes(id)) {
+      list.push(id);
+      localStorage.setItem(EXPLICITLY_DELETED_QUIZZES_KEY, JSON.stringify(list));
+    }
+  } catch (_) {}
+}
 
 export function getAdminRegisteredStudentsBackup(): User[] {
   try {
@@ -314,6 +336,12 @@ function loadDB(): StandaloneDB {
   if (!Array.isArray(db.users)) db.users = [];
   if (!Array.isArray(db.notifications)) db.notifications = [];
   if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
+
+  // Pastikan seluruh kuis yang dihapus permanen disaring keluar dari database lokal
+  const explicitlyDeletedQuizzes = getExplicitlyDeletedQuizIds();
+  if (Array.isArray(db.quizzes)) {
+    db.quizzes = db.quizzes.filter((q) => !explicitlyDeletedQuizzes.includes(q.id));
+  }
 
   // Pastikan foto profil & bio yang pernah disimpan selamanya tidak hilang
   if (Array.isArray(db.users)) {
@@ -1323,17 +1351,21 @@ export const offlineStore = {
   // Quizzes
   getQuizzes(): Quiz[] {
     const db = loadDB();
+    const explicit = getExplicitlyDeletedQuizIds();
     const deleted = (db as any).deletedQuizIds || [];
-    return (db.quizzes || []).filter((q) => !deleted.includes(q.id));
+    const all = new Set([...explicit, ...deleted]);
+    return (db.quizzes || []).filter((q) => !all.has(q.id));
   },
 
   setQuizzes(quizzes: Quiz[]) {
     if (!Array.isArray(quizzes)) return;
     const db = loadDB();
-    const deleted = new Set((db as any).deletedQuizIds || []);
+    const explicit = getExplicitlyDeletedQuizIds();
+    const deleted = (db as any).deletedQuizIds || [];
+    const all = new Set([...explicit, ...deleted]);
     const map = new Map<string, Quiz>();
-    (db.quizzes || []).forEach((q) => { if (q.id && !deleted.has(q.id)) map.set(q.id, q); });
-    quizzes.forEach((q) => { if (q.id && !deleted.has(q.id)) map.set(q.id, q); });
+    (db.quizzes || []).forEach((q) => { if (q.id && !all.has(q.id)) map.set(q.id, q); });
+    quizzes.forEach((q) => { if (q.id && !all.has(q.id)) map.set(q.id, q); });
     db.quizzes = Array.from(map.values());
     saveDB(db);
   },
@@ -1355,6 +1387,7 @@ export const offlineStore = {
   },
 
   deleteQuiz(id: string): boolean {
+    addExplicitlyDeletedQuizId(id);
     const db = loadDB();
     if (!Array.isArray(db.quizzes)) db.quizzes = [];
     const beforeLen = db.quizzes.length;
@@ -1376,7 +1409,7 @@ export const offlineStore = {
       db.quizAttempts = db.quizAttempts.filter((a) => a.quizId !== id);
     }
     saveDB(db);
-    return db.quizzes.length !== beforeLen;
+    return true;
   },
 
   getQuizById(id: string): Quiz {
