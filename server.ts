@@ -706,6 +706,26 @@ app.get('/api/quizzes', optionalAuthMiddleware, async (req: AuthenticatedRequest
   return res.json(quizzes);
 });
 
+// GET /api/quizzes/participants (Guru & Admin pantau siapa saja yang sudah masuk ujian)
+app.get('/api/quizzes/participants', optionalAuthMiddleware, async (req, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
+  const quizId = req.query.quizId as string | undefined;
+  const participants = db.getQuizParticipants(quizId);
+  return res.json(participants);
+});
+
+// GET /api/quizzes/violations (Guru & Admin pantau pelanggaran ujian real-time)
+app.get('/api/quizzes/violations', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
+  const quizId = req.query.quizId as string;
+  const violations = db.getQuizViolations(quizId);
+  return res.json(violations);
+});
+
 // GET /api/quizzes/:id
 app.get('/api/quizzes/:id', optionalAuthMiddleware, async (req, res) => {
   try {
@@ -748,16 +768,6 @@ app.post('/api/quizzes/verify-token', optionalAuthMiddleware, async (req: Authen
     success: true,
     quiz: result.quiz,
   });
-});
-
-// GET /api/quizzes/participants (Guru & Admin pantau siapa saja yang sudah masuk ujian)
-app.get('/api/quizzes/participants', optionalAuthMiddleware, async (req, res) => {
-  try {
-    await db.reloadFromGitHub();
-  } catch (_) {}
-  const quizId = req.query.quizId as string | undefined;
-  const participants = db.getQuizParticipants(quizId);
-  return res.json(participants);
 });
 
 // POST /api/quizzes/generate-token (Guru/Admin generate token otomatis)
@@ -896,16 +906,6 @@ app.post('/api/quizzes/:id/violation', optionalAuthMiddleware, async (req: Authe
   } catch (_) {}
 
   return res.status(201).json({ success: true, violation });
-});
-
-// GET /api/quizzes/violations (Guru & Admin pantau pelanggaran ujian real-time)
-app.get('/api/quizzes/violations', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
-  try {
-    await db.reloadFromGitHub();
-  } catch (_) {}
-  const quizId = req.query.quizId as string;
-  const violations = db.getQuizViolations(quizId);
-  return res.json(violations);
 });
 
 // PUT /api/quizzes/:id (Admin & Guru)
