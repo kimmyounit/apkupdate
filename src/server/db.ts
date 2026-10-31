@@ -559,6 +559,14 @@ class DatabaseManager {
             if (ghUser.isActive !== undefined) existing.isActive = ghUser.isActive;
           }
         });
+
+        // Pastikan semua akun guru selalu berstatus terverifikasi centang biru
+        this.data.users.forEach((u) => {
+          if (u.role === 'guru') {
+            u.isVerified = true;
+            u.badgeType = 'blue';
+          }
+        });
       }
       if (Array.isArray(parsed.posts)) {
         const postMap = new Map<string, any>();
@@ -822,6 +830,10 @@ class DatabaseManager {
               u.mustChangePassword = false;
               u.passwordHash = defaultAdminPass.hash;
               u.salt = defaultAdminPass.salt;
+            }
+            if (u.role === 'guru') {
+              u.isVerified = true;
+              u.badgeType = 'blue';
             }
           });
 
@@ -3444,6 +3456,7 @@ class DatabaseManager {
         partnerName: partner ? partner.name : (conv.lastMessage.senderId === partnerId ? conv.lastMessage.senderName : conv.lastMessage.recipientName),
         partnerUsername: partner ? partner.username : (conv.lastMessage.senderId === partnerId ? conv.lastMessage.senderUsername : conv.lastMessage.recipientUsername),
         partnerAvatar: partner?.avatarUrl,
+        partnerIsVerified: partner?.isVerified || partner?.role === 'guru',
         lastMessage: conv.lastMessage,
         unreadCount: conv.unreadCount,
         updatedAt: conv.lastMessage.createdAt,

@@ -16,7 +16,7 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({
   isDeveloper = false,
 }) => {
   const isDev = isDeveloper || type === 'yellow' || type === 'developer' || type === 'gold';
-  const resolvedTitle = title || (isDev ? 'Developer Resmi TAMVESTA (Centang Kuning)' : 'Siswa Sudah Terverifikasi Resmi (Centang Biru)');
+  const resolvedTitle = title || (isDev ? 'Developer Resmi TAMVESTA (Centang Kuning)' : 'Akun Terverifikasi Resmi (Centang Biru)');
 
   const sizeMap = {
     xs: 'w-3 h-3',

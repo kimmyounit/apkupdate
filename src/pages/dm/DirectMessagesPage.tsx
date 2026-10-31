@@ -613,8 +613,11 @@ export const DirectMessagesPage: React.FC<DirectMessagesPageProps> = ({
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                        {conv.partnerName}
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate flex items-center gap-1">
+                        <span className="truncate">{conv.partnerName}</span>
+                        {(conv.partnerIsVerified || availableUsers.find((u) => u.id === conv.partnerId)?.isVerified) && (
+                          <VerifiedBadge size="xs" />
+                        )}
                       </h4>
                       {conv.lastMessage && (
                         <span className="text-[10px] text-slate-400 shrink-0 ml-2">
@@ -776,8 +779,12 @@ export const DirectMessagesPage: React.FC<DirectMessagesPageProps> = ({
                   <span className="truncate">{activePartner.partnerName}</span>
                   {(activePartner.partnerUsername?.toLowerCase() === 'tamvesta' ||
                     availableUsers.find((u) => u.id === activePartnerId)?.isDeveloper ||
-                    availableUsers.find((u) => u.id === activePartnerId)?.role === 'support') && (
+                    availableUsers.find((u) => u.id === activePartnerId)?.role === 'support') ? (
                     <VerifiedBadge size="sm" isDeveloper={true} />
+                  ) : (
+                    (activePartner.partnerIsVerified || availableUsers.find((u) => u.id === activePartnerId)?.isVerified) && (
+                      <VerifiedBadge size="sm" />
+                    )
                   )}
                 </h3>
                 <p className="text-[10px] sm:text-[11px] text-emerald-600 font-semibold truncate">

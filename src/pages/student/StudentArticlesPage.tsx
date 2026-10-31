@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api.ts';
 import type { TeacherArticle } from '../../types/index.ts';
+import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
 
 export const StudentArticlesPage: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [articles, setArticles] = useState<TeacherArticle[]>([]);
@@ -207,7 +208,10 @@ export const StudentArticlesPage: React.FC<{ onBack?: () => void }> = ({ onBack 
                         )}
                       </div>
                       <div>
-                        <span className="font-semibold text-slate-700 text-xs block">{art.authorName}</span>
+                        <span className="font-semibold text-slate-700 text-xs flex items-center gap-1">
+                          <span>{art.authorName}</span>
+                          <VerifiedBadge size="xs" />
+                        </span>
                         {art.authorSubject && (
                           <span className="text-[10px] text-slate-400 block -mt-0.5">{art.authorSubject}</span>
                         )}
@@ -284,8 +288,8 @@ export const StudentArticlesPage: React.FC<{ onBack?: () => void }> = ({ onBack 
                   </div>
                   <div>
                     <h4 className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1">
-                      {selectedArticle.authorName}
-                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />
+                      <span>{selectedArticle.authorName}</span>
+                      <VerifiedBadge size="xs" />
                     </h4>
                     <p className="text-[11px] text-slate-500">{selectedArticle.authorSubject || 'Guru Pengampu'}</p>
                   </div>

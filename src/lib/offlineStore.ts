@@ -286,6 +286,18 @@ function loadDB(): StandaloneDB {
         db.users[idx].name = defUser.name || db.users[idx].name;
         db.users[idx].username = defUser.username || db.users[idx].username;
         db.users[idx].jabatan = defUser.jabatan || db.users[idx].jabatan;
+        if (defUser.role === 'guru') {
+          db.users[idx].isVerified = true;
+          db.users[idx].badgeType = 'blue';
+        }
+      }
+    });
+
+    // Pastikan seluruh akun guru berstatus terverifikasi centang biru
+    db.users.forEach((u) => {
+      if (u.role === 'guru') {
+        u.isVerified = true;
+        u.badgeType = 'blue';
       }
     });
   }
@@ -2670,6 +2682,7 @@ export const offlineStore = {
         partnerName: partner ? partner.name : (conv.lastMessage.senderId === partnerId ? conv.lastMessage.senderName : conv.lastMessage.recipientName),
         partnerUsername: partner ? partner.username : (conv.lastMessage.senderId === partnerId ? conv.lastMessage.senderUsername : conv.lastMessage.recipientUsername),
         partnerAvatar: partner?.avatarUrl,
+        partnerIsVerified: partner?.isVerified || partner?.role === 'guru',
         lastMessage: conv.lastMessage,
         unreadCount: conv.unreadCount,
         updatedAt: conv.lastMessage.createdAt,

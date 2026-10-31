@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2, ChevronLeft, ChevronRight, Clock, Send, MessageCircle, Heart, Check } from 'lucide-react';
 import type { Story } from '../types/index.ts';
 import { api } from '../lib/api.ts';
+import { VerifiedBadge } from './VerifiedBadge.tsx';
 
 interface StoryViewerModalProps {
   isOpen: boolean;
@@ -136,6 +137,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
               <div>
                 <div className="font-bold text-xs flex items-center gap-1.5">
                   <span>{currentStory.authorName}</span>
+                  {currentStory.authorIsVerified && <VerifiedBadge size="xs" />}
                   {currentStory.authorKelas && (
                     <span className="text-[10px] text-emerald-400 font-semibold">
                       • {currentStory.authorKelas}

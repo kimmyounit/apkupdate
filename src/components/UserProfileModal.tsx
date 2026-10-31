@@ -237,7 +237,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
                   {/* Bio */}
                   <p className="text-xs text-slate-600 leading-relaxed max-w-sm">
-                    {profileUser.bio || 'Siswa Perguruan Tamansiswa Batam. Belum ada bio.'}
+                    {profileUser.bio || (profileUser.role === 'guru' ? 'Dewan Guru Perguruan Tamansiswa Batam.' : 'Siswa Perguruan Tamansiswa Batam. Belum ada bio.')}
                   </p>
 
                   {/* Stats Counter */}

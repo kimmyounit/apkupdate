@@ -538,6 +538,7 @@ export interface DMConversation {
   partnerName: string;
   partnerUsername: string;
   partnerAvatar?: string;
+  partnerIsVerified?: boolean;
   lastMessage?: DirectMessage;
   unreadCount: number;
   updatedAt: string;

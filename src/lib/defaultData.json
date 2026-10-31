@@ -103,7 +103,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_maidarlis:57a4b0da25c987d8",
       "createdAt": "2026-10-20T12:20:35.218Z",
-      "updatedAt": "2026-10-20T12:20:35.218Z"
+      "updatedAt": "2026-10-20T12:20:35.218Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_fatimah",
@@ -118,7 +120,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_fatimah:a44c1084a898be20",
       "createdAt": "2026-10-20T12:20:35.231Z",
-      "updatedAt": "2026-10-20T12:20:35.231Z"
+      "updatedAt": "2026-10-20T12:20:35.231Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_endang_daryanti",
@@ -133,7 +137,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_endang_daryanti:2aba397c7a60e609",
       "createdAt": "2026-10-20T12:20:35.241Z",
-      "updatedAt": "2026-10-20T12:20:35.241Z"
+      "updatedAt": "2026-10-20T12:20:35.241Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_kristina_manurung",
@@ -148,7 +154,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_kristina_manurung:a278187e110481c8",
       "createdAt": "2026-10-20T12:20:35.255Z",
-      "updatedAt": "2026-10-20T12:20:35.255Z"
+      "updatedAt": "2026-10-20T12:20:35.255Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_nia_damayanti",
@@ -163,7 +171,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_nia_damayanti:1239e21c7e314907",
       "createdAt": "2026-10-20T12:20:35.268Z",
-      "updatedAt": "2026-10-20T12:20:35.268Z"
+      "updatedAt": "2026-10-20T12:20:35.268Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_nelly_silitonga",
@@ -178,7 +188,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_nelly_silitonga:ad6264c94f0e721a",
       "createdAt": "2026-10-20T12:20:35.280Z",
-      "updatedAt": "2026-10-20T12:20:35.280Z"
+      "updatedAt": "2026-10-20T12:20:35.280Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_dina_nurziana",
@@ -193,7 +205,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_dina_nurziana:e96cd902d953f1e1",
       "createdAt": "2026-10-20T12:20:35.289Z",
-      "updatedAt": "2026-10-20T12:20:35.289Z"
+      "updatedAt": "2026-10-20T12:20:35.289Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_nur_aini",
@@ -208,7 +222,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_nur_aini:d806c34a2027d6f0",
       "createdAt": "2026-10-20T12:20:35.301Z",
-      "updatedAt": "2026-10-20T12:20:35.301Z"
+      "updatedAt": "2026-10-20T12:20:35.301Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_siska_permatasari",
@@ -223,7 +239,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_siska_permatasari:8f72f422d97c94af",
       "createdAt": "2026-10-20T12:20:35.313Z",
-      "updatedAt": "2026-10-20T12:20:35.313Z"
+      "updatedAt": "2026-10-20T12:20:35.313Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_risky",
@@ -238,7 +256,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_risky:b4a2896eb088772e",
       "createdAt": "2026-10-20T12:20:35.322Z",
-      "updatedAt": "2026-10-20T12:20:35.322Z"
+      "updatedAt": "2026-10-20T12:20:35.322Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_masni",
@@ -253,7 +273,9 @@
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_masni:5c6b1af87cca3d50",
       "createdAt": "2026-10-20T12:20:35.337Z",
-      "updatedAt": "2026-10-20T12:20:35.337Z"
+      "updatedAt": "2026-10-20T12:20:35.337Z",
+      "isVerified": true,
+      "badgeType": "blue"
     },
     {
       "id": "user_staff_angga_satpam",

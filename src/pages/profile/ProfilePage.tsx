@@ -512,7 +512,7 @@ export const ProfilePage: React.FC = () => {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <span>Nama Lengkap Siswa</span>
+              <span>{user.role === 'guru' ? 'Nama Lengkap Guru' : 'Nama Lengkap Siswa'}</span>
               {user.isVerified && <VerifiedBadge size="sm" />}
             </label>
             <span className="text-[10px] text-slate-400 font-semibold bg-slate-100 px-2 py-0.5 rounded-full">
@@ -595,7 +595,7 @@ export const ProfilePage: React.FC = () => {
             {user.isVerified ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold">
                 <VerifiedBadge size="sm" />
-                <span>Siswa Sudah Terverifikasi (Centang Biru Aktif)</span>
+                <span>{user.role === 'guru' ? 'Guru Sudah Terverifikasi (Centang Biru Aktif)' : 'Siswa Sudah Terverifikasi (Centang Biru Aktif)'}</span>
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 text-xs font-semibold">
