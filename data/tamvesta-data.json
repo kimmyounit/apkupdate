@@ -512,24 +512,6 @@
   "attendanceRecords": [],
   "passwordResetRequests": [
     {
-      "id": "pr_1793379084239",
-      "ticketNumber": "TKT-574403",
-      "userId": "stu_1793377010945_uzghx",
-      "username": "siswa.rian.resmi",
-      "name": "Rian Pratama",
-      "kelas": "Kelas 7",
-      "role": "siswa",
-      "reason": "Pengajuan ganti sandi berkala",
-      "status": "approved",
-      "newPasswordHash": "1a3a6c21e8783c7bad84e7156b2a6c9b935a2996c2eeab2d6abb764e388304204f4879511103e652a8320ee979b735c378c5a81a4cbe1ddf1d3ca39006901447",
-      "newSalt": "264d2c9588c3de3d98c10077b8c82422",
-      "newPassword": "passwordBaru789",
-      "createdAt": "2026-10-30T16:51:24.239Z",
-      "processedAt": "2026-10-30T16:56:16.713Z",
-      "processedBy": "Administrator Tamansiswa Batam",
-      "adminNote": "Telah Disetujui"
-    },
-    {
       "id": "pr_1793377899590",
       "ticketNumber": "TKT-994704",
       "userId": "stu_1793373992097_jv1v1",
@@ -544,6 +526,24 @@
       "newPassword": "Paro Pratama1",
       "createdAt": "2026-10-30T16:31:39.590Z",
       "processedAt": "2026-10-30T16:56:17.016Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "Telah Disetujui"
+    },
+    {
+      "id": "pr_1793379084239",
+      "ticketNumber": "TKT-574403",
+      "userId": "stu_1793377010945_uzghx",
+      "username": "siswa.rian.resmi",
+      "name": "Rian Pratama",
+      "kelas": "Kelas 7",
+      "role": "siswa",
+      "reason": "Pengajuan ganti sandi berkala",
+      "status": "approved",
+      "newPasswordHash": "1a3a6c21e8783c7bad84e7156b2a6c9b935a2996c2eeab2d6abb764e388304204f4879511103e652a8320ee979b735c378c5a81a4cbe1ddf1d3ca39006901447",
+      "newSalt": "264d2c9588c3de3d98c10077b8c82422",
+      "newPassword": "passwordBaru789",
+      "createdAt": "2026-10-30T16:51:24.239Z",
+      "processedAt": "2026-10-30T16:56:16.713Z",
       "processedBy": "Administrator Tamansiswa Batam",
       "adminNote": "Telah Disetujui"
     }
@@ -569,7 +569,42 @@
   ],
   "stories": [],
   "notes": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif_welcome",
+      "title": "Selamat Datang di TAMVESTA Mobile!",
+      "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
+      "type": "general",
+      "isImportant": true,
+      "linkType": "none",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T09:13:42.493Z"
+    },
+    {
+      "id": "notif_announcement_1",
+      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
+      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
+      "type": "announcement",
+      "isImportant": true,
+      "linkType": "announcement",
+      "linkId": "ann_1",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T08:13:42.494Z"
+    },
+    {
+      "id": "notif_subject_1",
+      "title": "Pembaruan Jadwal: Matematika Wajib",
+      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
+      "type": "subject_change",
+      "isImportant": false,
+      "linkType": "subject",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T07:13:42.494Z"
+    }
+  ],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
