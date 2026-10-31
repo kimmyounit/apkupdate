@@ -405,7 +405,42 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [],
+  "quizzes": [
+    {
+      "title": "ppp",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [
+        {
+          "id": "q_guru_1",
+          "question": "siapa pendiri tamansiswa",
+          "options": [
+            "soekarno",
+            "khd",
+            "jookowi",
+            "pascabowo"
+          ],
+          "correctOptionIndex": 0,
+          "explanation": ""
+        }
+      ],
+      "isActive": true,
+      "token": "TVQ-4655",
+      "sourceType": "interactive",
+      "externalUrl": "",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793433581388",
+      "createdAt": "2026-10-31T07:59:41.388Z"
+    }
+  ],
   "quizAttempts": [],
   "quizViolations": [],
   "attendanceEvents": [],
@@ -471,6 +506,19 @@
   "notes": [],
   "notifications": [
     {
+      "id": "notif_1793433581389_lyhqm",
+      "title": "📢 Quiz Baru Tersedia!",
+      "message": "Endang Daryanti telah menerbitkan quiz: \"ppp\" (Matematika Peminatan). Token: TVQ-4655",
+      "type": "quiz",
+      "isImportant": false,
+      "linkType": "quiz",
+      "linkId": "quiz_1793433581388",
+      "targetRole": "siswa",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T07:59:41.389Z"
+    },
+    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -513,7 +561,18 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793433581420_kz8a",
+      "userId": "user_staff_endang_daryanti",
+      "userName": "Endang Daryanti",
+      "userUsername": "endang.daryanti",
+      "userKelas": "Quiz: TVQ-4655",
+      "timestamp": "2026-10-31T07:59:41.390Z",
+      "formattedTime": "07.59.41 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
