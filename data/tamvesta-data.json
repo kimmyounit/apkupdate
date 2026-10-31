@@ -405,31 +405,112 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [],
-  "quizAttempts": [],
-  "quizViolations": [],
-  "quizParticipants": [],
+  "quizzes": [
+    {
+      "title": "hh",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-4824",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793438004502",
+      "createdAt": "2026-10-31T09:13:24.502Z"
+    },
+    {
+      "title": "ppp",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [
+        {
+          "id": "q_guru_1",
+          "question": "siapa pendiri tamansiswa",
+          "options": [
+            "soekarno",
+            "khd",
+            "jookowi",
+            "pascabowo"
+          ],
+          "correctOptionIndex": 0,
+          "explanation": ""
+        }
+      ],
+      "isActive": false,
+      "token": "TVQ-4655",
+      "sourceType": "interactive",
+      "externalUrl": "",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "inactive",
+      "id": "quiz_1793433581388",
+      "createdAt": "2026-10-31T07:59:41.388Z"
+    }
+  ],
+  "quizAttempts": [
+    {
+      "quizId": "quiz_1793438004502",
+      "quizTitle": "hh",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "username": "siswa.rian.resmi",
+      "tokenUsed": "TVQ-4824",
+      "score": 100,
+      "totalQuestions": 0,
+      "correctAnswersCount": 0,
+      "passed": true,
+      "answers": [],
+      "id": "att_1793438088274",
+      "completedAt": "2026-10-31T09:14:48.274Z"
+    }
+  ],
+  "quizViolations": [
+    {
+      "quizId": "quiz_1793438004502",
+      "quizTitle": "hh",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "studentUsername": "siswa.rian.resmi",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "violationType": "tab_switch",
+      "violationDetail": "Beralih tab / membuka aplikasi lain saat ujian berlangsung",
+      "id": "violation_1793438066702_fckg",
+      "timestamp": "2026-10-31T09:14:26.702Z"
+    }
+  ],
+  "quizParticipants": [
+    {
+      "id": "part_1793438059814_p6js",
+      "quizId": "quiz_1793438004502",
+      "quizTitle": "hh",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "studentUsername": "siswa.rian.resmi",
+      "studentKelas": "Kelas 7",
+      "tokenUsed": "TVQ-4824",
+      "enteredAt": "2026-10-31T09:14:19.814Z",
+      "status": "in_progress"
+    }
+  ],
   "attendanceEvents": [],
   "attendanceRecords": [],
   "passwordResetRequests": [
-    {
-      "id": "pr_1793377899590",
-      "ticketNumber": "TKT-994704",
-      "userId": "stu_1793373992097_jv1v1",
-      "username": "graniat",
-      "name": "Alvaro Pratama Herlen",
-      "kelas": "Kelas 8",
-      "role": "siswa",
-      "reason": "Pengajuan ganti sandi berkala",
-      "status": "approved",
-      "newPasswordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
-      "newSalt": "7e1e10ed5203669f3d107fecf5f68dfa",
-      "newPassword": "Paro Pratama1",
-      "createdAt": "2026-10-30T16:31:39.590Z",
-      "processedAt": "2026-10-30T16:56:17.016Z",
-      "processedBy": "Administrator Tamansiswa Batam",
-      "adminNote": "Telah Disetujui"
-    },
     {
       "id": "pr_1793379084239",
       "ticketNumber": "TKT-574403",
@@ -445,6 +526,24 @@
       "newPassword": "passwordBaru789",
       "createdAt": "2026-10-30T16:51:24.239Z",
       "processedAt": "2026-10-30T16:56:16.713Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "Telah Disetujui"
+    },
+    {
+      "id": "pr_1793377899590",
+      "ticketNumber": "TKT-994704",
+      "userId": "stu_1793373992097_jv1v1",
+      "username": "graniat",
+      "name": "Alvaro Pratama Herlen",
+      "kelas": "Kelas 8",
+      "role": "siswa",
+      "reason": "Pengajuan ganti sandi berkala",
+      "status": "approved",
+      "newPasswordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
+      "newSalt": "7e1e10ed5203669f3d107fecf5f68dfa",
+      "newPassword": "Paro Pratama1",
+      "createdAt": "2026-10-30T16:31:39.590Z",
+      "processedAt": "2026-10-30T16:56:17.016Z",
       "processedBy": "Administrator Tamansiswa Batam",
       "adminNote": "Telah Disetujui"
     }
@@ -480,7 +579,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T09:13:10.084Z"
+      "createdAt": "2026-10-31T10:58:36.329Z"
     },
     {
       "id": "notif_announcement_1",
@@ -492,7 +591,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T08:13:10.084Z"
+      "createdAt": "2026-10-31T09:58:36.329Z"
     },
     {
       "id": "notif_subject_1",
@@ -503,7 +602,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T07:13:10.084Z"
+      "createdAt": "2026-10-31T08:58:36.329Z"
     }
   ],
   "articles": [],
@@ -690,10 +789,5 @@
     "guru.bahasa",
     "kepala.sekolah",
     "panitia.osis"
-  ],
-  "deletedQuizIds": [
-    "quiz_1793433581388",
-    "quiz_1793438004502",
-    "quiz_1793438743437"
   ]
 }
