@@ -429,14 +429,14 @@
           "explanation": ""
         }
       ],
-      "isActive": true,
+      "isActive": false,
       "token": "TVQ-4655",
       "sourceType": "interactive",
       "externalUrl": "",
       "password": "",
       "scheduleStart": "",
       "scheduleEnd": "",
-      "status": "active",
+      "status": "inactive",
       "id": "quiz_1793433581388",
       "createdAt": "2026-10-31T07:59:41.388Z"
     },
