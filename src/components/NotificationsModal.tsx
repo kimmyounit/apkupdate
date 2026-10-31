@@ -150,11 +150,16 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               <Bell className="w-5 h-5 text-amber-300" />
             </div>
             <div>
-              <h2 className="font-black text-sm sm:text-base">Notifikasi Sekolah</h2>
+              <h2 className="font-black text-sm sm:text-base flex items-center gap-1.5">
+                <span>Pusat Kontrol & Notifikasi Siswa</span>
+                <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.2 rounded-md uppercase">
+                  Siaran Resmi
+                </span>
+              </h2>
               <p className="text-[11px] text-teal-100">
                 {unreadCount > 0
-                  ? `${unreadCount} notifikasi belum dibaca`
-                  : 'Semua notifikasi telah dibaca'}
+                  ? `${unreadCount} notifikasi baru belum dibaca`
+                  : 'Semua siaran sekolah telah dibaca'}
               </p>
             </div>
           </div>

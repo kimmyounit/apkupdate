@@ -31,7 +31,9 @@ import {
   Download,
   FileSpreadsheet,
   FolderDown,
+  Bell,
 } from 'lucide-react';
+import { NotificationBroadcastPanel } from '../../components/NotificationBroadcastPanel.tsx';
 import { api } from '../../lib/api.ts';
 import type {
   User,
@@ -44,7 +46,7 @@ import { useAuth } from '../../context/AuthContext.tsx';
 
 export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpenScanner }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'articles' | 'finance' | 'tu_reports' | 'permissions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'articles' | 'finance' | 'tu_reports' | 'permissions' | 'notifications'>('overview');
   const [tuReports, setTuReports] = useState<any[]>([]);
   const [permissions, setPermissions] = useState<any[]>([]);
   const [reviewingPermId, setReviewingPermId] = useState<string | null>(null);
@@ -298,6 +300,18 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
           {permissions.filter((p) => p.status === 'menunggu_kepsek').length > 0 && (
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
           )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('notifications')}
+          className={`py-3 px-4 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'notifications'
+              ? 'border-purple-600 text-purple-700'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Bell className="w-4 h-4 text-purple-600" />
+          <span>Siaran Notifikasi Siswa</span>
         </button>
       </div>
 
@@ -1083,6 +1097,11 @@ export const PrincipalDashboard: React.FC<{ onOpenScanner: () => void }> = ({ on
             </div>
           )}
         </div>
+      )}
+
+      {/* Tab Siaran Notifikasi Siswa */}
+      {activeTab === 'notifications' && (
+        <NotificationBroadcastPanel userRole="kepala_sekolah" userName={user?.name || 'Kepala Sekolah'} />
       )}
 
       {/* Reader Modal for Article */}

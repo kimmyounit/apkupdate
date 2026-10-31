@@ -974,6 +974,15 @@ export const api = {
     }
   },
 
+  getQuizParticipants: async (quizId?: string) => {
+    try {
+      const query = quizId ? `?quizId=${quizId}` : '';
+      return await tryServerRequest<any[]>(`/api/quizzes/participants${query}`);
+    } catch (_) {
+      return [];
+    }
+  },
+
   // Attendance
   getAttendanceEvents: async () => {
     try {
@@ -1384,6 +1393,46 @@ export const api = {
   deleteNotification: async (id: string) => {
     try {
       return await tryServerRequest<{ message: string }>(`/api/notifications/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (_) {
+      return offlineStore.deleteNotification(id);
+    }
+  },
+
+  createNotification: async (data: {
+    title: string;
+    message: string;
+    type?: string;
+    isImportant?: boolean;
+    linkType?: string;
+    linkId?: string;
+    targetRole?: string;
+    targetClass?: string;
+  }) => {
+    try {
+      const res = await tryServerRequest<{ success: boolean; message: string; notification: AppNotification }>('/api/notifications', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      return res.notification;
+    } catch (err: any) {
+      const local = offlineStore.createNotification(data as any);
+      return local;
+    }
+  },
+
+  getAdminNotifications: async () => {
+    try {
+      return await tryServerRequest<AppNotification[]>('/api/admin/notifications');
+    } catch (_) {
+      return offlineStore.getNotifications();
+    }
+  },
+
+  deleteNotificationAdmin: async (id: string) => {
+    try {
+      return await tryServerRequest<{ message: string }>(`/api/admin/notifications/${id}`, {
         method: 'DELETE',
       });
     } catch (_) {

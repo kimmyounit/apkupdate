@@ -461,22 +461,39 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
           </div>
 
           {/* ------------------------------------------------------------- */}
-          {/* TOMBOL GARIS TIGA UTAMA (MENU KEBAWAH: Notifikasi, Refresh, Akun, Keluar) */}
+          {/* TOMBOL PUSAT KONTROL & MENU GARIS TIGA */}
           {/* ------------------------------------------------------------- */}
-          <div className="relative shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Tombol Cepat Lonceng Pusat Kontrol Notifikasi Siswa */}
             <button
               type="button"
-              onClick={() => setIsMenuDropdownOpen(!isMenuDropdownOpen)}
-              className="relative p-2.5 sm:p-3 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-95 text-white border border-white/25 backdrop-blur-md shadow-lg transition flex items-center justify-center group"
-              title="Menu Garis Tiga Siswa (Notifikasi, Refresh, Akun, Keluar)"
+              onClick={() => setIsNotificationsOpen(true)}
+              className="relative p-2.5 sm:p-3 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-95 text-white border border-white/25 backdrop-blur-md shadow-lg transition flex items-center justify-center group cursor-pointer"
+              title="Pusat Kontrol & Notifikasi Siswa"
             >
-              <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-amber-300 group-hover:scale-110 transition shrink-0" />
+              <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-amber-300 group-hover:scale-110 transition shrink-0" />
               {unreadNotifCount > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-white text-[9px] font-black shadow-md animate-pulse">
                   {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
                 </span>
               )}
             </button>
+
+            {/* TOMBOL GARIS TIGA UTAMA (MENU KEBAWAH: Notifikasi, Refresh, Akun, Keluar) */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsMenuDropdownOpen(!isMenuDropdownOpen)}
+                className="relative p-2.5 sm:p-3 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-95 text-white border border-white/25 backdrop-blur-md shadow-lg transition flex items-center justify-center group cursor-pointer"
+                title="Menu Garis Tiga Siswa (Notifikasi, Refresh, Akun, Keluar)"
+              >
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-amber-300 group-hover:scale-110 transition shrink-0" />
+                {unreadNotifCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-white text-[9px] font-black shadow-md animate-pulse">
+                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                  </span>
+                )}
+              </button>
 
             {/* DROPDOWN MENU KEBAWAH */}
             {isMenuDropdownOpen && (
@@ -603,6 +620,7 @@ export const StudentFeedPage: React.FC<StudentFeedPageProps> = ({
                 </div>
               </>
             )}
+          </div>
           </div>
         </div>
 

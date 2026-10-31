@@ -67,8 +67,9 @@ import type {
 import { StudentProfileModal } from '../../components/StudentProfileModal.tsx';
 import { ImageLightboxModal } from '../../components/ImageLightboxModal.tsx';
 import { VerifiedBadge } from '../../components/VerifiedBadge.tsx';
+import { NotificationBroadcastPanel } from '../../components/NotificationBroadcastPanel.tsx';
 
-type AdminTab = 'students' | 'contacts' | 'staff' | 'subjects' | 'library' | 'announcements' | 'quizzes' | 'events' | 'tickets' | 'support_tickets';
+type AdminTab = 'students' | 'contacts' | 'staff' | 'subjects' | 'library' | 'announcements' | 'quizzes' | 'events' | 'tickets' | 'support_tickets' | 'notifications';
 
 export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpenScanner }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('students');
@@ -1639,6 +1640,16 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
               {supportReports.filter((r) => r.status === 'laporan_diterima' || r.status === 'sedang_ditangani' || r.status === 'sedang_ditinjau').length}
             </span>
           )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('notifications')}
+          className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition ${
+            activeTab === 'notifications' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <Bell className="w-4 h-4 shrink-0" />
+          <span className="truncate">Siaran Notifikasi</span>
         </button>
       </div>
 
@@ -3729,6 +3740,11 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
             </div>
           </div>
         </div>
+      )}
+
+      {/* TAB: SIARAN NOTIFIKASI SEKOLAH */}
+      {activeTab === 'notifications' && (
+        <NotificationBroadcastPanel userRole="admin" userName="Administrator" />
       )}
 
       {/* MODAL: RESET PASSWORD SISWA */}

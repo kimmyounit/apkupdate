@@ -35,6 +35,7 @@ import type {
   AppReportStatus,
   RefreshSignal,
   ModerationLog,
+  QuizParticipant,
 } from '../types/index.ts';
 
 const DEFAULT_DATA_FILE = path.resolve(process.cwd(), 'data', 'tamvesta-data.json');
@@ -85,6 +86,7 @@ export interface DatabaseSchema {
   activityPermissions?: ActivityPermission[];
   appReports?: AppReport[];
   quizViolations?: QuizViolation[];
+  quizParticipants?: QuizParticipant[];
 }
 
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
@@ -438,6 +440,7 @@ export function getInitialData(): DatabaseSchema {
     activityPermissions: [],
     appReports: [],
     quizViolations: [],
+    quizParticipants: [],
   };
 }
 
@@ -644,6 +647,14 @@ class DatabaseManager {
         });
         this.data.quizViolations = Array.from(violMap.values());
       }
+      if (Array.isArray(parsed.quizParticipants)) {
+        const partMap = new Map<string, any>();
+        (this.data.quizParticipants || []).forEach((p) => { if (p.id) partMap.set(p.id, p); });
+        parsed.quizParticipants.forEach((p: any) => {
+          if (p.id && !partMap.has(p.id)) partMap.set(p.id, p);
+        });
+        this.data.quizParticipants = Array.from(partMap.values());
+      }
       this.saveDataDirect(this.data);
     } catch (err) {
       console.warn('[DB] loadFromGitHub error:', err);
@@ -825,6 +836,7 @@ class DatabaseManager {
           quizzes: parsed.quizzes || [],
           quizAttempts: parsed.quizAttempts || [],
           quizViolations: parsed.quizViolations || [],
+          quizParticipants: parsed.quizParticipants || [],
           attendanceEvents: parsed.attendanceEvents || [],
           attendanceRecords: parsed.attendanceRecords || [],
           passwordResetRequests: parsed.passwordResetRequests || [],
@@ -1792,6 +1804,66 @@ class DatabaseManager {
     return list;
   }
 
+  public recordQuizParticipant(payload: {
+    quizId: string;
+    quizTitle: string;
+    studentId: string;
+    studentName: string;
+    studentUsername?: string;
+    studentKelas?: string;
+    tokenUsed: string;
+  }): QuizParticipant {
+    if (!Array.isArray(this.data.quizParticipants)) {
+      this.data.quizParticipants = [];
+    }
+    const existing = this.data.quizParticipants.find(
+      (p) => p.quizId === payload.quizId && p.studentId === payload.studentId
+    );
+    if (existing) {
+      existing.enteredAt = new Date().toISOString();
+      if (existing.status !== 'completed') {
+        existing.status = 'in_progress';
+      }
+      this.save();
+      return existing;
+    }
+
+    const newParticipant: QuizParticipant = {
+      id: `part_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      quizId: payload.quizId,
+      quizTitle: payload.quizTitle,
+      studentId: payload.studentId,
+      studentName: payload.studentName,
+      studentUsername: payload.studentUsername,
+      studentKelas: payload.studentKelas || '-',
+      tokenUsed: payload.tokenUsed,
+      enteredAt: new Date().toISOString(),
+      status: 'in_progress',
+    };
+    this.data.quizParticipants.unshift(newParticipant);
+    this.save();
+    return newParticipant;
+  }
+
+  public completeQuizParticipant(quizId: string, studentId: string, score?: number): void {
+    if (!Array.isArray(this.data.quizParticipants)) return;
+    const participant = this.data.quizParticipants.find(
+      (p) => p.quizId === quizId && p.studentId === studentId
+    );
+    if (participant) {
+      participant.status = 'completed';
+      if (score !== undefined) participant.score = score;
+      this.save();
+    }
+  }
+
+  public getQuizParticipants(quizId?: string): QuizParticipant[] {
+    if (!Array.isArray(this.data.quizParticipants)) return [];
+    let list = this.data.quizParticipants;
+    if (quizId) list = list.filter((p) => p.quizId === quizId);
+    return list.sort((a, b) => new Date(b.enteredAt).getTime() - new Date(a.enteredAt).getTime());
+  }
+
   public addQuiz(quiz: Omit<Quiz, 'id' | 'createdAt'>): Quiz {
     const cleanToken = quiz.token && quiz.token.trim() !== '' ? quiz.token.trim().toUpperCase() : generateRandomQuizToken();
     const newQuiz: Quiz = {
@@ -2595,6 +2667,24 @@ class DatabaseManager {
 
   addNotification(data: any): AppNotification {
     return this.createNotification(data);
+  }
+
+  public getAllNotificationsRaw(): AppNotification[] {
+    if (!Array.isArray(this.data.notifications)) this.data.notifications = [];
+    return [...this.data.notifications].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  public deleteNotificationAdmin(notificationId: string): boolean {
+    if (!Array.isArray(this.data.notifications)) return false;
+    const initialLen = this.data.notifications.length;
+    this.data.notifications = this.data.notifications.filter((n) => n.id !== notificationId);
+    if (this.data.notifications.length !== initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
   }
 
   // -------------------------------------------------------------

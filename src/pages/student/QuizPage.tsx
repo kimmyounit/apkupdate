@@ -21,6 +21,7 @@ import {
   Radio,
   Wifi,
   BookOpen,
+  RefreshCw,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '../../lib/api.ts';
@@ -78,6 +79,22 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChang
   // Real-Time Quizzes & Server Signal State
   const [activeQuizzesList, setActiveQuizzesList] = useState<Quiz[]>([]);
   const [isRealtimeSignalLive, setIsRealtimeSignalLive] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const list = await api.getQuizzes();
+      if (Array.isArray(list)) {
+        setActiveQuizzesList(list.filter((q) => q.isActive !== false && q.status !== 'inactive'));
+        setIsRealtimeSignalLive(true);
+      }
+    } catch (_) {
+      setIsRealtimeSignalLive(false);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
 
   // Poll available quizzes every 3.5 seconds from server
   useEffect(() => {
@@ -725,9 +742,20 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChang
             <span>{isRealtimeSignalLive ? 'Sinyal Server Ujian Aktif • Real-Time Terhubung' : 'Menghubungkan ke Server Ujian...'}</span>
           </span>
         </div>
-        <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-          {activeQuizzesList.length} Kuis Aktif
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
+            title="Segarkan kuis aktif"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-600' : ''}`} />
+            <span>Segarkan</span>
+          </button>
+          <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+            {activeQuizzesList.length} Kuis Aktif
+          </span>
+        </div>
       </div>
 
       {!isFormOpen ? (

@@ -190,6 +190,20 @@ export interface QuizViolation {
   timestamp: string;
 }
 
+export interface QuizParticipant {
+  id: string;
+  quizId: string;
+  quizTitle: string;
+  studentId: string;
+  studentName: string;
+  studentUsername?: string;
+  studentKelas?: string;
+  tokenUsed: string;
+  enteredAt: string;
+  status: 'in_progress' | 'completed';
+  score?: number;
+}
+
 export interface QuizAttempt {
   id: string;
   quizId: string;

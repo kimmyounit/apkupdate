@@ -24,6 +24,14 @@ import { api } from '../lib/api.ts';
 import { StudentProfileModal } from './StudentProfileModal.tsx';
 import { NotificationsModal } from './NotificationsModal.tsx';
 import { VerifiedBadge } from './VerifiedBadge.tsx';
+import {
+  isNotificationSupported,
+  getNotificationPermission,
+  requestNotificationPermission,
+  isNotificationPromptDismissed,
+  dismissNotificationPrompt,
+  type NotificationPermissionState,
+} from '../lib/notificationService.ts';
 
 interface Props {
   currentTab?: string;
@@ -37,6 +45,8 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notifPerm, setNotifPerm] = useState<NotificationPermissionState>(() => getNotificationPermission());
+  const [bannerDismissed, setBannerDismissed] = useState<boolean>(() => isNotificationPromptDismissed());
 
   const fetchUnreadCount = async () => {
     try {
@@ -71,6 +81,16 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
     } finally {
       setTimeout(() => setIsRefreshing(false), 600);
     }
+  };
+
+  const handleRequestNotif = async () => {
+    const res = await requestNotificationPermission();
+    setNotifPerm(res);
+  };
+
+  const handleDismissNotifBanner = () => {
+    dismissNotificationPrompt(24);
+    setBannerDismissed(true);
   };
 
   if (!user) return null;
@@ -108,6 +128,35 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+      {/* Banner Izin Notifikasi Perangkat (Android, iOS & Web) */}
+      {isNotificationSupported() && notifPerm !== 'granted' && !bannerDismissed && (
+        <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 text-slate-950 px-3.5 py-2 text-xs font-bold flex flex-col sm:flex-row items-center justify-between gap-2 shadow-xs border-b border-amber-400">
+          <div className="flex items-center gap-2 text-center sm:text-left">
+            <span className="p-1 rounded-full bg-white/30 text-slate-950 animate-bounce shrink-0">
+              <Bell className="w-3.5 h-3.5" />
+            </span>
+            <span>
+              Aktifkan izin notifikasi perangkat (Android / iOS / Web) agar pengumuman, kuis, dan pesan pusat kontrol sekolah masuk seketika!
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleRequestNotif}
+              className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-white font-black rounded-lg text-[11px] shadow-sm transition active:scale-95 cursor-pointer"
+            >
+              Izinkan Notifikasi
+            </button>
+            <button
+              onClick={handleDismissNotifBanner}
+              className="px-2 py-1 bg-white/30 hover:bg-white/50 text-slate-900 font-bold rounded-lg text-[11px] transition cursor-pointer"
+              title="Tunda 24 jam"
+            >
+              Nanti
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & School Name */}
@@ -356,22 +405,20 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
               </button>
             )}
 
-            {/* Tombol Lonceng Notifikasi (Hanya staff / non-siswa di navbar) */}
-            {userRole !== 'siswa' && (
-              <button
-                type="button"
-                onClick={() => setIsNotifModalOpen(true)}
-                className="relative p-2 rounded-xl text-slate-700 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition active:scale-95 shadow-xs"
-                title="Notifikasi"
-              >
-                <Bell className="w-4 h-4 text-emerald-700" />
-                {unreadNotifCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center shadow-xs animate-pulse">
-                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-                  </span>
-                )}
-              </button>
-            )}
+            {/* Tombol Lonceng Notifikasi & Pusat Kontrol (Untuk Siswa, Guru, Admin, TU, Kepsek) */}
+            <button
+              type="button"
+              onClick={() => setIsNotifModalOpen(true)}
+              className="relative p-2 rounded-xl text-slate-700 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition active:scale-95 shadow-xs cursor-pointer"
+              title="Pusat Kontrol & Notifikasi Sekolah"
+            >
+              <Bell className="w-4 h-4 text-emerald-700" />
+              {unreadNotifCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center shadow-xs animate-pulse">
+                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                </span>
+              )}
+            </button>
 
             {/* Profil Saya Button (Hanya Desktop) */}
             {userRole !== 'siswa' && (

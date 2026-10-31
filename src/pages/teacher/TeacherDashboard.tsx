@@ -48,10 +48,12 @@ import {
 } from 'lucide-react';
 import { LostFoundManagementPanel } from '../../components/LostFoundManagementPanel.tsx';
 import { api } from '../../lib/api.ts';
+import { playQuizExitAlertSound, playNotificationChime } from '../../lib/audio.ts';
 import type {
   Quiz,
   QuizAttempt,
   QuizViolation,
+  QuizParticipant,
   Subject,
   TeacherArticle,
   ClassAttendanceEntry,
@@ -119,6 +121,11 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   // --- Quiz Management State ---
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
+  const [participants, setParticipants] = useState<QuizParticipant[]>([]);
+  const [isRefreshingQuiz, setIsRefreshingQuiz] = useState(false);
+  const [quizSubTab, setQuizSubTab] = useState<'participants' | 'violations' | 'attempts'>('participants');
+  const [latestViolationAlert, setLatestViolationAlert] = useState<QuizViolation | null>(null);
+  const prevViolationCountRef = React.useRef<number>(0);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [searchAttempt, setSearchAttempt] = useState('');
   const [selectedQuizFilter, setSelectedQuizFilter] = useState<string>('all');
@@ -264,24 +271,57 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     }
   };
 
+  const handleRefreshQuizData = async () => {
+    setIsRefreshingQuiz(true);
+    try {
+      const [qz, att, viols, parts] = await Promise.all([
+        api.getQuizzes(),
+        api.getQuizAttempts(),
+        api.getQuizViolations(),
+        api.getQuizParticipants(),
+      ]);
+      if (Array.isArray(qz)) setQuizzes(qz);
+      if (Array.isArray(att)) setAttempts(att);
+      if (Array.isArray(parts)) setParticipants(parts);
+      if (Array.isArray(viols)) {
+        if (viols.length > prevViolationCountRef.current && prevViolationCountRef.current > 0) {
+          const newest = viols[0];
+          setLatestViolationAlert(newest);
+          playQuizExitAlertSound();
+        }
+        prevViolationCountRef.current = viols.length;
+        setViolations(viols);
+      }
+    } catch (err) {
+      console.error('Failed to refresh quiz data:', err);
+    } finally {
+      setTimeout(() => setIsRefreshingQuiz(false), 500);
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
       await api.syncLocalQuizzesToServer().catch(() => {});
-      const [qz, att, sb, artList, stuList, viols] = await Promise.all([
+      const [qz, att, sb, artList, stuList, viols, parts] = await Promise.all([
         api.getQuizzes(),
         api.getQuizAttempts(),
         api.getSubjects(),
         api.getArticles(),
         api.getStudents(),
         api.getQuizViolations(),
+        api.getQuizParticipants(),
       ]);
       setQuizzes(qz);
       setAttempts(att);
       setSubjects(sb);
       setArticles(artList);
       setAllStudents(stuList);
-      if (Array.isArray(viols)) setViolations(viols);
+      if (Array.isArray(parts)) setParticipants(parts);
+      if (Array.isArray(viols)) {
+        setViolations(viols);
+        prevViolationCountRef.current = viols.length;
+      }
 
       if (sb.length > 0 && !quizForm.subjectName) {
         setQuizForm((prev) => ({ ...prev, subjectName: sb[0].name }));
@@ -297,17 +337,29 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     loadData();
   }, []);
 
-  // Real-time polling untuk kuis & pelanggaran ujian saat guru di tab kuis
+  // Real-time polling untuk kuis, peserta masuk & pelanggaran ujian saat guru di tab kuis
   useEffect(() => {
     if (activeTab !== 'quizzes') return;
     const interval = setInterval(async () => {
       try {
-        const [viols, qz] = await Promise.all([
+        const [viols, qz, parts, att] = await Promise.all([
           api.getQuizViolations(),
           api.getQuizzes(),
+          api.getQuizParticipants(),
+          api.getQuizAttempts(),
         ]);
-        if (Array.isArray(viols)) setViolations(viols);
         if (Array.isArray(qz)) setQuizzes(qz);
+        if (Array.isArray(parts)) setParticipants(parts);
+        if (Array.isArray(att)) setAttempts(att);
+        if (Array.isArray(viols)) {
+          if (viols.length > prevViolationCountRef.current && prevViolationCountRef.current > 0) {
+            const newest = viols[0];
+            setLatestViolationAlert(newest);
+            playQuizExitAlertSound();
+          }
+          prevViolationCountRef.current = viols.length;
+          setViolations(viols);
+        }
       } catch (_) {}
     }, 4000);
     return () => clearInterval(interval);
@@ -854,6 +906,27 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     return matchesSearch && matchesQuiz;
   });
 
+  const filteredParticipants = participants.filter((p) => {
+    const matchesSearch =
+      p.studentName.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+      (p.studentUsername && p.studentUsername.toLowerCase().includes(searchAttempt.toLowerCase())) ||
+      (p.studentKelas && p.studentKelas.toLowerCase().includes(searchAttempt.toLowerCase())) ||
+      p.quizTitle.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+      p.tokenUsed.toLowerCase().includes(searchAttempt.toLowerCase());
+    const matchesQuiz = selectedQuizFilter === 'all' || p.quizId === selectedQuizFilter;
+    return matchesSearch && matchesQuiz;
+  });
+
+  const filteredViolations = violations.filter((v) => {
+    const matchesSearch =
+      v.studentName.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+      (v.studentUsername && v.studentUsername.toLowerCase().includes(searchAttempt.toLowerCase())) ||
+      v.quizTitle.toLowerCase().includes(searchAttempt.toLowerCase()) ||
+      v.violationDetail.toLowerCase().includes(searchAttempt.toLowerCase());
+    const matchesQuiz = selectedQuizFilter === 'all' || v.quizId === selectedQuizFilter;
+    return matchesSearch && matchesQuiz;
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Top Banner Portal Guru */}
@@ -883,16 +956,27 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
           )}
 
           {activeTab === 'quizzes' ? (
-            <button
-              onClick={() => {
-                handleGenerateToken();
-                setShowCreateModal(true);
-              }}
-              className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Buat Quiz & Token Baru</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefreshQuizData}
+                disabled={isRefreshingQuiz}
+                className="flex items-center gap-2 px-4 py-3 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-400/30 rounded-2xl font-bold text-xs sm:text-sm transition active:scale-95 cursor-pointer"
+                title="Segarkan data peserta kuis & pelanggaran"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshingQuiz ? 'animate-spin text-blue-300' : ''}`} />
+                <span className="hidden sm:inline">{isRefreshingQuiz ? 'Menyegarkan...' : 'Segarkan Data'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  handleGenerateToken();
+                  setShowCreateModal(true);
+                }}
+                className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Buat Quiz & Token Baru</span>
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => {
@@ -1574,17 +1658,64 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                 </p>
               </div>
 
-              <button
-                onClick={() => {
-                  handleGenerateToken();
-                  setShowCreateModal(true);
-                }}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs shadow-md shadow-emerald-600/20 transition active:scale-95 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Buat Quiz & Token Baru</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRefreshQuizData}
+                  disabled={isRefreshingQuiz}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-2xl font-black text-xs transition active:scale-95 cursor-pointer"
+                  title="Segarkan siapa saja yang sudah masuk & kuis"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshingQuiz ? 'animate-spin text-blue-600' : ''}`} />
+                  <span>{isRefreshingQuiz ? 'Menyegarkan...' : 'Segarkan Data'}</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleGenerateToken();
+                    setShowCreateModal(true);
+                  }}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs shadow-md shadow-emerald-600/20 transition active:scale-95 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Buat Quiz & Token Baru</span>
+                </button>
+              </div>
             </div>
+
+            {/* ALERT NOTIFIKASI PELANGGARAN TERAKHIR */}
+            {latestViolationAlert && (
+              <div className="bg-rose-600 text-white p-4 rounded-3xl shadow-lg border-2 border-rose-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white/20 rounded-2xl shrink-0">
+                    <ShieldAlert className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm">🚨 PERINGATAN: PELANGGARAN SISWA TERDETEKSI!</h4>
+                    <p className="text-xs text-rose-100">
+                      Siswa <strong className="text-white underline">{latestViolationAlert.studentName}</strong> terdeteksi: <strong>{latestViolationAlert.violationDetail}</strong> pada kuis <em>{latestViolationAlert.quizTitle}</em> ({new Date(latestViolationAlert.timestamp).toLocaleTimeString('id-ID')} WIB).
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  <button
+                    onClick={() => {
+                      setQuizSubTab('violations');
+                      setLatestViolationAlert(null);
+                    }}
+                    className="px-3.5 py-1.5 bg-white text-rose-700 font-black rounded-xl text-xs hover:bg-rose-50 cursor-pointer shadow-xs"
+                  >
+                    Buka Kolom Pelanggaran
+                  </button>
+                  <button
+                    onClick={() => setLatestViolationAlert(null)}
+                    className="p-1.5 hover:bg-white/20 rounded-xl cursor-pointer"
+                    title="Tutup Notifikasi"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* LIVE PELANGGARAN UJIAN SISWA (REAL-TIME NOTIFIKASI) */}
             {violations.length > 0 && (
@@ -1789,17 +1920,69 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
             )}
           </div>
 
-          {/* RIGHT COLUMN: RESULTS & ATTEMPTS (5 cols) */}
+          {/* RIGHT COLUMN: REAL-TIME MONITORING (PESERTA MASUK, KOLOM PELANGGARAN & HASIL NILAI) */}
           <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900">
-                  Hasil Nilai Siswa ({filteredAttempts.length})
+                <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                  <span>Pusat Monitoring Ujian</span>
+                  {violations.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-200 animate-pulse">
+                      {violations.length} Pelanggaran
+                    </span>
+                  )}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Nilai dan catatan waktu pengerjaan quiz
+                  Pantau siapa yang masuk, pelanggaran siswa, & hasil nilai
                 </p>
               </div>
+
+              <button
+                onClick={handleRefreshQuizData}
+                disabled={isRefreshingQuiz}
+                className="p-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 transition shadow-2xs cursor-pointer"
+                title="Segarkan Siapa yang Masuk & Pelanggaran"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshingQuiz ? 'animate-spin text-blue-600' : 'text-slate-600'}`} />
+              </button>
+            </div>
+
+            {/* 3-Tab Selector: Peserta Masuk, Kolom Pelanggaran, Hasil Nilai */}
+            <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl">
+              <button
+                onClick={() => setQuizSubTab('participants')}
+                className={`py-2 px-1 text-center rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  quizSubTab === 'participants'
+                    ? 'bg-white text-emerald-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+                <span>Masuk ({filteredParticipants.length})</span>
+              </button>
+
+              <button
+                onClick={() => setQuizSubTab('violations')}
+                className={`py-2 px-1 text-center rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  quizSubTab === 'violations'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'text-rose-700 hover:bg-rose-50'
+                }`}
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Pelanggaran ({violations.length})</span>
+              </button>
+
+              <button
+                onClick={() => setQuizSubTab('attempts')}
+                className={`py-2 px-1 text-center rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  quizSubTab === 'attempts'
+                    ? 'bg-white text-blue-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>Nilai ({filteredAttempts.length})</span>
+              </button>
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-4">
@@ -1809,7 +1992,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                     type="text"
                     value={searchAttempt}
                     onChange={(e) => setSearchAttempt(e.target.value)}
-                    placeholder="Cari nama siswa atau username..."
+                    placeholder="Cari nama siswa, token, atau kuis..."
                     className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
@@ -1829,44 +2012,142 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                 </select>
               </div>
 
-              {filteredAttempts.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs italic">
-                  Belum ada siswa yang mengerjakan quiz ini.
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto space-y-1">
-                  {filteredAttempts.map((att) => (
-                    <div key={att.id} className="py-3 flex items-center justify-between gap-3 text-xs">
-                      <div className="space-y-0.5">
-                        <p className="font-bold text-slate-900">{att.studentName}</p>
-                        <p className="text-[11px] text-slate-500">
-                          @{att.username} • <span className="text-blue-700 font-mono font-bold">{att.tokenUsed}</span>
-                        </p>
-                        <p className="text-[10px] text-slate-400">
-                          {new Date(att.completedAt).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                          })}{' '}
-                          • {new Date(att.completedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
-                        </p>
-                      </div>
-
-                      <div className="text-right space-y-1">
-                        <div className="text-lg font-black text-slate-900">
-                          {att.score}
-                        </div>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                            att.passed
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                              : 'bg-rose-50 text-rose-800 border border-rose-200'
-                          }`}
-                        >
-                          {att.passed ? 'LULUS' : 'REMIDI'}
-                        </span>
-                      </div>
+              {/* VIEW 1: SIAPA YANG SUDAH MASUK (PESERTA MASUK) */}
+              {quizSubTab === 'participants' && (
+                <div>
+                  {filteredParticipants.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-xs italic space-y-2">
+                      <HelpCircle className="w-8 h-8 mx-auto text-slate-300" />
+                      <p className="font-bold text-slate-600">Belum ada siswa yang masuk ke kuis ini.</p>
+                      <p className="text-[11px] text-slate-400">Bagikan token kuis di sebelah kiri agar siswa dapat mulai mengerjakan.</p>
                     </div>
-                  ))}
+                  ) : (
+                    <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto space-y-2 pr-1">
+                      {filteredParticipants.map((p) => (
+                        <div key={p.id} className="pt-2 pb-2.5 flex items-center justify-between gap-3 text-xs">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-slate-900">{p.studentName}</p>
+                              {p.studentKelas && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-semibold">
+                                  {p.studentKelas}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500">
+                              Kuis: <strong className="text-slate-700">{p.quizTitle}</strong> • Token: <span className="font-mono text-blue-700 font-bold">{p.tokenUsed}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              Masuk: {new Date(p.enteredAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
+                            </p>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            {p.status === 'in_progress' ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                <span>Mengerjakan</span>
+                              </span>
+                            ) : (
+                              <div className="space-y-0.5">
+                                <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                  Selesai
+                                </span>
+                                {typeof p.score === 'number' && (
+                                  <div className="text-xs font-black text-slate-800">
+                                    Skor: {p.score}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* VIEW 2: KOLOM PELANGGARAN */}
+              {quizSubTab === 'violations' && (
+                <div>
+                  {filteredViolations.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-xs italic space-y-2">
+                      <Shield className="w-8 h-8 mx-auto text-emerald-400" />
+                      <p className="font-bold text-slate-700">Tidak Ada Pelanggaran!</p>
+                      <p className="text-[11px] text-slate-400">Semua siswa mengerjakan ujian dengan tertib tanpa keluar layar.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                      {filteredViolations.map((v) => (
+                        <div
+                          key={v.id}
+                          className="bg-rose-50/70 border border-rose-200 rounded-2xl p-3 space-y-1.5 shadow-2xs"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <strong className="text-slate-900 text-xs font-black">{v.studentName}</strong>
+                            <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200">
+                              {new Date(v.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
+                            </span>
+                          </div>
+                          <div className="text-xs font-semibold text-rose-800 flex items-center gap-1.5">
+                            <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+                            <span>{v.violationDetail}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-500">
+                            Kuis: <strong className="text-slate-700">{v.quizTitle}</strong>
+                            {v.studentUsername && <> • @{v.studentUsername}</>}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* VIEW 3: HASIL NILAI SISWA (ATTEMPTS) */}
+              {quizSubTab === 'attempts' && (
+                <div>
+                  {filteredAttempts.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-xs italic">
+                      Belum ada siswa yang mengerjakan quiz ini.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto space-y-1 pr-1">
+                      {filteredAttempts.map((att) => (
+                        <div key={att.id} className="py-3 flex items-center justify-between gap-3 text-xs">
+                          <div className="space-y-0.5">
+                            <p className="font-bold text-slate-900">{att.studentName}</p>
+                            <p className="text-[11px] text-slate-500">
+                              @{att.username} • <span className="text-blue-700 font-mono font-bold">{att.tokenUsed}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              {new Date(att.completedAt).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}{' '}
+                              • {new Date(att.completedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                            </p>
+                          </div>
+
+                          <div className="text-right space-y-1 shrink-0">
+                            <div className="text-lg font-black text-slate-900">
+                              {att.score}
+                            </div>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                                att.passed
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                  : 'bg-rose-50 text-rose-800 border border-rose-200'
+                              }`}
+                            >
+                              {att.passed ? 'LULUS' : 'REMIDI'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

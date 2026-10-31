@@ -33,6 +33,7 @@ import {
   Package,
 } from 'lucide-react';
 import { LostFoundManagementPanel } from '../../components/LostFoundManagementPanel.tsx';
+import { NotificationBroadcastPanel } from '../../components/NotificationBroadcastPanel.tsx';
 import { api } from '../../lib/api.ts';
 import type {
   TuitionBill,
@@ -44,7 +45,7 @@ import type {
 } from '../../types/index.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
-type TuTab = 'bills' | 'finance' | 'documents' | 'chat' | 'lost_found' | 'reports' | 'backup';
+type TuTab = 'bills' | 'finance' | 'documents' | 'chat' | 'lost_found' | 'reports' | 'backup' | 'notifications';
 
 export const TuDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -977,6 +978,18 @@ Tembusan:
               {monthlyReports.length}
             </span>
           )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('notifications')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+            activeTab === 'notifications'
+              ? 'bg-amber-600 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Bell className="w-4 h-4 text-amber-300" />
+          <span>Siaran Notifikasi</span>
         </button>
       </div>
 
@@ -2012,6 +2025,12 @@ Tembusan:
             )}
           </div>
         </div>
+      )}
+
+      {/* 8. TAB SIARAN NOTIFIKASI SISWA & PENGGUNA */}
+      {/* ============================================================= */}
+      {activeTab === 'notifications' && (
+        <NotificationBroadcastPanel userRole="tata_usaha" userName={user?.name || 'Tata Usaha'} />
       )}
 
 

@@ -726,13 +726,38 @@ app.post('/api/quizzes/verify-token', optionalAuthMiddleware, async (req: Authen
   } catch (_) {}
   const { token, studentName, password } = req.body;
   const result = db.verifyQuizAccess({ token, studentName, password });
-  if (!result.success) {
+  if (!result.success || !result.quiz) {
     return res.status(400).json({ error: result.error });
   }
+
+  // Catat data peserta yang berhasil masuk ke sesi kuis (In Progress)
+  try {
+    db.recordQuizParticipant({
+      quizId: result.quiz.id,
+      quizTitle: result.quiz.title,
+      studentId: req.user?.id || `stu_${Date.now()}`,
+      studentName: studentName || req.user?.name || 'Siswa',
+      studentUsername: req.user?.username || '',
+      studentKelas: req.user?.kelas || '-',
+      tokenUsed: token,
+    });
+    await db.saveAsync();
+  } catch (_) {}
+
   return res.json({
     success: true,
     quiz: result.quiz,
   });
+});
+
+// GET /api/quizzes/participants (Guru & Admin pantau siapa saja yang sudah masuk ujian)
+app.get('/api/quizzes/participants', optionalAuthMiddleware, async (req, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
+  const quizId = req.query.quizId as string | undefined;
+  const participants = db.getQuizParticipants(quizId);
+  return res.json(participants);
 });
 
 // POST /api/quizzes/generate-token (Guru/Admin generate token otomatis)
@@ -961,6 +986,7 @@ app.post('/api/quizzes/:id/submit', optionalAuthMiddleware, async (req: Authenti
   });
 
   try {
+    db.completeQuizParticipant(quiz.id, req.user?.id || 'siswa_user', score);
     await db.saveAsync();
   } catch (_) {}
 
@@ -1554,6 +1580,69 @@ app.post('/api/notifications/read-all', authMiddleware, (req: AuthenticatedReque
 app.delete('/api/notifications/:id', authMiddleware, (req: AuthenticatedRequest, res) => {
   db.deleteNotificationForUser(req.params.id, req.user!.id);
   return res.json({ message: 'Notifikasi berhasil dihapus dari daftar Anda.' });
+});
+
+// POST /api/notifications (Admin, TU, Kepala Sekolah, Guru menerbitkan siaran notifikasi)
+app.post('/api/notifications', authMiddleware, requireRole(['admin', 'tata_usaha', 'kepala_sekolah', 'guru', 'support']), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { title, message, type, isImportant, linkType, linkId, targetRole, targetClass, targetUserId } = req.body;
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Judul dan isi pesan notifikasi wajib diisi.' });
+    }
+
+    const newNotif = db.createNotification({
+      title,
+      message,
+      type: type || 'announcement',
+      isImportant: !!isImportant,
+      linkType: linkType || 'none',
+      linkId,
+      targetRole: targetRole === 'semua' || !targetRole ? undefined : targetRole,
+      targetClass: targetClass === 'semua' || !targetClass ? undefined : targetClass,
+      targetUserId,
+    });
+
+    try {
+      db.addRefreshSignal({
+        userId: req.user?.id || 'admin',
+        userName: req.user?.name || 'Pengelola',
+        userUsername: req.user?.username || 'admin',
+        userKelas: targetRole ? `Notif ke ${targetRole}` : 'Notif ke Semua Siswa',
+      });
+    } catch (_) {}
+
+    try {
+      await db.saveAsync();
+    } catch (err) {
+      console.warn('Failed to save notification to cloud:', err);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Notifikasi berhasil diterbitkan dan masuk ke Pusat Kontrol siswa!',
+      notification: newNotif,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Gagal menerbitkan notifikasi.' });
+  }
+});
+
+// GET /api/admin/notifications (Daftar seluruh riwayat siaran notifikasi)
+app.get('/api/admin/notifications', authMiddleware, requireRole(['admin', 'tata_usaha', 'kepala_sekolah', 'guru', 'support']), async (req, res) => {
+  try {
+    await db.reloadFromGitHub();
+  } catch (_) {}
+  return res.json(db.getAllNotificationsRaw());
+});
+
+// DELETE /api/admin/notifications/:id (Hapus siaran notifikasi oleh Admin/TU)
+app.delete('/api/admin/notifications/:id', authMiddleware, requireRole(['admin', 'tata_usaha', 'kepala_sekolah', 'guru', 'support']), async (req, res) => {
+  const ok = db.deleteNotificationAdmin(req.params.id);
+  if (!ok) return res.status(404).json({ error: 'Notifikasi tidak ditemukan.' });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ message: 'Notifikasi berhasil dihapus permanen.' });
 });
 
 // -------------------------------------------------------------
