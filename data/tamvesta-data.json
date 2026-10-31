@@ -1,6 +1,25 @@
 {
   "users": [
     {
+      "id": "user_teacher_1793456753524_bb7l",
+      "username": "guru.contoh",
+      "name": "Contoh",
+      "role": "guru",
+      "jabatan": "Guru Seni",
+      "initialPassword": "Tamvesta!313",
+      "password": "Tamvesta!313",
+      "passwordHash": "df3d172d599f854c65f1dfaefe292e410bd2b7019690a719032ff0ada3b439e5bced5c7f48c44e70fab311d8871745f7b039d6722f79d25534a2d69ba93aeaf9",
+      "salt": "9985b493a179c776451b1e12bf22872b",
+      "mustChangePassword": false,
+      "isActive": true,
+      "isVerified": true,
+      "email": "",
+      "phone": "",
+      "qrToken": "TAMVESTA:STUDENT:guru.contoh:b2f795375e884553",
+      "createdAt": "2026-10-31T14:25:53.524Z",
+      "updatedAt": "2026-10-31T14:25:53.524Z"
+    },
+    {
       "id": "user_admin_tamansiswa",
       "username": "TAMANSISWA",
       "name": "Administrator Tamansiswa Batam",
@@ -29,7 +48,8 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_kepsek:d592cc82bedb9886",
       "createdAt": "2026-10-24T08:22:46.821Z",
       "updatedAt": "2026-10-24T08:22:46.821Z",
-      "password": "Tamvesta!B2601"
+      "password": "Tamvesta!B2601",
+      "isVerified": true
     },
     {
       "id": "user_staff_titus_yayasan",
@@ -285,7 +305,8 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_angga_satpam:b970654ecf6fa094",
       "createdAt": "2026-10-24T08:22:47.082Z",
       "updatedAt": "2026-10-24T08:22:47.082Z",
-      "password": "Tamvesta!A2617"
+      "password": "Tamvesta!A2617",
+      "isVerified": true
     },
     {
       "id": "user_support_tamvesta",
@@ -400,25 +421,6 @@
       "password": "Siswa793701",
       "passwordHash": "8bbdf7c2887ea2a86ede0789f4867a1194e1f4bca095503fe2b2e20b3aebb3739f9f800323fd77b58d7042bb257f92c9a70788816087397dd2e0b0d95596ee72",
       "salt": "887f896e736ebf18869cb47d087ab843"
-    },
-    {
-      "id": "user_teacher_1793456753524_bb7l",
-      "username": "guru.contoh",
-      "name": "Contoh",
-      "role": "guru",
-      "jabatan": "Guru Seni",
-      "initialPassword": "Tamvesta!313",
-      "password": "Tamvesta!313",
-      "passwordHash": "df3d172d599f854c65f1dfaefe292e410bd2b7019690a719032ff0ada3b439e5bced5c7f48c44e70fab311d8871745f7b039d6722f79d25534a2d69ba93aeaf9",
-      "salt": "9985b493a179c776451b1e12bf22872b",
-      "mustChangePassword": false,
-      "isActive": true,
-      "isVerified": true,
-      "email": "",
-      "phone": "",
-      "qrToken": "TAMVESTA:STUDENT:guru.contoh:b2f795375e884553",
-      "createdAt": "2026-10-31T14:25:53.524Z",
-      "updatedAt": "2026-10-31T14:25:53.524Z"
     }
   ],
   "subjects": [],
@@ -482,21 +484,7 @@
     }
   ],
   "quizAttempts": [],
-  "quizViolations": [
-    {
-      "quizId": "quiz_1793438004502",
-      "quizTitle": "hh",
-      "studentId": "stu_1793373992097_jv1v1",
-      "studentName": "Alvaro Pratama Herlen",
-      "studentUsername": "graniat",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "violationType": "tab_switch",
-      "violationDetail": "Beralih tab / membuka aplikasi lain saat ujian berlangsung",
-      "id": "violation_1793456954119_ecij",
-      "timestamp": "2026-10-31T14:29:14.119Z"
-    }
-  ],
+  "quizViolations": [],
   "quizParticipants": [
     {
       "id": "part_1793456898000_ugug",
@@ -519,19 +507,6 @@
   "notes": [],
   "notifications": [
     {
-      "id": "notif_1793456954120_fttjv",
-      "title": "🚨 Pelanggaran Kuis Terdeteksi!",
-      "message": "Siswa \"Alvaro Pratama Herlen\" terdeteksi Beralih tab / membuka aplikasi lain saat ujian berlangsung saat mengerjakan kuis \"hh\".",
-      "type": "quiz_violation",
-      "isImportant": false,
-      "linkType": "quiz",
-      "linkId": "quiz_1793438004502",
-      "targetRole": "guru",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T14:29:14.120Z"
-    },
-    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -540,7 +515,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:27:52.653Z"
+      "createdAt": "2026-10-31T14:25:58.643Z"
     },
     {
       "id": "notif_announcement_1",
@@ -552,7 +527,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T13:27:52.653Z"
+      "createdAt": "2026-10-31T13:25:58.643Z"
     },
     {
       "id": "notif_subject_1",
@@ -563,7 +538,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T12:27:52.653Z"
+      "createdAt": "2026-10-31T12:25:58.643Z"
     }
   ],
   "articles": [],
