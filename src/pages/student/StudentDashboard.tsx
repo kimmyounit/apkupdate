@@ -80,7 +80,7 @@ export const StudentDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col relative">
+    <div className={`min-h-screen bg-slate-50 flex flex-col relative ${activeTab === 'dm' ? 'h-[100dvh] overflow-hidden' : ''}`}>
       {/* Quiz Exit Attempt Alert Banner */}
       {quizWarningNotice && (
         <div className="fixed top-4 left-4 right-4 z-50 p-4 bg-rose-600 text-white rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-rose-300 animate-bounce">
@@ -96,7 +96,7 @@ export const StudentDashboard: React.FC = () => {
       />
 
       {/* SEPARATE PAGES ROUTER */}
-      <div className="flex-1 pb-24 sm:pb-28">
+      <div className={`flex-1 ${activeTab === 'games' || activeTab === 'dm' ? 'pb-0 flex flex-col overflow-hidden min-h-0' : 'pb-24 sm:pb-28'}`}>
         {activeTab === 'home' && (
           <StudentFeedPage
             onOpenAnnouncements={() => setActiveTab('announcements')}
@@ -158,8 +158,8 @@ export const StudentDashboard: React.FC = () => {
       </div>
 
       {/* PERSISTENT BOTTOM NAVIGATION BAR (Home, Artikel, Quiz, Arsip, QR, Profil) */}
-      {/* Disembunyikan saat bermain game agar layar bersih, penuh dan kontrol permainan tidak tertutup */}
-      {activeTab !== 'games' && (
+      {/* Disembunyikan saat bermain game atau membuka DM agar layar bersih, penuh dan kontrol input tidak tertutup */}
+      {activeTab !== 'games' && activeTab !== 'dm' && (
         <StudentBottomNav
           activeTab={isNavTab(activeTab) ? activeTab : 'home'}
           onTabChange={handleTabChange}

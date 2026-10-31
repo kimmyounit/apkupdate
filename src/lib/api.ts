@@ -2582,6 +2582,10 @@ export const api = {
     replyToMessage?: any;
     replyToStory?: any;
     forwardedFrom?: string;
+    senderId?: string;
+    senderName?: string;
+    senderUsername?: string;
+    senderAvatar?: string;
   }): Promise<DirectMessage> => {
     try {
       const res = await tryServerRequest<{ message: DirectMessage }>('/api/dm/messages', {
@@ -2590,13 +2594,13 @@ export const api = {
       });
       return res.message;
     } catch (_) {
-      const curId = offlineStore.getCurrentUserId() || '';
-      const curUser = offlineStore.findUserById(curId);
+      const curId = payload.senderId || offlineStore.getCurrentUserId() || '';
+      const curUser = offlineStore.findUserById(curId) || offlineStore.getCurrentUser();
       return offlineStore.sendDirectMessage({
         senderId: curId,
-        senderName: curUser?.name || 'Siswa',
-        senderUsername: curUser?.username || '',
-        senderAvatar: curUser?.avatarUrl,
+        senderName: payload.senderName || curUser?.name || 'Siswa',
+        senderUsername: payload.senderUsername || curUser?.username || '',
+        senderAvatar: payload.senderAvatar || curUser?.avatarUrl,
         ...payload,
       });
     }
