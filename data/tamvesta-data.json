@@ -482,7 +482,21 @@
     }
   ],
   "quizAttempts": [],
-  "quizViolations": [],
+  "quizViolations": [
+    {
+      "quizId": "quiz_1793438004502",
+      "quizTitle": "hh",
+      "studentId": "stu_1793373992097_jv1v1",
+      "studentName": "Alvaro Pratama Herlen",
+      "studentUsername": "graniat",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "violationType": "tab_switch",
+      "violationDetail": "Beralih tab / membuka aplikasi lain saat ujian berlangsung",
+      "id": "violation_1793456954119_ecij",
+      "timestamp": "2026-10-31T14:29:14.119Z"
+    }
+  ],
   "quizParticipants": [
     {
       "id": "part_1793456898000_ugug",
@@ -504,6 +518,19 @@
   "stories": [],
   "notes": [],
   "notifications": [
+    {
+      "id": "notif_1793456954120_fttjv",
+      "title": "🚨 Pelanggaran Kuis Terdeteksi!",
+      "message": "Siswa \"Alvaro Pratama Herlen\" terdeteksi Beralih tab / membuka aplikasi lain saat ujian berlangsung saat mengerjakan kuis \"hh\".",
+      "type": "quiz_violation",
+      "isImportant": false,
+      "linkType": "quiz",
+      "linkId": "quiz_1793438004502",
+      "targetRole": "guru",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T14:29:14.120Z"
+    },
     {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
