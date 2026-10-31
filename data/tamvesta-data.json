@@ -29,7 +29,8 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_kepsek:d592cc82bedb9886",
       "createdAt": "2026-10-24T08:22:46.821Z",
       "updatedAt": "2026-10-24T08:22:46.821Z",
-      "password": "Tamvesta!B2601"
+      "password": "Tamvesta!B2601",
+      "isVerified": false
     },
     {
       "id": "user_staff_titus_yayasan",
@@ -77,8 +78,7 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
       "createdAt": "2026-10-24T08:22:46.865Z",
       "updatedAt": "2026-10-24T08:22:46.865Z",
-      "password": "Tamvesta!B2604",
-      "isVerified": false
+      "password": "Tamvesta!B2604"
     },
     {
       "id": "user_staff_haliza_tu",
@@ -286,8 +286,7 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_angga_satpam:b970654ecf6fa094",
       "createdAt": "2026-10-24T08:22:47.082Z",
       "updatedAt": "2026-10-24T08:22:47.082Z",
-      "password": "Tamvesta!A2617",
-      "isVerified": true
+      "password": "Tamvesta!A2617"
     },
     {
       "id": "user_support_tamvesta",
@@ -428,6 +427,27 @@
   "announcements": [],
   "quizzes": [
     {
+      "title": "hh",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-4824",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793438004502",
+      "createdAt": "2026-10-31T09:13:24.502Z"
+    },
+    {
       "title": "ppp",
       "subjectId": "sub_general",
       "subjectName": "Matematika Peminatan",
@@ -460,27 +480,6 @@
       "status": "inactive",
       "id": "quiz_1793433581388",
       "createdAt": "2026-10-31T07:59:41.388Z"
-    },
-    {
-      "title": "hh",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [],
-      "isActive": true,
-      "token": "TVQ-4824",
-      "sourceType": "google_forms",
-      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "active",
-      "id": "quiz_1793438004502",
-      "createdAt": "2026-10-31T09:13:24.502Z"
     }
   ],
   "quizAttempts": [
@@ -541,7 +540,8 @@
       "studentKelas": "Kelas 8",
       "tokenUsed": "TVQ-4824",
       "enteredAt": "2026-10-31T14:28:18.000Z",
-      "status": "in_progress"
+      "status": "completed",
+      "score": 100
     }
   ],
   "attendanceEvents": [],
@@ -552,6 +552,19 @@
   "notes": [],
   "notifications": [
     {
+      "id": "notif_1793456954120_fttjv",
+      "title": "🚨 Pelanggaran Kuis Terdeteksi!",
+      "message": "Siswa \"Alvaro Pratama Herlen\" terdeteksi Beralih tab / membuka aplikasi lain saat ujian berlangsung saat mengerjakan kuis \"hh\".",
+      "type": "quiz_violation",
+      "isImportant": false,
+      "linkType": "quiz",
+      "linkId": "quiz_1793438004502",
+      "targetRole": "guru",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T14:29:14.120Z"
+    },
+    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -560,19 +573,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:27:59.889Z"
-    },
-    {
-      "id": "notif_announcement_1",
-      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
-      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
-      "type": "announcement",
-      "isImportant": true,
-      "linkType": "announcement",
-      "linkId": "ann_1",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T13:27:59.889Z"
+      "createdAt": "2026-10-31T14:27:52.653Z"
     },
     {
       "id": "notif_subject_1",
@@ -583,7 +584,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T12:27:59.889Z"
+      "createdAt": "2026-10-31T12:27:52.653Z"
     }
   ],
   "articles": [],
