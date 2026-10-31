@@ -1028,6 +1028,50 @@ class DatabaseManager {
 
   private saveDataDirect(dataToSave: DatabaseSchema) {
     try {
+      const purgedSeedQuizIds = ['quiz_1793433581388', 'quiz_1793438004502', 'quiz_1793438743437'];
+      const deletedQuizSet = new Set([
+        ...purgedSeedQuizIds,
+        ...(dataToSave.deletedQuizIds || []).map((id) => (id || '').trim().toLowerCase())
+      ]);
+      if (Array.isArray(dataToSave.quizzes)) {
+        dataToSave.quizzes = dataToSave.quizzes.filter((q) => {
+          const qId = (q.id || '').trim().toLowerCase();
+          if (deletedQuizSet.has(qId)) return false;
+          if (q.teacherId === 'user_staff_endang_daryanti' || q.teacherName === 'Endang Daryanti') return false;
+          if (q.title === 'ppp' || q.title === 'hh') return false;
+          return true;
+        });
+      }
+      if (Array.isArray(dataToSave.quizViolations)) {
+        dataToSave.quizViolations = dataToSave.quizViolations.filter((v) => {
+          const vqId = (v.quizId || '').trim().toLowerCase();
+          if (deletedQuizSet.has(vqId)) return false;
+          if (v.quizTitle === 'ppp' || v.quizTitle === 'hh') return false;
+          if (v.teacherId === 'user_staff_endang_daryanti') return false;
+          return true;
+        });
+      }
+      if (Array.isArray(dataToSave.quizParticipants)) {
+        dataToSave.quizParticipants = dataToSave.quizParticipants.filter((p) => {
+          const pqId = (p.quizId || '').trim().toLowerCase();
+          if (deletedQuizSet.has(pqId)) return false;
+          if (p.quizTitle === 'ppp' || p.quizTitle === 'hh') return false;
+          return true;
+        });
+      }
+      if (Array.isArray(dataToSave.quizAttempts)) {
+        dataToSave.quizAttempts = dataToSave.quizAttempts.filter((a) => {
+          const aqId = (a.quizId || '').trim().toLowerCase();
+          if (deletedQuizSet.has(aqId)) return false;
+          if (a.quizTitle === 'ppp' || a.quizTitle === 'hh') return false;
+          return true;
+        });
+      }
+      dataToSave.deletedQuizIds = Array.from(new Set([
+        ...(dataToSave.deletedQuizIds || []),
+        ...purgedSeedQuizIds
+      ]));
+
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }

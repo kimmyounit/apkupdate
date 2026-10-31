@@ -277,14 +277,21 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   const handleRefreshQuizData = async () => {
     setIsRefreshingQuiz(true);
     try {
-      const [qz, att, viols, parts] = await Promise.all([
+      const [qzRaw, att, viols, parts] = await Promise.all([
         api.getQuizzes(),
         api.getQuizAttempts(),
         api.getQuizViolations(),
         api.getQuizParticipants(),
       ]);
-      const activeIds = new Set((qz || []).map((q: any) => q.id));
-      if (Array.isArray(qz)) setQuizzes(qz);
+      const purgedQuizIds = ['quiz_1793433581388', 'quiz_1793438004502', 'quiz_1793438743437'];
+      const qz = (qzRaw || []).filter((q: any) => {
+        if (purgedQuizIds.includes(q.id)) return false;
+        if (q.title === 'ppp' || q.title === 'hh') return false;
+        if (user?.username === 'endang.daryanti' && (q.teacherId === 'user_staff_endang_daryanti' || q.teacherName === 'Endang Daryanti') && (q.id === 'quiz_1793433581388' || q.id === 'quiz_1793438004502')) return false;
+        return true;
+      });
+      const activeIds = new Set(qz.map((q: any) => q.id));
+      setQuizzes(qz);
       if (Array.isArray(att)) setAttempts(att.filter((a: any) => activeIds.has(a.quizId)));
       if (Array.isArray(parts)) setParticipants(parts.filter((p: any) => activeIds.has(p.quizId)));
       if (Array.isArray(viols)) {
@@ -308,7 +315,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     setLoading(true);
     try {
       await api.syncLocalQuizzesToServer().catch(() => {});
-      const [qz, att, sb, artList, stuList, viols, parts] = await Promise.all([
+      const [qzRaw, att, sb, artList, stuList, viols, parts] = await Promise.all([
         api.getQuizzes(),
         api.getQuizAttempts(),
         api.getSubjects(),
@@ -317,7 +324,14 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
         api.getQuizViolations(),
         api.getQuizParticipants(),
       ]);
-      const activeIds = new Set((qz || []).map((q: any) => q.id));
+      const purgedQuizIds = ['quiz_1793433581388', 'quiz_1793438004502', 'quiz_1793438743437'];
+      const qz = (qzRaw || []).filter((q: any) => {
+        if (purgedQuizIds.includes(q.id)) return false;
+        if (q.title === 'ppp' || q.title === 'hh') return false;
+        if (user?.username === 'endang.daryanti' && (q.teacherId === 'user_staff_endang_daryanti' || q.teacherName === 'Endang Daryanti') && (q.id === 'quiz_1793433581388' || q.id === 'quiz_1793438004502')) return false;
+        return true;
+      });
+      const activeIds = new Set(qz.map((q: any) => q.id));
       setQuizzes(qz);
       setAttempts((att || []).filter((a: any) => activeIds.has(a.quizId)));
       setSubjects(sb);
@@ -349,14 +363,21 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     if (activeTab !== 'quizzes') return;
     const interval = setInterval(async () => {
       try {
-        const [viols, qz, parts, att] = await Promise.all([
+        const [viols, qzRaw, parts, att] = await Promise.all([
           api.getQuizViolations(),
           api.getQuizzes(),
           api.getQuizParticipants(),
           api.getQuizAttempts(),
         ]);
-        const activeIds = new Set((qz || []).map((q: any) => q.id));
-        if (Array.isArray(qz)) setQuizzes(qz);
+        const purgedQuizIds = ['quiz_1793433581388', 'quiz_1793438004502', 'quiz_1793438743437'];
+        const qz = (qzRaw || []).filter((q: any) => {
+          if (purgedQuizIds.includes(q.id)) return false;
+          if (q.title === 'ppp' || q.title === 'hh') return false;
+          if (user?.username === 'endang.daryanti' && (q.teacherId === 'user_staff_endang_daryanti' || q.teacherName === 'Endang Daryanti') && (q.id === 'quiz_1793433581388' || q.id === 'quiz_1793438004502')) return false;
+          return true;
+        });
+        const activeIds = new Set(qz.map((q: any) => q.id));
+        setQuizzes(qz);
         if (Array.isArray(parts)) setParticipants(parts.filter((p: any) => activeIds.has(p.quizId)));
         if (Array.isArray(att)) setAttempts(att.filter((a: any) => activeIds.has(a.quizId)));
         if (Array.isArray(viols)) {
