@@ -1,6 +1,25 @@
 {
   "users": [
     {
+      "id": "user_teacher_1793456753524_bb7l",
+      "username": "guru.contoh",
+      "name": "Contoh",
+      "role": "guru",
+      "jabatan": "Guru Seni",
+      "initialPassword": "Tamvesta!313",
+      "password": "Tamvesta!313",
+      "passwordHash": "df3d172d599f854c65f1dfaefe292e410bd2b7019690a719032ff0ada3b439e5bced5c7f48c44e70fab311d8871745f7b039d6722f79d25534a2d69ba93aeaf9",
+      "salt": "9985b493a179c776451b1e12bf22872b",
+      "mustChangePassword": false,
+      "isActive": true,
+      "isVerified": true,
+      "email": "",
+      "phone": "",
+      "qrToken": "TAMVESTA:STUDENT:guru.contoh:b2f795375e884553",
+      "createdAt": "2026-10-31T14:25:53.524Z",
+      "updatedAt": "2026-10-31T14:25:53.524Z"
+    },
+    {
       "id": "user_admin_tamansiswa",
       "username": "TAMANSISWA",
       "name": "Administrator Tamansiswa Batam",
