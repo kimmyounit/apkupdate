@@ -1,25 +1,6 @@
 {
   "users": [
     {
-      "id": "user_teacher_1793456753524_bb7l",
-      "username": "guru.contoh",
-      "name": "Contoh",
-      "role": "guru",
-      "jabatan": "Guru Seni",
-      "initialPassword": "Tamvesta!313",
-      "password": "Tamvesta!313",
-      "passwordHash": "df3d172d599f854c65f1dfaefe292e410bd2b7019690a719032ff0ada3b439e5bced5c7f48c44e70fab311d8871745f7b039d6722f79d25534a2d69ba93aeaf9",
-      "salt": "9985b493a179c776451b1e12bf22872b",
-      "mustChangePassword": false,
-      "isActive": true,
-      "isVerified": true,
-      "email": "",
-      "phone": "",
-      "qrToken": "TAMVESTA:STUDENT:guru.contoh:b2f795375e884553",
-      "createdAt": "2026-10-31T14:25:53.524Z",
-      "updatedAt": "2026-10-31T14:25:53.524Z"
-    },
-    {
       "id": "user_admin_tamansiswa",
       "username": "TAMANSISWA",
       "name": "Administrator Tamansiswa Batam",
@@ -48,8 +29,7 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_kepsek:d592cc82bedb9886",
       "createdAt": "2026-10-24T08:22:46.821Z",
       "updatedAt": "2026-10-24T08:22:46.821Z",
-      "password": "Tamvesta!B2601",
-      "isVerified": true
+      "password": "Tamvesta!B2601"
     },
     {
       "id": "user_staff_titus_yayasan",
@@ -305,8 +285,7 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_angga_satpam:b970654ecf6fa094",
       "createdAt": "2026-10-24T08:22:47.082Z",
       "updatedAt": "2026-10-24T08:22:47.082Z",
-      "password": "Tamvesta!A2617",
-      "isVerified": true
+      "password": "Tamvesta!A2617"
     },
     {
       "id": "user_support_tamvesta",
@@ -421,6 +400,25 @@
       "password": "Siswa793701",
       "passwordHash": "8bbdf7c2887ea2a86ede0789f4867a1194e1f4bca095503fe2b2e20b3aebb3739f9f800323fd77b58d7042bb257f92c9a70788816087397dd2e0b0d95596ee72",
       "salt": "887f896e736ebf18869cb47d087ab843"
+    },
+    {
+      "id": "user_teacher_1793456753524_bb7l",
+      "username": "guru.contoh",
+      "name": "Contoh",
+      "role": "guru",
+      "jabatan": "Guru Seni",
+      "initialPassword": "Tamvesta!313",
+      "password": "Tamvesta!313",
+      "passwordHash": "df3d172d599f854c65f1dfaefe292e410bd2b7019690a719032ff0ada3b439e5bced5c7f48c44e70fab311d8871745f7b039d6722f79d25534a2d69ba93aeaf9",
+      "salt": "9985b493a179c776451b1e12bf22872b",
+      "mustChangePassword": false,
+      "isActive": true,
+      "isVerified": true,
+      "email": "",
+      "phone": "",
+      "qrToken": "TAMVESTA:STUDENT:guru.contoh:b2f795375e884553",
+      "createdAt": "2026-10-31T14:25:53.524Z",
+      "updatedAt": "2026-10-31T14:25:53.524Z"
     }
   ],
   "subjects": [],
@@ -541,7 +539,8 @@
       "studentKelas": "Kelas 8",
       "tokenUsed": "TVQ-4824",
       "enteredAt": "2026-10-31T14:28:18.000Z",
-      "status": "in_progress"
+      "status": "completed",
+      "score": 100
     }
   ],
   "attendanceEvents": [],
@@ -560,7 +559,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:25:58.643Z"
+      "createdAt": "2026-10-31T14:28:02.679Z"
     },
     {
       "id": "notif_announcement_1",
@@ -572,7 +571,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T13:25:58.643Z"
+      "createdAt": "2026-10-31T13:28:02.679Z"
     },
     {
       "id": "notif_subject_1",
@@ -583,7 +582,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T12:25:58.643Z"
+      "createdAt": "2026-10-31T12:28:02.679Z"
     }
   ],
   "articles": [],
