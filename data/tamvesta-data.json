@@ -481,7 +481,23 @@
       "createdAt": "2026-10-31T07:59:41.388Z"
     }
   ],
-  "quizAttempts": [],
+  "quizAttempts": [
+    {
+      "quizId": "quiz_1793438004502",
+      "quizTitle": "hh",
+      "studentId": "stu_1793373992097_jv1v1",
+      "studentName": "Alvaro Pratama Herlen",
+      "username": "graniat",
+      "tokenUsed": "TVQ-4824",
+      "score": 100,
+      "totalQuestions": 0,
+      "correctAnswersCount": 0,
+      "passed": true,
+      "answers": [],
+      "id": "att_1793457006948",
+      "completedAt": "2026-10-31T14:30:06.948Z"
+    }
+  ],
   "quizViolations": [
     {
       "quizId": "quiz_1793438004502",
@@ -508,7 +524,8 @@
       "studentKelas": "Kelas 8",
       "tokenUsed": "TVQ-4824",
       "enteredAt": "2026-10-31T14:28:18.000Z",
-      "status": "in_progress"
+      "status": "completed",
+      "score": 100
     }
   ],
   "attendanceEvents": [],
