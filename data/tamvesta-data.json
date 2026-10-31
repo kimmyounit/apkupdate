@@ -424,63 +424,7 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [
-    {
-      "title": "hh",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [],
-      "isActive": true,
-      "token": "TVQ-4824",
-      "sourceType": "google_forms",
-      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "active",
-      "id": "quiz_1793438004502",
-      "createdAt": "2026-10-31T09:13:24.502Z"
-    },
-    {
-      "title": "ppp",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [
-        {
-          "id": "q_guru_1",
-          "question": "siapa pendiri tamansiswa",
-          "options": [
-            "soekarno",
-            "khd",
-            "jookowi",
-            "pascabowo"
-          ],
-          "correctOptionIndex": 0,
-          "explanation": ""
-        }
-      ],
-      "isActive": false,
-      "token": "TVQ-4655",
-      "sourceType": "interactive",
-      "externalUrl": "",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "inactive",
-      "id": "quiz_1793433581388",
-      "createdAt": "2026-10-31T07:59:41.388Z"
-    }
-  ],
+  "quizzes": [],
   "quizAttempts": [],
   "quizViolations": [],
   "quizParticipants": [],
@@ -500,7 +444,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:26:04.177Z"
+      "createdAt": "2026-10-31T14:24:38.928Z"
     },
     {
       "id": "notif_announcement_1",
@@ -512,7 +456,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T13:26:04.177Z"
+      "createdAt": "2026-10-31T13:24:38.928Z"
     },
     {
       "id": "notif_subject_1",
@@ -523,7 +467,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T12:26:04.177Z"
+      "createdAt": "2026-10-31T12:24:38.928Z"
     }
   ],
   "articles": [],
