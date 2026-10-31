@@ -405,10 +405,109 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [],
-  "quizAttempts": [],
-  "quizViolations": [],
-  "quizParticipants": [],
+  "quizzes": [
+    {
+      "title": "ppp",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [
+        {
+          "id": "q_guru_1",
+          "question": "siapa pendiri tamansiswa",
+          "options": [
+            "soekarno",
+            "khd",
+            "jookowi",
+            "pascabowo"
+          ],
+          "correctOptionIndex": 0,
+          "explanation": ""
+        }
+      ],
+      "isActive": false,
+      "token": "TVQ-4655",
+      "sourceType": "interactive",
+      "externalUrl": "",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "inactive",
+      "id": "quiz_1793433581388",
+      "createdAt": "2026-10-31T07:59:41.388Z"
+    },
+    {
+      "title": "hh",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-4824",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793438004502",
+      "createdAt": "2026-10-31T09:13:24.502Z"
+    }
+  ],
+  "quizAttempts": [
+    {
+      "quizId": "quiz_1793438004502",
+      "quizTitle": "hh",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "username": "siswa.rian.resmi",
+      "tokenUsed": "TVQ-4824",
+      "score": 100,
+      "totalQuestions": 0,
+      "correctAnswersCount": 0,
+      "passed": true,
+      "answers": [],
+      "id": "att_1793438088274",
+      "completedAt": "2026-10-31T09:14:48.274Z"
+    }
+  ],
+  "quizViolations": [
+    {
+      "quizId": "quiz_1793438004502",
+      "quizTitle": "hh",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "studentUsername": "siswa.rian.resmi",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "violationType": "tab_switch",
+      "violationDetail": "Beralih tab / membuka aplikasi lain saat ujian berlangsung",
+      "id": "violation_1793438066702_fckg",
+      "timestamp": "2026-10-31T09:14:26.702Z"
+    }
+  ],
+  "quizParticipants": [
+    {
+      "id": "part_1793438059814_p6js",
+      "quizId": "quiz_1793438004502",
+      "quizTitle": "hh",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "studentUsername": "siswa.rian.resmi",
+      "studentKelas": "Kelas 7",
+      "tokenUsed": "TVQ-4824",
+      "enteredAt": "2026-10-31T09:14:19.814Z",
+      "status": "in_progress"
+    }
+  ],
   "attendanceEvents": [],
   "attendanceRecords": [],
   "passwordResetRequests": [
@@ -470,7 +569,42 @@
   ],
   "stories": [],
   "notes": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif_welcome",
+      "title": "Selamat Datang di TAMVESTA Mobile!",
+      "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
+      "type": "general",
+      "isImportant": true,
+      "linkType": "none",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T09:13:10.084Z"
+    },
+    {
+      "id": "notif_announcement_1",
+      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
+      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
+      "type": "announcement",
+      "isImportant": true,
+      "linkType": "announcement",
+      "linkId": "ann_1",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T08:13:10.084Z"
+    },
+    {
+      "id": "notif_subject_1",
+      "title": "Pembaruan Jadwal: Matematika Wajib",
+      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
+      "type": "subject_change",
+      "isImportant": false,
+      "linkType": "subject",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T07:13:10.084Z"
+    }
+  ],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
@@ -623,12 +757,6 @@
   "lostFoundItems": [],
   "activityPermissions": [],
   "appReports": [],
-  "deletedPostIds": [],
-  "deletedQuizIds": [
-    "quiz_1793438743437",
-    "quiz_1793433581388",
-    "quiz_1793438004502"
-  ],
   "deletedUserIds": [
     "siswa.smp7a.001",
     "siswa.smp7a.002",
