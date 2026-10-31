@@ -462,7 +462,23 @@
       "createdAt": "2026-10-31T07:59:41.388Z"
     }
   ],
-  "quizAttempts": [],
+  "quizAttempts": [
+    {
+      "quizId": "quiz_1793438004502",
+      "quizTitle": "hh",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "username": "siswa.rian.resmi",
+      "tokenUsed": "TVQ-4824",
+      "score": 100,
+      "totalQuestions": 0,
+      "correctAnswersCount": 0,
+      "passed": true,
+      "answers": [],
+      "id": "att_1793438088274",
+      "completedAt": "2026-10-31T09:14:48.274Z"
+    }
+  ],
   "quizViolations": [
     {
       "quizId": "quiz_1793438004502",
