@@ -513,24 +513,6 @@
   "attendanceRecords": [],
   "passwordResetRequests": [
     {
-      "id": "pr_1793379084239",
-      "ticketNumber": "TKT-574403",
-      "userId": "stu_1793377010945_uzghx",
-      "username": "siswa.rian.resmi",
-      "name": "Rian Pratama",
-      "kelas": "Kelas 7",
-      "role": "siswa",
-      "reason": "Pengajuan ganti sandi berkala",
-      "status": "approved",
-      "newPasswordHash": "1a3a6c21e8783c7bad84e7156b2a6c9b935a2996c2eeab2d6abb764e388304204f4879511103e652a8320ee979b735c378c5a81a4cbe1ddf1d3ca39006901447",
-      "newSalt": "264d2c9588c3de3d98c10077b8c82422",
-      "newPassword": "passwordBaru789",
-      "createdAt": "2026-10-30T16:51:24.239Z",
-      "processedAt": "2026-10-30T16:56:16.713Z",
-      "processedBy": "Administrator Tamansiswa Batam",
-      "adminNote": "Telah Disetujui"
-    },
-    {
       "id": "pr_1793377899590",
       "ticketNumber": "TKT-994704",
       "userId": "stu_1793373992097_jv1v1",
@@ -547,12 +529,43 @@
       "processedAt": "2026-10-30T16:56:17.016Z",
       "processedBy": "Administrator Tamansiswa Batam",
       "adminNote": "Telah Disetujui"
+    },
+    {
+      "id": "pr_1793379084239",
+      "ticketNumber": "TKT-574403",
+      "userId": "stu_1793377010945_uzghx",
+      "username": "siswa.rian.resmi",
+      "name": "Rian Pratama",
+      "kelas": "Kelas 7",
+      "role": "siswa",
+      "reason": "Pengajuan ganti sandi berkala",
+      "status": "approved",
+      "newPasswordHash": "1a3a6c21e8783c7bad84e7156b2a6c9b935a2996c2eeab2d6abb764e388304204f4879511103e652a8320ee979b735c378c5a81a4cbe1ddf1d3ca39006901447",
+      "newSalt": "264d2c9588c3de3d98c10077b8c82422",
+      "newPassword": "passwordBaru789",
+      "createdAt": "2026-10-30T16:51:24.239Z",
+      "processedAt": "2026-10-30T16:56:16.713Z",
+      "processedBy": "Administrator Tamansiswa Batam",
+      "adminNote": "Telah Disetujui"
     }
   ],
   "posts": [],
   "stories": [],
   "notes": [],
   "notifications": [
+    {
+      "id": "notif_1793438004503_gico1",
+      "title": "📢 Quiz Baru Tersedia!",
+      "message": "Endang Daryanti telah menerbitkan quiz: \"hh\" (Matematika Peminatan). Token: TVQ-4824",
+      "type": "quiz",
+      "isImportant": false,
+      "linkType": "quiz",
+      "linkId": "quiz_1793438004502",
+      "targetRole": "siswa",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T09:13:24.503Z"
+    },
     {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
@@ -562,7 +575,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T09:09:36.853Z"
+      "createdAt": "2026-10-31T09:10:51.465Z"
     },
     {
       "id": "notif_announcement_1",
@@ -574,7 +587,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T08:09:36.853Z"
+      "createdAt": "2026-10-31T08:10:51.465Z"
     },
     {
       "id": "notif_subject_1",
@@ -585,7 +598,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T07:09:36.853Z"
+      "createdAt": "2026-10-31T07:10:51.465Z"
     }
   ],
   "articles": [],
@@ -596,7 +609,18 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793438004533_tw12",
+      "userId": "user_staff_endang_daryanti",
+      "userName": "Endang Daryanti",
+      "userUsername": "endang.daryanti",
+      "userKelas": "Quiz: TVQ-4824",
+      "timestamp": "2026-10-31T09:13:24.505Z",
+      "formattedTime": "09.13.24 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
