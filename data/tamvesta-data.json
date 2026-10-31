@@ -315,6 +315,8 @@
   "announcements": [],
   "quizzes": [],
   "quizAttempts": [],
+  "quizViolations": [],
+  "quizParticipants": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
   "passwordResetRequests": [],
@@ -368,9 +370,6 @@
     "guru.matematika",
     "guru.bahasa",
     "kepala.sekolah",
-    "panitia.osis",
-    "alvaro1234",
-    "itskimzz",
-    "tamansiswa1"
+    "panitia.osis"
   ]
 }
