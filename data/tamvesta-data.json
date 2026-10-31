@@ -442,21 +442,7 @@
     }
   ],
   "quizAttempts": [],
-  "quizViolations": [
-    {
-      "quizId": "quiz_1793433581388",
-      "quizTitle": "ppp",
-      "studentId": "stu_1793377010945_uzghx",
-      "studentName": "Rian Pratama",
-      "studentUsername": "siswa.rian.resmi",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "violationType": "tab_switch",
-      "violationDetail": "Beralih tab / membuka aplikasi lain saat ujian berlangsung",
-      "id": "violation_1793433618580_xhch",
-      "timestamp": "2026-10-31T08:00:18.580Z"
-    }
-  ],
+  "quizViolations": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
   "passwordResetRequests": [
@@ -520,19 +506,6 @@
   "notes": [],
   "notifications": [
     {
-      "id": "notif_1793433618580_krwxv",
-      "title": "🚨 Pelanggaran Kuis Terdeteksi!",
-      "message": "Siswa \"Rian Pratama\" terdeteksi Beralih tab / membuka aplikasi lain saat ujian berlangsung saat mengerjakan kuis \"ppp\".",
-      "type": "quiz_violation",
-      "isImportant": false,
-      "linkType": "quiz",
-      "linkId": "quiz_1793433581388",
-      "targetRole": "guru",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T08:00:18.580Z"
-    },
-    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -541,7 +514,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T07:57:59.143Z"
+      "createdAt": "2026-10-31T07:58:19.158Z"
     },
     {
       "id": "notif_announcement_1",
@@ -553,7 +526,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T06:57:59.143Z"
+      "createdAt": "2026-10-31T06:58:19.158Z"
     },
     {
       "id": "notif_subject_1",
@@ -564,7 +537,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T05:57:59.143Z"
+      "createdAt": "2026-10-31T05:58:19.158Z"
     }
   ],
   "articles": [],
