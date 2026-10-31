@@ -338,9 +338,37 @@ function loadDB(): StandaloneDB {
   if (!Array.isArray(db.passwordResetRequests)) db.passwordResetRequests = [];
 
   // Pastikan seluruh kuis yang dihapus permanen disaring keluar dari database lokal
-  const explicitlyDeletedQuizzes = getExplicitlyDeletedQuizIds();
+  const explicitlyDeletedQuizzes = getExplicitlyDeletedQuizIds().map((id) => (id || '').trim().toLowerCase());
+  const deletedQuizSet = new Set(explicitlyDeletedQuizzes);
   if (Array.isArray(db.quizzes)) {
-    db.quizzes = db.quizzes.filter((q) => !explicitlyDeletedQuizzes.includes(q.id));
+    db.quizzes = db.quizzes.filter((q) => !deletedQuizSet.has((q.id || '').trim().toLowerCase()));
+  }
+  const currentQuizIds = new Set((db.quizzes || []).map((q) => (q.id || '').trim().toLowerCase()));
+
+  // Pastikan pelanggaran, peserta, dan attempt dari kuis yang sudah dihapus tidak tertinggal di memori lokal
+  if (Array.isArray((db as any).quizViolations)) {
+    (db as any).quizViolations = (db as any).quizViolations.filter((v: any) => {
+      const vqId = (v.quizId || '').trim().toLowerCase();
+      if (deletedQuizSet.has(vqId)) return false;
+      if (!currentQuizIds.has(vqId)) return false;
+      return true;
+    });
+  }
+  if (Array.isArray((db as any).quizParticipants)) {
+    (db as any).quizParticipants = (db as any).quizParticipants.filter((p: any) => {
+      const pqId = (p.quizId || '').trim().toLowerCase();
+      if (deletedQuizSet.has(pqId)) return false;
+      if (!currentQuizIds.has(pqId)) return false;
+      return true;
+    });
+  }
+  if (Array.isArray(db.quizAttempts)) {
+    db.quizAttempts = db.quizAttempts.filter((a: any) => {
+      const aqId = (a.quizId || '').trim().toLowerCase();
+      if (deletedQuizSet.has(aqId)) return false;
+      if (!currentQuizIds.has(aqId)) return false;
+      return true;
+    });
   }
 
   // Pastikan foto profil & bio yang pernah disimpan selamanya tidak hilang
@@ -1389,27 +1417,46 @@ export const offlineStore = {
   deleteQuiz(id: string): boolean {
     addExplicitlyDeletedQuizId(id);
     const db = loadDB();
+    const targetId = (id || '').trim().toLowerCase();
     if (!Array.isArray(db.quizzes)) db.quizzes = [];
-    const beforeLen = db.quizzes.length;
-    db.quizzes = db.quizzes.filter((q) => q.id !== id);
+    db.quizzes = db.quizzes.filter((q) => (q.id || '').trim().toLowerCase() !== targetId);
     if (!Array.isArray((db as any).deletedQuizIds)) {
       (db as any).deletedQuizIds = [];
     }
-    if (!(db as any).deletedQuizIds.includes(id)) {
+    if (!(db as any).deletedQuizIds.some((did: string) => did.trim().toLowerCase() === targetId)) {
       (db as any).deletedQuizIds.push(id);
     }
-    // Hapus juga data peserta kuis, pelanggaran kuis, dan riwayat attempt terkait
-    if (Array.isArray(db.quizParticipants)) {
-      db.quizParticipants = db.quizParticipants.filter((p) => p.quizId !== id);
+    // Hapus juga data peserta kuis, pelanggaran kuis, dan riwayat attempt terkait secara permanen
+    if (Array.isArray((db as any).quizParticipants)) {
+      (db as any).quizParticipants = (db as any).quizParticipants.filter((p: any) => (p.quizId || '').trim().toLowerCase() !== targetId);
     }
-    if (Array.isArray(db.quizViolations)) {
-      db.quizViolations = db.quizViolations.filter((v) => v.quizId !== id);
+    if (Array.isArray((db as any).quizViolations)) {
+      (db as any).quizViolations = (db as any).quizViolations.filter((v: any) => (v.quizId || '').trim().toLowerCase() !== targetId);
     }
     if (Array.isArray(db.quizAttempts)) {
-      db.quizAttempts = db.quizAttempts.filter((a) => a.quizId !== id);
+      db.quizAttempts = db.quizAttempts.filter((a) => (a.quizId || '').trim().toLowerCase() !== targetId);
     }
     saveDB(db);
     return true;
+  },
+
+  clearQuizViolations(quizId?: string): void {
+    const db = loadDB();
+    if (!Array.isArray((db as any).quizViolations)) return;
+    if (quizId) {
+      const targetId = (quizId || '').trim().toLowerCase();
+      (db as any).quizViolations = (db as any).quizViolations.filter((v: any) => (v.quizId || '').trim().toLowerCase() !== targetId);
+    } else {
+      (db as any).quizViolations = [];
+    }
+    saveDB(db);
+  },
+
+  deleteQuizViolation(violationId: string): void {
+    const db = loadDB();
+    if (!Array.isArray((db as any).quizViolations)) return;
+    (db as any).quizViolations = (db as any).quizViolations.filter((v: any) => v.id !== violationId);
+    saveDB(db);
   },
 
   getQuizById(id: string): Quiz {
@@ -1535,25 +1582,29 @@ export const offlineStore = {
   },
 
   mergeQuizParticipants(serverParticipants: QuizParticipant[]): void {
-    if (!Array.isArray(serverParticipants) || serverParticipants.length === 0) return;
+    if (!Array.isArray(serverParticipants)) return;
     const db = loadDB();
-    if (!db.quizParticipants) db.quizParticipants = [];
-    serverParticipants.forEach((sp) => {
-      const idx = db.quizParticipants.findIndex((p: any) => p.id === sp.id || (p.quizId === sp.quizId && p.studentId === sp.studentId));
-      if (idx >= 0) {
-        db.quizParticipants[idx] = sp;
-      } else {
-        db.quizParticipants.push(sp);
-      }
+    const explicitlyDeleted = new Set(getExplicitlyDeletedQuizIds().map((id) => (id || '').trim().toLowerCase()));
+    const validQuizIds = new Set((db.quizzes || []).map((q) => (q.id || '').trim().toLowerCase()));
+    (db as any).quizParticipants = serverParticipants.filter((sp) => {
+      const pqId = (sp.quizId || '').trim().toLowerCase();
+      return !explicitlyDeleted.has(pqId) && validQuizIds.has(pqId);
     });
     saveDB(db);
   },
 
   getQuizViolations(quizId?: string): QuizViolation[] {
     const db = loadDB();
-    const list = (db.quizViolations || []) as QuizViolation[];
+    const explicitlyDeleted = new Set(getExplicitlyDeletedQuizIds().map((id) => (id || '').trim().toLowerCase()));
+    const validQuizIds = new Set((db.quizzes || []).map((q) => (q.id || '').trim().toLowerCase()));
+    let list = ((db as any).quizViolations || []) as QuizViolation[];
+    list = list.filter((v) => {
+      const vqId = (v.quizId || '').trim().toLowerCase();
+      return !explicitlyDeleted.has(vqId) && validQuizIds.has(vqId);
+    });
     if (quizId) {
-      return list.filter((v) => v.quizId === quizId);
+      const targetQuizId = (quizId || '').trim().toLowerCase();
+      return list.filter((v) => (v.quizId || '').trim().toLowerCase() === targetQuizId);
     }
     return list;
   },
@@ -1585,16 +1636,13 @@ export const offlineStore = {
   },
 
   mergeQuizViolations(serverViolations: QuizViolation[]): void {
-    if (!Array.isArray(serverViolations) || serverViolations.length === 0) return;
+    if (!Array.isArray(serverViolations)) return;
     const db = loadDB();
-    if (!db.quizViolations) db.quizViolations = [];
-    serverViolations.forEach((sv) => {
-      const idx = db.quizViolations.findIndex((v: any) => v.id === sv.id);
-      if (idx >= 0) {
-        db.quizViolations[idx] = sv;
-      } else {
-        db.quizViolations.push(sv);
-      }
+    const explicitlyDeleted = new Set(getExplicitlyDeletedQuizIds().map((id) => (id || '').trim().toLowerCase()));
+    const validQuizIds = new Set((db.quizzes || []).map((q) => (q.id || '').trim().toLowerCase()));
+    (db as any).quizViolations = serverViolations.filter((sv) => {
+      const vqId = (sv.quizId || '').trim().toLowerCase();
+      return !explicitlyDeleted.has(vqId) && validQuizIds.has(vqId);
     });
     saveDB(db);
   },

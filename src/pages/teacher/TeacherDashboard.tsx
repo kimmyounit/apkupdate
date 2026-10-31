@@ -283,17 +283,19 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
         api.getQuizViolations(),
         api.getQuizParticipants(),
       ]);
+      const activeIds = new Set((qz || []).map((q: any) => q.id));
       if (Array.isArray(qz)) setQuizzes(qz);
-      if (Array.isArray(att)) setAttempts(att);
-      if (Array.isArray(parts)) setParticipants(parts);
+      if (Array.isArray(att)) setAttempts(att.filter((a: any) => activeIds.has(a.quizId)));
+      if (Array.isArray(parts)) setParticipants(parts.filter((p: any) => activeIds.has(p.quizId)));
       if (Array.isArray(viols)) {
-        if (viols.length > prevViolationCountRef.current && prevViolationCountRef.current > 0) {
-          const newest = viols[0];
+        const validViols = viols.filter((v: any) => activeIds.has(v.quizId));
+        if (validViols.length > prevViolationCountRef.current && prevViolationCountRef.current > 0) {
+          const newest = validViols[0];
           setLatestViolationAlert(newest);
           playQuizExitAlertSound();
         }
-        prevViolationCountRef.current = viols.length;
-        setViolations(viols);
+        prevViolationCountRef.current = validViols.length;
+        setViolations(validViols);
       }
     } catch (err) {
       console.error('Failed to refresh quiz data:', err);
@@ -315,15 +317,17 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
         api.getQuizViolations(),
         api.getQuizParticipants(),
       ]);
+      const activeIds = new Set((qz || []).map((q: any) => q.id));
       setQuizzes(qz);
-      setAttempts(att);
+      setAttempts((att || []).filter((a: any) => activeIds.has(a.quizId)));
       setSubjects(sb);
       setArticles(artList);
       setAllStudents(stuList);
-      if (Array.isArray(parts)) setParticipants(parts);
+      if (Array.isArray(parts)) setParticipants(parts.filter((p: any) => activeIds.has(p.quizId)));
       if (Array.isArray(viols)) {
-        setViolations(viols);
-        prevViolationCountRef.current = viols.length;
+        const validViols = viols.filter((v: any) => activeIds.has(v.quizId));
+        setViolations(validViols);
+        prevViolationCountRef.current = validViols.length;
       }
 
       if (sb.length > 0 && !quizForm.subjectName) {
@@ -351,17 +355,19 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
           api.getQuizParticipants(),
           api.getQuizAttempts(),
         ]);
+        const activeIds = new Set((qz || []).map((q: any) => q.id));
         if (Array.isArray(qz)) setQuizzes(qz);
-        if (Array.isArray(parts)) setParticipants(parts);
-        if (Array.isArray(att)) setAttempts(att);
+        if (Array.isArray(parts)) setParticipants(parts.filter((p: any) => activeIds.has(p.quizId)));
+        if (Array.isArray(att)) setAttempts(att.filter((a: any) => activeIds.has(a.quizId)));
         if (Array.isArray(viols)) {
-          if (viols.length > prevViolationCountRef.current && prevViolationCountRef.current > 0) {
-            const newest = viols[0];
+          const validViols = viols.filter((v: any) => activeIds.has(v.quizId));
+          if (validViols.length > prevViolationCountRef.current && prevViolationCountRef.current > 0) {
+            const newest = validViols[0];
             setLatestViolationAlert(newest);
             playQuizExitAlertSound();
           }
-          prevViolationCountRef.current = viols.length;
-          setViolations(viols);
+          prevViolationCountRef.current = validViols.length;
+          setViolations(validViols);
         }
       } catch (_) {}
     }, 4000);
@@ -475,14 +481,47 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     setQuizToDelete(null);
     try {
       await api.deleteQuiz(id);
+      // Hapus kuis dari daftar
       setQuizzes((prev) => prev.filter((q) => q.id !== id));
+      // Hapus seluruh pelanggaran kuis terkait secara instan
+      setViolations((prev) => prev.filter((v) => v.quizId !== id));
+      // Hapus seluruh peserta dan attempt kuis terkait secara instan
+      setParticipants((prev) => prev.filter((p) => p.quizId !== id));
+      setAttempts((prev) => prev.filter((a) => a.quizId !== id));
+      // Bersihkan alert jika berasal dari kuis ini
+      setLatestViolationAlert((prev) => (prev?.quizId === id ? null : prev));
+      prevViolationCountRef.current = 0;
       if (selectedQuizForDetails?.id === id) {
         setSelectedQuizForDetails(null);
       }
-      setGlobalSuccess('Quiz berhasil dihapus secara permanen.');
+      setGlobalSuccess('Quiz dan seluruh data pelanggaran berhasil dihapus permanen.');
       setTimeout(() => setGlobalSuccess(null), 3000);
     } catch (err: any) {
       alert(err.message || 'Gagal menghapus quiz.');
+    }
+  };
+
+  const handleClearAllViolations = async () => {
+    try {
+      await api.clearQuizViolations();
+      setViolations([]);
+      setLatestViolationAlert(null);
+      prevViolationCountRef.current = 0;
+      setGlobalSuccess('Seluruh riwayat pelanggaran telah dibersihkan.');
+      setTimeout(() => setGlobalSuccess(null), 3000);
+    } catch (_) {
+      setViolations([]);
+    }
+  };
+
+  const handleDeleteSingleViolation = async (violationId: string) => {
+    try {
+      await api.deleteQuizViolation(violationId);
+      setViolations((prev) => prev.filter((v) => v.id !== violationId));
+      setLatestViolationAlert((prev) => (prev?.id === violationId ? null : prev));
+      prevViolationCountRef.current = Math.max(0, prevViolationCountRef.current - 1);
+    } catch (_) {
+      setViolations((prev) => prev.filter((v) => v.id !== violationId));
     }
   };
 
@@ -918,7 +957,24 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     return matchesCat && matchesSearch;
   });
 
-  const filteredAttempts = attempts.filter((att) => {
+  const validQuizIds = React.useMemo(() => new Set(quizzes.map((q) => q.id)), [quizzes]);
+
+  const visibleViolations = React.useMemo(
+    () => violations.filter((v) => validQuizIds.has(v.quizId)),
+    [violations, validQuizIds]
+  );
+
+  const visibleParticipants = React.useMemo(
+    () => participants.filter((p) => validQuizIds.has(p.quizId)),
+    [participants, validQuizIds]
+  );
+
+  const visibleAttempts = React.useMemo(
+    () => attempts.filter((a) => validQuizIds.has(a.quizId)),
+    [attempts, validQuizIds]
+  );
+
+  const filteredAttempts = visibleAttempts.filter((att) => {
     const matchesSearch =
       att.studentName.toLowerCase().includes(searchAttempt.toLowerCase()) ||
       att.username.toLowerCase().includes(searchAttempt.toLowerCase()) ||
@@ -927,7 +983,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     return matchesSearch && matchesQuiz;
   });
 
-  const filteredParticipants = participants.filter((p) => {
+  const filteredParticipants = visibleParticipants.filter((p) => {
     const matchesSearch =
       p.studentName.toLowerCase().includes(searchAttempt.toLowerCase()) ||
       (p.studentUsername && p.studentUsername.toLowerCase().includes(searchAttempt.toLowerCase())) ||
@@ -938,7 +994,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
     return matchesSearch && matchesQuiz;
   });
 
-  const filteredViolations = violations.filter((v) => {
+  const filteredViolations = visibleViolations.filter((v) => {
     const matchesSearch =
       v.studentName.toLowerCase().includes(searchAttempt.toLowerCase()) ||
       (v.studentUsername && v.studentUsername.toLowerCase().includes(searchAttempt.toLowerCase())) ||
@@ -1704,7 +1760,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
             </div>
 
             {/* ALERT NOTIFIKASI PELANGGARAN TERAKHIR */}
-            {latestViolationAlert && (
+            {latestViolationAlert && validQuizIds.has(latestViolationAlert.quizId) && (
               <div className="bg-rose-600 text-white p-4 rounded-3xl shadow-lg border-2 border-rose-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-pulse">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-white/20 rounded-2xl shrink-0">
@@ -1739,7 +1795,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
             )}
 
             {/* LIVE PELANGGARAN UJIAN SISWA (REAL-TIME NOTIFIKASI) */}
-            {violations.length > 0 && (
+            {visibleViolations.length > 0 && (
               <div className="bg-rose-50 border-2 border-rose-300 rounded-3xl p-5 shadow-sm space-y-3 animate-in fade-in">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-rose-700 font-black text-sm">
@@ -1748,15 +1804,25 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                       <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
                     </span>
                     <ShieldAlert className="w-5 h-5 text-rose-600" />
-                    <span>Laporan Pelanggaran Ujian Siswa ({violations.length})</span>
+                    <span>Laporan Pelanggaran Ujian Siswa ({visibleViolations.length})</span>
                   </div>
-                  <span className="text-[10px] uppercase font-black bg-rose-200/80 text-rose-800 px-2.5 py-0.5 rounded-full">
-                    Real-Time Signal
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleClearAllViolations}
+                      className="text-[10px] font-black bg-rose-100 hover:bg-rose-200 text-rose-800 px-2.5 py-1 rounded-xl transition cursor-pointer flex items-center gap-1 border border-rose-300/80"
+                      title="Bersihkan riwayat pelanggaran"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Bersihkan</span>
+                    </button>
+                    <span className="text-[10px] uppercase font-black bg-rose-200/80 text-rose-800 px-2.5 py-0.5 rounded-full">
+                      Real-Time Signal
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                  {violations.map((v) => (
+                  {visibleViolations.map((v) => (
                     <div
                       key={v.id}
                       className="bg-white p-3.5 rounded-2xl border border-rose-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
@@ -1773,9 +1839,18 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                         </p>
                       </div>
 
-                      <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-lg border border-rose-100 shrink-0 self-start sm:self-auto">
-                        Terdeteksi Sistem
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                        <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-lg border border-rose-100">
+                          Terdeteksi Sistem
+                        </span>
+                        <button
+                          onClick={() => handleDeleteSingleViolation(v.id)}
+                          className="p-1 hover:bg-rose-100 text-rose-400 hover:text-rose-700 rounded-lg transition cursor-pointer"
+                          title="Hapus laporan ini"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1946,9 +2021,9 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
               <div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                   <span>Pusat Monitoring Ujian</span>
-                  {violations.length > 0 && (
+                  {visibleViolations.length > 0 && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-200 animate-pulse">
-                      {violations.length} Pelanggaran
+                      {visibleViolations.length} Pelanggaran
                     </span>
                   )}
                 </h2>
@@ -1990,7 +2065,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                 }`}
               >
                 <ShieldAlert className="w-3.5 h-3.5" />
-                <span>Pelanggaran ({violations.length})</span>
+                <span>Pelanggaran ({visibleViolations.length})</span>
               </button>
 
               <button
@@ -2099,6 +2174,21 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                      <div className="flex items-center justify-between pb-1 px-1">
+                        <span className="text-[11px] font-bold text-slate-500">
+                          Total {filteredViolations.length} catatan pelanggaran
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleClearAllViolations}
+                          className="text-[10px] font-black text-rose-700 hover:text-rose-900 bg-rose-100 hover:bg-rose-200 px-2.5 py-1 rounded-xl transition cursor-pointer flex items-center gap-1 border border-rose-300"
+                          title="Bersihkan seluruh catatan pelanggaran"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Bersihkan Semua</span>
+                        </button>
+                      </div>
+
                       {filteredViolations.map((v) => (
                         <div
                           key={v.id}
@@ -2106,9 +2196,19 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                         >
                           <div className="flex items-center justify-between gap-2">
                             <strong className="text-slate-900 text-xs font-black">{v.studentName}</strong>
-                            <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200">
-                              {new Date(v.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200">
+                                {new Date(v.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSingleViolation(v.id)}
+                                className="p-1 hover:bg-rose-200/70 rounded-lg text-rose-500 hover:text-rose-800 transition cursor-pointer"
+                                title="Hapus laporan pelanggaran ini"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                           <div className="text-xs font-semibold text-rose-800 flex items-center gap-1.5">
                             <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-rose-600" />

@@ -1315,6 +1315,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     try {
       await api.deleteQuiz(id);
       setQuizzes((prev) => prev.filter((q) => q.id !== id));
+      setQuizAttempts((prev) => prev.filter((a) => a.quizId !== id));
     } catch (err: any) {
       alert(err.message || 'Gagal menghapus quiz.');
     }

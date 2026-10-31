@@ -962,12 +962,36 @@ export const api = {
     try {
       const query = quizId ? `?quizId=${quizId}` : '';
       const serverViolations = await tryServerRequest<any[]>(`/api/quizzes/violations${query}`);
-      if (Array.isArray(serverViolations) && serverViolations.length > 0) {
+      if (Array.isArray(serverViolations)) {
         offlineStore.mergeQuizViolations(serverViolations);
-        return serverViolations;
+        const deleted = offlineStore.getExplicitlyDeletedQuizIds();
+        return serverViolations.filter((v: any) => !deleted.includes(v.quizId));
       }
     } catch (_) {}
     return offlineStore.getQuizViolations(quizId);
+  },
+
+  clearQuizViolations: async (quizId?: string) => {
+    offlineStore.clearQuizViolations(quizId);
+    try {
+      const url = quizId ? `/api/quizzes/${quizId}/violations` : `/api/quizzes/violations`;
+      return await tryServerRequest<{ success: boolean; message: string }>(url, {
+        method: 'DELETE',
+      });
+    } catch (_) {
+      return { success: true, message: 'Pelanggaran berhasil dibersihkan.' };
+    }
+  },
+
+  deleteQuizViolation: async (violationId: string) => {
+    offlineStore.deleteQuizViolation(violationId);
+    try {
+      return await tryServerRequest<{ success: boolean; message: string }>(`/api/quizzes/violations/${violationId}`, {
+        method: 'DELETE',
+      });
+    } catch (_) {
+      return { success: true, message: 'Pelanggaran berhasil dihapus.' };
+    }
   },
 
   updateQuiz: async (id: string, data: Partial<Quiz>) => {
@@ -983,6 +1007,7 @@ export const api = {
 
   deleteQuiz: async (id: string) => {
     offlineStore.deleteQuiz(id);
+    offlineStore.clearQuizViolations(id);
     try {
       return await tryServerRequest<{ message: string }>(`/api/quizzes/${id}`, {
         method: 'DELETE',
@@ -1024,19 +1049,23 @@ export const api = {
   getQuizAttempts: async (quizId?: string) => {
     try {
       const query = quizId ? `?quizId=${quizId}` : '';
-      return await tryServerRequest<QuizAttempt[]>(`/api/quiz-attempts${query}`);
-    } catch (_) {
-      return [];
-    }
+      const serverAttempts = await tryServerRequest<QuizAttempt[]>(`/api/quiz-attempts${query}`);
+      if (Array.isArray(serverAttempts)) {
+        const deleted = offlineStore.getExplicitlyDeletedQuizIds();
+        return serverAttempts.filter((a) => !deleted.includes(a.quizId));
+      }
+    } catch (_) {}
+    return [];
   },
 
   getQuizParticipants: async (quizId?: string) => {
     try {
       const query = quizId ? `?quizId=${quizId}` : '';
       const serverParticipants = await tryServerRequest<any[]>(`/api/quizzes/participants${query}`);
-      if (Array.isArray(serverParticipants) && serverParticipants.length > 0) {
+      if (Array.isArray(serverParticipants)) {
         offlineStore.mergeQuizParticipants(serverParticipants);
-        return serverParticipants;
+        const deleted = offlineStore.getExplicitlyDeletedQuizIds();
+        return serverParticipants.filter((p: any) => !deleted.includes(p.quizId));
       }
     } catch (_) {}
     return offlineStore.getQuizParticipants(quizId);

@@ -867,15 +867,19 @@ class DatabaseManager {
 
         this.saveDataDirect(parsed);
 
+        const parsedDeletedQuizSet = new Set((parsed.deletedQuizIds || []).map((id: string) => (id || '').trim().toLowerCase()));
+        const cleanQuizzes = (parsed.quizzes || []).filter((q: Quiz) => !parsedDeletedQuizSet.has((q.id || '').trim().toLowerCase()));
+        const cleanQuizIdSet = new Set(cleanQuizzes.map((q: Quiz) => (q.id || '').trim().toLowerCase()));
+
         return {
           users: parsed.users || [],
           subjects: parsed.subjects || [],
           books: parsed.books || [],
           announcements: parsed.announcements || [],
-          quizzes: parsed.quizzes || [],
-          quizAttempts: parsed.quizAttempts || [],
-          quizViolations: parsed.quizViolations || [],
-          quizParticipants: parsed.quizParticipants || [],
+          quizzes: cleanQuizzes,
+          quizAttempts: (parsed.quizAttempts || []).filter((a: QuizAttempt) => !parsedDeletedQuizSet.has((a.quizId || '').trim().toLowerCase()) && cleanQuizIdSet.has((a.quizId || '').trim().toLowerCase())),
+          quizViolations: (parsed.quizViolations || []).filter((v: any) => !parsedDeletedQuizSet.has((v.quizId || '').trim().toLowerCase()) && cleanQuizIdSet.has((v.quizId || '').trim().toLowerCase())),
+          quizParticipants: (parsed.quizParticipants || []).filter((p: any) => !parsedDeletedQuizSet.has((p.quizId || '').trim().toLowerCase()) && cleanQuizIdSet.has((p.quizId || '').trim().toLowerCase())),
           attendanceEvents: parsed.attendanceEvents || [],
           attendanceRecords: parsed.attendanceRecords || [],
           passwordResetRequests: parsed.passwordResetRequests || [],
@@ -1839,10 +1843,43 @@ class DatabaseManager {
 
   public getQuizViolations(quizId?: string, teacherId?: string): QuizViolation[] {
     if (!Array.isArray(this.data.quizViolations)) return [];
-    let list = this.data.quizViolations;
-    if (quizId) list = list.filter((v) => v.quizId === quizId);
+    const deletedQuizSet = new Set((this.data.deletedQuizIds || []).map((id) => (id || '').trim().toLowerCase()));
+    const validQuizIds = new Set((this.data.quizzes || []).map((q) => (q.id || '').trim().toLowerCase()));
+
+    let list = this.data.quizViolations.filter((v) => {
+      const vqId = (v.quizId || '').trim().toLowerCase();
+      if (deletedQuizSet.has(vqId)) return false;
+      if (!validQuizIds.has(vqId)) return false;
+      return true;
+    });
+
+    if (quizId) {
+      const targetQuizId = (quizId || '').trim().toLowerCase();
+      list = list.filter((v) => (v.quizId || '').trim().toLowerCase() === targetQuizId);
+    }
     if (teacherId) list = list.filter((v) => !v.teacherId || v.teacherId === teacherId);
     return list;
+  }
+
+  public clearQuizViolations(quizId?: string): boolean {
+    if (!Array.isArray(this.data.quizViolations)) return true;
+    if (quizId) {
+      const targetQuizId = (quizId || '').trim().toLowerCase();
+      this.data.quizViolations = this.data.quizViolations.filter(
+        (v) => (v.quizId || '').trim().toLowerCase() !== targetQuizId
+      );
+    } else {
+      this.data.quizViolations = [];
+    }
+    this.save();
+    return true;
+  }
+
+  public deleteQuizViolation(violationId: string): boolean {
+    if (!Array.isArray(this.data.quizViolations)) return true;
+    this.data.quizViolations = this.data.quizViolations.filter((v) => v.id !== violationId);
+    this.save();
+    return true;
   }
 
   public recordQuizParticipant(payload: {
@@ -1900,8 +1937,20 @@ class DatabaseManager {
 
   public getQuizParticipants(quizId?: string): QuizParticipant[] {
     if (!Array.isArray(this.data.quizParticipants)) return [];
-    let list = this.data.quizParticipants;
-    if (quizId) list = list.filter((p) => p.quizId === quizId);
+    const deletedQuizSet = new Set((this.data.deletedQuizIds || []).map((id) => (id || '').trim().toLowerCase()));
+    const validQuizIds = new Set((this.data.quizzes || []).map((q) => (q.id || '').trim().toLowerCase()));
+
+    let list = this.data.quizParticipants.filter((p) => {
+      const pqId = (p.quizId || '').trim().toLowerCase();
+      if (deletedQuizSet.has(pqId)) return false;
+      if (!validQuizIds.has(pqId)) return false;
+      return true;
+    });
+
+    if (quizId) {
+      const targetQuizId = (quizId || '').trim().toLowerCase();
+      list = list.filter((p) => (p.quizId || '').trim().toLowerCase() === targetQuizId);
+    }
     return list.sort((a, b) => new Date(b.enteredAt).getTime() - new Date(a.enteredAt).getTime());
   }
 
@@ -1936,21 +1985,21 @@ class DatabaseManager {
   }
 
   public deleteQuiz(id: string): boolean {
-    const initialLen = this.data.quizzes.length;
-    this.data.quizzes = this.data.quizzes.filter((q) => q.id !== id);
+    const targetId = (id || '').trim().toLowerCase();
+    this.data.quizzes = (this.data.quizzes || []).filter((q) => (q.id || '').trim().toLowerCase() !== targetId);
     this.data.deletedQuizIds = this.data.deletedQuizIds || [];
-    if (!this.data.deletedQuizIds.includes(id)) {
+    if (!this.data.deletedQuizIds.some((did) => did.trim().toLowerCase() === targetId)) {
       this.data.deletedQuizIds.push(id);
     }
     // Hapus permanen seluruh data peserta kuis, pelanggaran kuis, dan riwayat attempt terkait
     if (Array.isArray(this.data.quizParticipants)) {
-      this.data.quizParticipants = this.data.quizParticipants.filter((p) => p.quizId !== id);
+      this.data.quizParticipants = this.data.quizParticipants.filter((p) => (p.quizId || '').trim().toLowerCase() !== targetId);
     }
     if (Array.isArray(this.data.quizViolations)) {
-      this.data.quizViolations = this.data.quizViolations.filter((v) => v.quizId !== id);
+      this.data.quizViolations = this.data.quizViolations.filter((v) => (v.quizId || '').trim().toLowerCase() !== targetId);
     }
     if (Array.isArray(this.data.quizAttempts)) {
-      this.data.quizAttempts = this.data.quizAttempts.filter((a) => a.quizId !== id);
+      this.data.quizAttempts = this.data.quizAttempts.filter((a) => (a.quizId || '').trim().toLowerCase() !== targetId);
     }
     this.save();
     return true;
@@ -2006,8 +2055,21 @@ class DatabaseManager {
   }
 
   public getQuizAttempts(quizId?: string, studentId?: string): QuizAttempt[] {
-    let result = this.data.quizAttempts;
-    if (quizId) result = result.filter((a) => a.quizId === quizId);
+    if (!Array.isArray(this.data.quizAttempts)) return [];
+    const deletedQuizSet = new Set((this.data.deletedQuizIds || []).map((id) => (id || '').trim().toLowerCase()));
+    const validQuizIds = new Set((this.data.quizzes || []).map((q) => (q.id || '').trim().toLowerCase()));
+
+    let result = this.data.quizAttempts.filter((a) => {
+      const aqId = (a.quizId || '').trim().toLowerCase();
+      if (deletedQuizSet.has(aqId)) return false;
+      if (!validQuizIds.has(aqId)) return false;
+      return true;
+    });
+
+    if (quizId) {
+      const targetQuizId = (quizId || '').trim().toLowerCase();
+      result = result.filter((a) => (a.quizId || '').trim().toLowerCase() === targetQuizId);
+    }
     if (studentId) result = result.filter((a) => a.studentId === studentId);
     return result.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
   }

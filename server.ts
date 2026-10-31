@@ -928,10 +928,40 @@ app.delete('/api/quizzes/:id', optionalAuthMiddleware, async (req: Authenticated
     await db.reloadFromGitHub().catch(() => {});
   } catch (_) {}
   const ok = db.deleteQuiz(id);
+  db.clearQuizViolations(id);
   try {
     await db.saveAsync();
   } catch (_) {}
-  return res.json({ message: 'Quiz berhasil dihapus secara permanen.', deletedQuizId: id, ok });
+  return res.json({ message: 'Quiz dan seluruh pelanggaran berhasil dihapus secara permanen.', deletedQuizId: id, ok });
+});
+
+// DELETE /api/quizzes/:id/violations (Bersihkan pelanggaran untuk kuis tertentu)
+app.delete('/api/quizzes/:id/violations', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  db.clearQuizViolations(id);
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ success: true, message: 'Pelanggaran kuis berhasil dibersihkan.' });
+});
+
+// DELETE /api/quizzes/violations (Bersihkan seluruh riwayat pelanggaran)
+app.delete('/api/quizzes/violations', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  db.clearQuizViolations();
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ success: true, message: 'Seluruh riwayat pelanggaran berhasil dibersihkan.' });
+});
+
+// DELETE /api/quizzes/violations/:id (Hapus satu pelanggaran spesifik)
+app.delete('/api/quizzes/violations/:id', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  db.deleteQuizViolation(id);
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ success: true, message: 'Pelanggaran berhasil dihapus.' });
 });
 
 // POST /api/quizzes/:id/submit (Siswa mengerjakan quiz & auto-grading)
