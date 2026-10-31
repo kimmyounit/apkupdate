@@ -750,7 +750,18 @@
       "updatedAt": 1793437417435
     }
   ],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793447019466_r2rd",
+      "userId": "stu_1793377010945_uzghx",
+      "userName": "Rian Pratama",
+      "userUsername": "siswa.rian.resmi",
+      "userKelas": "Kelas 7",
+      "timestamp": "2026-10-31T11:43:39.415Z",
+      "formattedTime": "11.43.39 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
