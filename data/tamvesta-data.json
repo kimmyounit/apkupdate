@@ -505,8 +505,7 @@
       "studentKelas": "Kelas 7",
       "tokenUsed": "TVQ-4824",
       "enteredAt": "2026-10-31T09:14:19.814Z",
-      "status": "completed",
-      "score": 100
+      "status": "in_progress"
     }
   ],
   "attendanceEvents": [],
@@ -554,19 +553,6 @@
   "notes": [],
   "notifications": [
     {
-      "id": "notif_1793438004503_gico1",
-      "title": "📢 Quiz Baru Tersedia!",
-      "message": "Endang Daryanti telah menerbitkan quiz: \"hh\" (Matematika Peminatan). Token: TVQ-4824",
-      "type": "quiz",
-      "isImportant": false,
-      "linkType": "quiz",
-      "linkId": "quiz_1793438004502",
-      "targetRole": "siswa",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T09:13:24.503Z"
-    },
-    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -575,7 +561,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T09:10:51.465Z"
+      "createdAt": "2026-10-31T09:10:51.741Z"
     },
     {
       "id": "notif_announcement_1",
@@ -587,7 +573,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T08:10:51.465Z"
+      "createdAt": "2026-10-31T08:10:51.741Z"
     },
     {
       "id": "notif_subject_1",
@@ -598,7 +584,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T07:10:51.465Z"
+      "createdAt": "2026-10-31T07:10:51.742Z"
     }
   ],
   "articles": [],
@@ -609,18 +595,7 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [
-    {
-      "id": "sig_1793438004533_tw12",
-      "userId": "user_staff_endang_daryanti",
-      "userName": "Endang Daryanti",
-      "userUsername": "endang.daryanti",
-      "userKelas": "Quiz: TVQ-4824",
-      "timestamp": "2026-10-31T09:13:24.505Z",
-      "formattedTime": "09.13.24 WIB",
-      "status": "received"
-    }
-  ],
+  "refreshSignals": [],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
