@@ -30,7 +30,7 @@
       "createdAt": "2026-10-24T08:22:46.821Z",
       "updatedAt": "2026-10-24T08:22:46.821Z",
       "password": "Tamvesta!B2601",
-      "isVerified": false
+      "isVerified": true
     },
     {
       "id": "user_staff_titus_yayasan",
@@ -286,7 +286,8 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_angga_satpam:b970654ecf6fa094",
       "createdAt": "2026-10-24T08:22:47.082Z",
       "updatedAt": "2026-10-24T08:22:47.082Z",
-      "password": "Tamvesta!A2617"
+      "password": "Tamvesta!A2617",
+      "isVerified": true
     },
     {
       "id": "user_support_tamvesta",
@@ -560,7 +561,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:26:18.954Z"
+      "createdAt": "2026-10-31T14:26:04.177Z"
     },
     {
       "id": "notif_announcement_1",
@@ -572,7 +573,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T13:26:18.954Z"
+      "createdAt": "2026-10-31T13:26:04.177Z"
     },
     {
       "id": "notif_subject_1",
@@ -583,7 +584,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T12:26:18.954Z"
+      "createdAt": "2026-10-31T12:26:04.177Z"
     }
   ],
   "articles": [],
