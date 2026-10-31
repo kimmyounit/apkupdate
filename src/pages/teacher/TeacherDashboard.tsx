@@ -61,6 +61,7 @@ import type {
   User,
 } from '../../types/index.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
+import { formatGoogleFormsEmbedUrl } from '../student/QuizPage.tsx';
 
 type TeacherTab = 'articles' | 'attendance' | 'quizzes' | 'lost_found';
 
@@ -135,6 +136,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   // Create Quiz Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creatingLoading, setCreatingLoading] = useState(false);
+  const [previewGoogleFormUrl, setPreviewGoogleFormUrl] = useState<string | null>(null);
   const [quizForm, setQuizForm] = useState({
     title: '',
     subjectName: 'Matematika Peminatan',
@@ -456,10 +458,15 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   };
 
   const handleDeleteQuiz = async (id: string) => {
-    if (!confirm('Hapus quiz ini beserta seluruh token dan riwayatnya?')) return;
+    if (!confirm('Hapus quiz ini secara permanen beserta seluruh token, riwayat pengerjaan, dan catatan pelanggarannya?')) return;
     try {
       await api.deleteQuiz(id);
       setQuizzes((prev) => prev.filter((q) => q.id !== id));
+      if (selectedQuizForDetails?.id === id) {
+        setSelectedQuizForDetails(null);
+      }
+      setGlobalSuccess('Quiz berhasil dihapus secara permanen.');
+      setTimeout(() => setGlobalSuccess(null), 3000);
     } catch (err: any) {
       alert(err.message || 'Gagal menghapus quiz.');
     }
@@ -1903,15 +1910,14 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
                     {quiz.sourceType === 'google_forms' && quiz.externalUrl && (
                       <div className="text-xs text-blue-700 bg-blue-50/60 p-2.5 rounded-xl border border-blue-100 flex items-center justify-between">
                         <span className="truncate max-w-sm">{quiz.externalUrl}</span>
-                        <a
-                          href={quiz.externalUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-700 font-bold hover:underline shrink-0 flex items-center gap-1 ml-2"
+                        <button
+                          type="button"
+                          onClick={() => setPreviewGoogleFormUrl(quiz.externalUrl || '')}
+                          className="text-blue-700 font-bold hover:underline shrink-0 flex items-center gap-1 ml-2 active:scale-95 transition"
                         >
-                          <span>Cek Link</span>
+                          <span>Buka di Aplikasi</span>
                           <ExternalLink className="w-3 h-3" />
-                        </a>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -2692,6 +2698,38 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
               >
                 Tutup
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL PREVIEW GOOGLE FORMS DI DALAM APLIKASI */}
+      {previewGoogleFormUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-4xl w-full h-[88vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-black uppercase">
+                  Google Forms Terintegrasi
+                </span>
+                <span className="text-xs text-slate-500 font-mono truncate max-w-md hidden sm:inline">
+                  {previewGoogleFormUrl}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewGoogleFormUrl(null)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 bg-slate-100 relative">
+              <iframe
+                src={formatGoogleFormsEmbedUrl(previewGoogleFormUrl)}
+                className="w-full h-full border-0 bg-white"
+                title="Preview Google Forms"
+                allow="autoplay"
+              />
             </div>
           </div>
         </div>

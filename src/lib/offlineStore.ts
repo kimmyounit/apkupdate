@@ -1323,15 +1323,17 @@ export const offlineStore = {
   // Quizzes
   getQuizzes(): Quiz[] {
     const db = loadDB();
-    return db.quizzes || [];
+    const deleted = (db as any).deletedQuizIds || [];
+    return (db.quizzes || []).filter((q) => !deleted.includes(q.id));
   },
 
   setQuizzes(quizzes: Quiz[]) {
     if (!Array.isArray(quizzes)) return;
     const db = loadDB();
+    const deleted = new Set((db as any).deletedQuizIds || []);
     const map = new Map<string, Quiz>();
-    (db.quizzes || []).forEach((q) => { if (q.id) map.set(q.id, q); });
-    quizzes.forEach((q) => { if (q.id) map.set(q.id, q); });
+    (db.quizzes || []).forEach((q) => { if (q.id && !deleted.has(q.id)) map.set(q.id, q); });
+    quizzes.forEach((q) => { if (q.id && !deleted.has(q.id)) map.set(q.id, q); });
     db.quizzes = Array.from(map.values());
     saveDB(db);
   },
@@ -1339,6 +1341,9 @@ export const offlineStore = {
   saveQuiz(quiz: Quiz) {
     if (!quiz || !quiz.id) return;
     const db = loadDB();
+    if (Array.isArray((db as any).deletedQuizIds)) {
+      (db as any).deletedQuizIds = (db as any).deletedQuizIds.filter((did: string) => did !== quiz.id);
+    }
     if (!Array.isArray(db.quizzes)) db.quizzes = [];
     const idx = db.quizzes.findIndex((q) => q.id === quiz.id);
     if (idx >= 0) {
@@ -1349,8 +1354,35 @@ export const offlineStore = {
     saveDB(db);
   },
 
+  deleteQuiz(id: string): boolean {
+    const db = loadDB();
+    if (!Array.isArray(db.quizzes)) db.quizzes = [];
+    const beforeLen = db.quizzes.length;
+    db.quizzes = db.quizzes.filter((q) => q.id !== id);
+    if (!Array.isArray((db as any).deletedQuizIds)) {
+      (db as any).deletedQuizIds = [];
+    }
+    if (!(db as any).deletedQuizIds.includes(id)) {
+      (db as any).deletedQuizIds.push(id);
+    }
+    // Hapus juga data peserta kuis, pelanggaran kuis, dan riwayat attempt terkait
+    if (Array.isArray(db.quizParticipants)) {
+      db.quizParticipants = db.quizParticipants.filter((p) => p.quizId !== id);
+    }
+    if (Array.isArray(db.quizViolations)) {
+      db.quizViolations = db.quizViolations.filter((v) => v.quizId !== id);
+    }
+    if (Array.isArray(db.quizAttempts)) {
+      db.quizAttempts = db.quizAttempts.filter((a) => a.quizId !== id);
+    }
+    saveDB(db);
+    return db.quizzes.length !== beforeLen;
+  },
+
   getQuizById(id: string): Quiz {
     const db = loadDB();
+    const deleted = (db as any).deletedQuizIds || [];
+    if (deleted.includes(id)) throw new Error('Kuis telah dihapus');
     const q = (db.quizzes || []).find((x) => x.id === id);
     if (!q) throw new Error('Kuis tidak ditemukan');
     return q;

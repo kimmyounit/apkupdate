@@ -45,8 +45,30 @@ interface Props {
   onQuizActiveChange?: (isActive: boolean) => void;
 }
 
+export function formatGoogleFormsEmbedUrl(url: string): string {
+  if (!url) return '';
+  let clean = url.trim();
+  const srcMatch = clean.match(/src=["'](.*?)["']/i);
+  if (srcMatch && srcMatch[1]) {
+    clean = srcMatch[1].trim();
+  }
+  if (clean.includes('docs.google.com/forms')) {
+    clean = clean.replace(/\/edit(\?.*)?$/i, '/viewform');
+    if (!clean.includes('/viewform')) {
+      clean = clean.replace(/\/+$/, '') + '/viewform';
+    }
+    if (!clean.includes('embedded=true')) {
+      clean += clean.includes('?') ? '&embedded=true' : '?embedded=true';
+    }
+  }
+  return clean;
+}
+
 export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChange }) => {
   const { user } = useAuth();
+
+  // State untuk pemuatan lembar soal Google Forms di dalam aplikasi
+  const [iframeLoading, setIframeLoading] = useState(true);
 
   // Form open toggle (Landing vs Entrance Form)
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -498,38 +520,91 @@ export const QuizPage: React.FC<Props> = ({ onBackToDashboard, onQuizActiveChang
           </div>
         )}
 
-        {/* GOOGLE FORMS QUIZ SOURCE */}
+        {/* GOOGLE FORMS QUIZ SOURCE - TERBUKA OTOMATIS DI DALAM APLIKASI */}
         {isGoogleForms ? (
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6 text-center">
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl max-w-xl mx-auto space-y-2">
-              <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                Sumber Quiz Google Forms
-              </span>
-              <h3 className="font-bold text-slate-800 text-sm">
-                Quiz ini diselenggarakan menggunakan tautan resmi Google Forms
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Silakan buka tautan soal di bawah ini untuk mengerjakan. Setelah Anda selesai mengirimkan respon formulir, klik tombol <strong>"Konfirmasi Selesai Mengerjakan"</strong>.
-              </p>
+          <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
+            {/* Header Kontrol Pengerjaan Google Forms */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-emerald-50 border border-blue-200/80 rounded-2xl shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-md shadow-blue-500/20">
+                  GF
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded-full">
+                      Lembar Soal Google Forms
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Aktif di Dalam Aplikasi
+                    </span>
+                  </div>
+                  <h3 className="font-black text-slate-800 text-sm mt-0.5">
+                    {activeQuiz.title}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const iframe = document.getElementById('google-forms-active-iframe') as HTMLIFrameElement;
+                    if (iframe) {
+                      setIframeLoading(true);
+                      iframe.src = iframe.src;
+                    }
+                  }}
+                  className="px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5 active:scale-95"
+                  title="Muat ulang lembar soal jika koneksi internet terputus"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${iframeLoading ? 'animate-spin text-blue-600' : ''}`} />
+                  <span>Refresh Form</span>
+                </button>
+
+                <button
+                  onClick={handleSubmitQuiz}
+                  disabled={submitting}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black shadow-md shadow-emerald-600/25 transition active:scale-95 flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{submitting ? 'Menyimpan...' : 'Selesai Mengerjakan'}</span>
+                </button>
+              </div>
             </div>
 
-            <div className="py-4">
-              <a
-                href={activeQuiz.externalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm shadow-lg shadow-emerald-600/30 transition active:scale-95"
-              >
-                <span>Buka Google Forms Soal Ujian</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
+            {/* Embedded Google Forms Iframe (Otomatis Terbuka Tanpa Pindah ke Browser) */}
+            <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200/90 bg-slate-100 min-h-[620px] h-[78vh] shadow-inner">
+              {iframeLoading && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-50/90 backdrop-blur-xs space-y-3">
+                  <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs font-bold text-slate-600">
+                    Membuka lembar soal Google Forms di dalam aplikasi...
+                  </p>
+                </div>
+              )}
+              <iframe
+                id="google-forms-active-iframe"
+                src={formatGoogleFormsEmbedUrl(activeQuiz.externalUrl || '')}
+                className="w-full h-full border-0 rounded-2xl bg-white"
+                title={activeQuiz.title}
+                onLoad={() => setIframeLoading(false)}
+                allow="autoplay"
+              />
             </div>
 
-            <div className="pt-6 border-t border-slate-100 flex justify-center">
+            {/* Petunjuk Pengisian & Tombol Konfirmasi Selesai */}
+            <div className="p-3.5 bg-amber-50 border border-amber-200/90 rounded-2xl text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  Jawab seluruh soal pada formulir Google Forms di atas dan klik <strong>"Kirim / Submit"</strong> di dalam formulir, kemudian klik tombol <strong>"Konfirmasi Selesai Mengerjakan Quiz"</strong>.
+                </span>
+              </div>
               <button
                 onClick={handleSubmitQuiz}
                 disabled={submitting}
-                className="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black shadow-md transition"
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black shrink-0 transition active:scale-95 shadow-sm"
               >
                 {submitting ? 'Memproses...' : 'Konfirmasi Selesai Mengerjakan Quiz'}
               </button>

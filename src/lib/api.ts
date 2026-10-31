@@ -804,8 +804,9 @@ export const api = {
       const res = await tryServerRequest<Quiz[]>('/api/quizzes');
       if (Array.isArray(res)) {
         offlineStore.setQuizzes(res);
+        return offlineStore.getQuizzes();
       }
-      return res;
+      return offlineStore.getQuizzes();
     } catch (_) {
       return offlineStore.getQuizzes();
     }
@@ -981,12 +982,13 @@ export const api = {
   },
 
   deleteQuiz: async (id: string) => {
+    offlineStore.deleteQuiz(id);
     try {
       return await tryServerRequest<{ message: string }>(`/api/quizzes/${id}`, {
         method: 'DELETE',
       });
     } catch (_) {
-      return { message: 'Kuis berhasil dihapus' };
+      return { message: 'Kuis berhasil dihapus permanen' };
     }
   },
 

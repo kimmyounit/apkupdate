@@ -78,6 +78,7 @@ export interface DatabaseSchema {
   gameRooms?: any[];
   deletedUserIds?: string[];
   deletedPostIds?: string[];
+  deletedQuizIds?: string[];
   refreshSignals?: RefreshSignal[];
   moderationLogs?: ModerationLog[];
   directMessages?: DirectMessage[];
@@ -432,6 +433,7 @@ export function getInitialData(): DatabaseSchema {
     tuMonthlyReports: [],
     deletedUserIds: [],
     deletedPostIds: [],
+    deletedQuizIds: [],
     refreshSignals: [],
     moderationLogs: [],
     directMessages: [],
@@ -618,40 +620,57 @@ class DatabaseManager {
       if (Array.isArray(parsed.appReports)) {
         this.data.appReports = parsed.appReports;
       }
+      if (Array.isArray(parsed.deletedQuizIds)) {
+        this.data.deletedQuizIds = Array.from(new Set([
+          ...(this.data.deletedQuizIds || []),
+          ...parsed.deletedQuizIds,
+        ]));
+      }
+      const deletedQuizSet = new Set(this.data.deletedQuizIds || []);
       if (Array.isArray(parsed.quizzes)) {
         const quizMap = new Map<string, Quiz>();
-        (this.data.quizzes || []).forEach((q) => { if (q.id) quizMap.set(q.id, q); });
+        (this.data.quizzes || []).forEach((q) => {
+          if (q.id && !deletedQuizSet.has(q.id)) quizMap.set(q.id, q);
+        });
         parsed.quizzes.forEach((q: Quiz) => {
-          if (q.id && !quizMap.has(q.id)) {
-            quizMap.set(q.id, q);
-          } else if (q.id && quizMap.has(q.id)) {
-            const existing = quizMap.get(q.id)!;
-            quizMap.set(q.id, { ...existing, ...q });
+          if (q.id && !deletedQuizSet.has(q.id)) {
+            if (!quizMap.has(q.id)) {
+              quizMap.set(q.id, q);
+            } else {
+              const existing = quizMap.get(q.id)!;
+              quizMap.set(q.id, { ...existing, ...q });
+            }
           }
         });
         this.data.quizzes = Array.from(quizMap.values());
       }
       if (Array.isArray(parsed.quizAttempts)) {
         const attemptMap = new Map<string, QuizAttempt>();
-        (this.data.quizAttempts || []).forEach((a) => { if (a.id) attemptMap.set(a.id, a); });
+        (this.data.quizAttempts || []).forEach((a) => {
+          if (a.id && !deletedQuizSet.has(a.quizId)) attemptMap.set(a.id, a);
+        });
         parsed.quizAttempts.forEach((a: QuizAttempt) => {
-          if (a.id && !attemptMap.has(a.id)) attemptMap.set(a.id, a);
+          if (a.id && !deletedQuizSet.has(a.quizId) && !attemptMap.has(a.id)) attemptMap.set(a.id, a);
         });
         this.data.quizAttempts = Array.from(attemptMap.values());
       }
       if (Array.isArray(parsed.quizViolations)) {
         const violMap = new Map<string, any>();
-        (this.data.quizViolations || []).forEach((v) => { if (v.id) violMap.set(v.id, v); });
+        (this.data.quizViolations || []).forEach((v) => {
+          if (v.id && !deletedQuizSet.has(v.quizId)) violMap.set(v.id, v);
+        });
         parsed.quizViolations.forEach((v: any) => {
-          if (v.id && !violMap.has(v.id)) violMap.set(v.id, v);
+          if (v.id && !deletedQuizSet.has(v.quizId) && !violMap.has(v.id)) violMap.set(v.id, v);
         });
         this.data.quizViolations = Array.from(violMap.values());
       }
       if (Array.isArray(parsed.quizParticipants)) {
         const partMap = new Map<string, any>();
-        (this.data.quizParticipants || []).forEach((p) => { if (p.id) partMap.set(p.id, p); });
+        (this.data.quizParticipants || []).forEach((p) => {
+          if (p.id && !deletedQuizSet.has(p.quizId)) partMap.set(p.id, p);
+        });
         parsed.quizParticipants.forEach((p: any) => {
-          if (p.id && !partMap.has(p.id)) partMap.set(p.id, p);
+          if (p.id && !deletedQuizSet.has(p.quizId) && !partMap.has(p.id)) partMap.set(p.id, p);
         });
         this.data.quizParticipants = Array.from(partMap.values());
       }
@@ -879,6 +898,8 @@ class DatabaseManager {
           lostFoundItems: parsed.lostFoundItems || [],
           activityPermissions: parsed.activityPermissions || [],
           appReports: parsed.appReports || [],
+          deletedPostIds: parsed.deletedPostIds || [],
+          deletedQuizIds: parsed.deletedQuizIds || [],
           deletedUserIds: (parsed.deletedUserIds || []).filter((did: string) => {
             const clean = (did || '').toLowerCase().replace(/^@+/, '');
             return OLD_DEMO_USERNAMES.includes(clean) || did.startsWith('user_siswa_siswa_');
@@ -1894,6 +1915,9 @@ class DatabaseManager {
       status: quiz.status || (quiz.isActive ? 'active' : 'inactive'),
       createdAt: new Date().toISOString(),
     };
+    if (this.data.deletedQuizIds) {
+      this.data.deletedQuizIds = this.data.deletedQuizIds.filter((did) => did !== newQuiz.id);
+    }
     this.data.quizzes.push(newQuiz);
     this.save();
     return newQuiz;
@@ -1914,11 +1938,26 @@ class DatabaseManager {
   public deleteQuiz(id: string): boolean {
     const initialLen = this.data.quizzes.length;
     this.data.quizzes = this.data.quizzes.filter((q) => q.id !== id);
-    if (this.data.quizzes.length !== initialLen) {
-      this.save();
-      return true;
+    this.data.deletedQuizIds = this.data.deletedQuizIds || [];
+    if (!this.data.deletedQuizIds.includes(id)) {
+      this.data.deletedQuizIds.push(id);
     }
-    return false;
+    // Hapus permanen seluruh data peserta kuis, pelanggaran kuis, dan riwayat attempt terkait
+    if (Array.isArray(this.data.quizParticipants)) {
+      this.data.quizParticipants = this.data.quizParticipants.filter((p) => p.quizId !== id);
+    }
+    if (Array.isArray(this.data.quizViolations)) {
+      this.data.quizViolations = this.data.quizViolations.filter((v) => v.quizId !== id);
+    }
+    if (Array.isArray(this.data.quizAttempts)) {
+      this.data.quizAttempts = this.data.quizAttempts.filter((a) => a.quizId !== id);
+    }
+    this.save();
+    return true;
+  }
+
+  public getDeletedQuizIds(): string[] {
+    return this.data.deletedQuizIds || [];
   }
 
   public syncMultipleQuizzes(incoming: Quiz[]): { added: number; updated: number; count: number } {
@@ -1926,10 +1965,11 @@ class DatabaseManager {
       return { added: 0, updated: 0, count: (this.data.quizzes || []).length };
     }
     if (!Array.isArray(this.data.quizzes)) this.data.quizzes = [];
+    const deletedQuizSet = new Set(this.data.deletedQuizIds || []);
     let added = 0;
     let updated = 0;
     incoming.forEach((q) => {
-      if (!q || !q.id) return;
+      if (!q || !q.id || deletedQuizSet.has(q.id)) return;
       const cleanToken = q.token ? q.token.trim().toUpperCase() : '';
       const existingIdx = this.data.quizzes.findIndex(
         (x) => x.id === q.id || (cleanToken && x.token && x.token.trim().toUpperCase() === cleanToken)

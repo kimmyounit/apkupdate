@@ -1297,7 +1297,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
   };
 
   const handleDeleteQuiz = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus quiz ini?')) return;
+    if (!confirm('Apakah Anda yakin ingin menghapus quiz ini secara permanen beserta seluruh riwayatnya?')) return;
     try {
       await api.deleteQuiz(id);
       setQuizzes((prev) => prev.filter((q) => q.id !== id));

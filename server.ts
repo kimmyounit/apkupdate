@@ -924,6 +924,9 @@ app.put('/api/quizzes/:id', authMiddleware, requireRole(['admin', 'guru', 'kepal
 // DELETE /api/quizzes/:id (Admin & Guru)
 app.delete('/api/quizzes/:id', authMiddleware, requireRole(['admin', 'guru', 'kepala_sekolah', 'tata_usaha', 'support']), async (req, res) => {
   const { id } = req.params;
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
   const ok = db.deleteQuiz(id);
   if (!ok) {
     return res.status(404).json({ error: 'Quiz tidak ditemukan.' });
@@ -931,7 +934,7 @@ app.delete('/api/quizzes/:id', authMiddleware, requireRole(['admin', 'guru', 'ke
   try {
     await db.saveAsync();
   } catch (_) {}
-  return res.json({ message: 'Quiz berhasil dihapus.' });
+  return res.json({ message: 'Quiz berhasil dihapus secara permanen.', deletedQuizId: id });
 });
 
 // POST /api/quizzes/:id/submit (Siswa mengerjakan quiz & auto-grading)
