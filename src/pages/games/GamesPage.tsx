@@ -113,7 +113,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
 
     pollIntervalRef.current = setInterval(() => {
       fetchRoomState(activeRoomCode);
-    }, 1500);
+    }, 1200);
 
     // Multi-tab BroadcastChannel listener for 0ms lag
     let channel: BroadcastChannel | null = null;
@@ -157,8 +157,12 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
 
   // 2. Join Room Handler
   const handleJoinRoom = async (code: string) => {
-    const cleanCode = code.trim().toUpperCase();
+    let cleanCode = code.trim().toUpperCase();
     if (!cleanCode) return;
+    // Auto-normalize variasi input: SPY482 / SPY 482 -> SPY-482, MFA123 / MFA 123 -> MFA-123
+    if (/^[A-Z]{3}\s*\d{3}$/.test(cleanCode)) {
+      cleanCode = cleanCode.replace(/^([A-Z]{3})\s*(\d{3})$/, '$1-$2');
+    }
     setLoading(true);
     setErrorMessage(null);
     try {
@@ -827,6 +831,11 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack }) => {
               placeholder="Ketik Kode Room..."
               value={joinCodeInput}
               onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && joinCodeInput.trim() && !loading) {
+                  handleJoinRoom(joinCodeInput);
+                }
+              }}
               className="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-xs font-mono font-black text-white focus:outline-none focus:border-emerald-500 uppercase tracking-widest w-full sm:w-44 text-center"
             />
             <button

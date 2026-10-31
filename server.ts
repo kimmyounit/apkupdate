@@ -1953,73 +1953,145 @@ function sanitizeRoomForPlayer(room: any, userId?: string, username?: string): a
   return cloned;
 }
 
+// Helper untuk mengekstrak pengguna game dari token atau fallback body
+function getGameUser(req: AuthenticatedRequest): any {
+  if (req.user) return req.user;
+  const b = req.body || {};
+  if (b.user && (b.user.id || b.user.username)) return b.user;
+  if (b.userId || b.userUsername) {
+    return {
+      id: b.userId || `user_${Date.now()}`,
+      name: b.userName || b.userUsername || 'Pemain',
+      username: b.userUsername || 'pemain',
+      role: b.userRole || 'siswa',
+      kelas: b.userKelas || 'Tamansiswa',
+      avatarUrl: b.userAvatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(b.userName || 'Pemain')}`,
+    };
+  }
+  return null;
+}
+
 // Ambil semua daftar room yang sedang aktif/menunggu
-app.get('/api/games/rooms', authMiddleware, (_req: AuthenticatedRequest, res) => {
+app.get('/api/games/rooms', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
+    await db.reloadFromGitHub().catch(() => {});
     const rooms = db.getGameRooms();
-    res.json({ rooms });
+    const user = getGameUser(req);
+    const sanitizedRooms = rooms.map((r: any) => sanitizeRoomForPlayer(r, user?.id, user?.username));
+    return res.json({ rooms: sanitizedRooms });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // Buat room baru
-app.post('/api/games/rooms', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.post('/api/games/rooms', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
+    await db.reloadFromGitHub().catch(() => {});
     const { gameType, spySettings, mafiaSettings } = req.body;
     if (gameType !== 'spy' && gameType !== 'mafia') {
       return res.status(400).json({ error: 'Jenis permainan tidak valid.' });
     }
-    const room = createGameRoom(req.user!, gameType, spySettings, mafiaSettings);
+    const user = getGameUser(req);
+    if (!user) {
+      return res.status(401).json({ error: 'Pengguna wajib login untuk membuat room.' });
+    }
+    const room = createGameRoom(user, gameType, spySettings, mafiaSettings);
     db.saveGameRoom(room);
-    return res.status(201).json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+    try {
+      await db.saveAsync();
+    } catch (_) {}
+    return res.status(201).json({ room: sanitizeRoomForPlayer(room, user.id, user.username) });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Gagal membuat room permainan.' });
   }
 });
 
 // Ambil status room berdasarkan kode room
-app.get('/api/games/rooms/:code', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.get('/api/games/rooms/:code', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
+  if (!room) {
+    try {
+      await db.reloadFromGitHub().catch(() => {});
+      room = db.getGameRoomByCode(req.params.code);
+    } catch (_) {}
+  }
   if (!room) {
     return res.status(404).json({ error: 'Room permainan tidak ditemukan. Periksa kode room kembali.' });
   }
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  const user = getGameUser(req);
+  return res.json({ room: sanitizeRoomForPlayer(room, user?.id, user?.username) });
 });
 
 // Bergabung atau Reconnect ke Room
-app.post('/api/games/rooms/:code/join', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/join', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
+  if (!room) {
+    try {
+      await db.reloadFromGitHub().catch(() => {});
+      room = db.getGameRoomByCode(req.params.code);
+    } catch (_) {}
+  }
   if (!room) {
     return res.status(404).json({ error: 'Room permainan tidak ditemukan atau kode salah.' });
   }
   if (room.status === 'ended') {
     return res.status(400).json({ error: 'Room permainan ini sudah selesai / ditutup.' });
   }
-  const result = joinOrReconnectRoom(room, req.user!);
+  const user = getGameUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Pengguna wajib login untuk bergabung ke room.' });
+  }
+  const result = joinOrReconnectRoom(room, user);
   db.saveGameRoom(result.room);
-  return res.json({ room: sanitizeRoomForPlayer(result.room, req.user!.id, req.user!.username), player: result.player });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(result.room, user.id, user.username), player: result.player });
 });
 
 // Toggle Status Siap Pemain
-app.post('/api/games/rooms/:code/ready', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/ready', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
 
-  const cleanU = req.user!.username.toLowerCase();
-  const player = room.players.find((p: any) => p.userId === req.user!.id || p.username.toLowerCase() === cleanU);
+  const user = getGameUser(req);
+  if (!user) return res.status(401).json({ error: 'Pengguna wajib login.' });
+
+  const cleanU = (user.username || '').toLowerCase();
+  const player = room.players.find((p: any) => p.userId === user.id || (p.username && p.username.toLowerCase() === cleanU));
   if (!player) return res.status(403).json({ error: 'Anda belum bergabung dalam room ini.' });
 
   player.isReady = !player.isReady;
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user.id, user.username) });
 });
 
 // Update Pengaturan Room (Hanya Host)
-app.post('/api/games/rooms/:code/settings', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/settings', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
+
+  const user = getGameUser(req);
+  if (!user) return res.status(401).json({ error: 'Pengguna wajib login.' });
+  const cleanU = (user.username || '').toLowerCase();
+
+  if (room.hostId !== user.id && (room.hostUsername || '').toLowerCase() !== cleanU) {
     return res.status(403).json({ error: 'Hanya host yang dapat mengubah pengaturan room.' });
   }
 
@@ -2028,20 +2100,29 @@ app.post('/api/games/rooms/:code/settings', authMiddleware, (req: AuthenticatedR
   if (mafiaSettings) room.mafiaSettings = { ...room.mafiaSettings, ...mafiaSettings };
 
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user.id, user.username) });
 });
 
-
-
 // Tambah Pemain Bot (Simulasi) ke Room (Hanya Host)
-app.post('/api/games/rooms/:code/bot', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/bot', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
+
+  const user = getGameUser(req);
+  if (!user) return res.status(401).json({ error: 'Pengguna wajib login.' });
+  const cleanU = (user.username || '').toLowerCase();
+
+  if (room.hostId !== user.id && (room.hostUsername || '').toLowerCase() !== cleanU) {
     return res.status(403).json({ error: 'Hanya host yang dapat menambah bot simulasi.' });
   }
 
-  const botCount = room.players.filter((p: any) => p.username.startsWith('bot_')).length + 1;
+  const botCount = room.players.filter((p: any) => (p.username || '').startsWith('bot_')).length + 1;
   const botId = `bot_${Date.now()}_${botCount}`;
   const botPlayer = {
     id: botId,
@@ -2060,31 +2141,53 @@ app.post('/api/games/rooms/:code/bot', authMiddleware, (req: AuthenticatedReques
 
   room.players.push(botPlayer);
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user.id, user.username) });
 });
 
 // Hapus Bot Simulasi Terakhir dari Room (Hanya Host)
-app.delete('/api/games/rooms/:code/bot', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.delete('/api/games/rooms/:code/bot', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
+
+  const user = getGameUser(req);
+  if (!user) return res.status(401).json({ error: 'Pengguna wajib login.' });
+  const cleanU = (user.username || '').toLowerCase();
+
+  if (room.hostId !== user.id && (room.hostUsername || '').toLowerCase() !== cleanU) {
     return res.status(403).json({ error: 'Hanya host yang dapat menghapus bot simulasi.' });
   }
 
-  const bots = room.players.filter((p: any) => p.username.startsWith('bot_'));
+  const bots = room.players.filter((p: any) => (p.username || '').startsWith('bot_'));
   if (bots.length > 0) {
     const lastBot = bots[bots.length - 1];
     room.players = room.players.filter((p: any) => p.id !== lastBot.id);
     db.saveGameRoom(room);
+    try {
+      await db.saveAsync();
+    } catch (_) {}
   }
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  return res.json({ room: sanitizeRoomForPlayer(room, user.id, user.username) });
 });
 
 // Mulai Permainan (Hanya Host)
-app.post('/api/games/rooms/:code/start', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/start', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
+
+  const user = getGameUser(req);
+  if (!user) return res.status(401).json({ error: 'Pengguna wajib login.' });
+  const cleanU = (user.username || '').toLowerCase();
+
+  if (room.hostId !== user.id && (room.hostUsername || '').toLowerCase() !== cleanU) {
     return res.status(403).json({ error: 'Hanya host yang dapat memulai permainan.' });
   }
 
@@ -2096,17 +2199,24 @@ app.post('/api/games/rooms/:code/start', authMiddleware, (req: AuthenticatedRequ
       startedRoom = startMafiaGame(room);
     }
     db.saveGameRoom(startedRoom);
-    return res.json({ room: sanitizeRoomForPlayer(startedRoom, req.user!.id, req.user!.username) });
+    try {
+      await db.saveAsync();
+    } catch (_) {}
+    return res.json({ room: sanitizeRoomForPlayer(startedRoom, user.id, user.username) });
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
   }
 });
 
 // Pergantian Fase / Evaluasi Otomatis
-app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/next-phase', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
 
+  const user = getGameUser(req);
   const { targetPhase } = req.body;
   const now = Date.now();
 
@@ -2124,7 +2234,6 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
         room.phaseDurationSeconds = room.spySettings.clueDuration || 30;
         room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
       } else {
-        // Semua sudah memberi petunjuk -> Masuk ke Diskusi
         room.phase = 'discussion';
         room.phaseDurationSeconds = room.spySettings.discussionDuration || 60;
         room.phaseEndTime = now + room.phaseDurationSeconds * 1000;
@@ -2141,7 +2250,10 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
     } else if (targetPhase === 'evaluate_vote') {
       const evaluated = evaluateSpyVoting(room);
       db.saveGameRoom(evaluated);
-      return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
+      try {
+        await db.saveAsync();
+      } catch (_) {}
+      return res.json({ room: sanitizeRoomForPlayer(evaluated, user?.id, user?.username) });
     } else if (targetPhase === 'next_round') {
       room.round = (room.round || 1) + 1;
       room.phase = 'clues';
@@ -2161,7 +2273,10 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
     } else if (targetPhase === 'evaluate_night') {
       const evaluated = evaluateMafiaNight(room);
       db.saveGameRoom(evaluated);
-      return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
+      try {
+        await db.saveAsync();
+      } catch (_) {}
+      return res.json({ room: sanitizeRoomForPlayer(evaluated, user?.id, user?.username) });
     } else if (targetPhase === 'discussion') {
       room.phase = 'discussion';
       room.phaseDurationSeconds = room.mafiaSettings.discussionDuration || 60;
@@ -2174,7 +2289,10 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
     } else if (targetPhase === 'evaluate_vote') {
       const evaluated = evaluateMafiaVoting(room);
       db.saveGameRoom(evaluated);
-      return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
+      try {
+        await db.saveAsync();
+      } catch (_) {}
+      return res.json({ room: sanitizeRoomForPlayer(evaluated, user?.id, user?.username) });
     } else if (targetPhase === 'next_round') {
       room.round = (room.round || 1) + 1;
       room.phase = 'night';
@@ -2187,16 +2305,25 @@ app.post('/api/games/rooms/:code/next-phase', authMiddleware, (req: Authenticate
   }
 
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user?.id, user?.username) });
 });
 
 // Memberikan Suara Voting (Spy & Mafia)
-app.post('/api/games/rooms/:code/vote', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/vote', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
 
-  const cleanU = req.user!.username.toLowerCase();
-  const voter = room.players.find((p: any) => p.userId === req.user!.id || p.username.toLowerCase() === cleanU);
+  const user = getGameUser(req);
+  if (!user) return res.status(401).json({ error: 'Pengguna wajib login.' });
+  const cleanU = (user.username || '').toLowerCase();
+
+  const voter = room.players.find((p: any) => p.userId === user.id || (p.username && p.username.toLowerCase() === cleanU));
   if (!voter || !voter.isAlive || voter.isSpectator) {
     return res.status(403).json({ error: 'Hanya pemain aktif yang masih hidup yang dapat memberikan suara.' });
   }
@@ -2206,7 +2333,6 @@ app.post('/api/games/rooms/:code/vote', authMiddleware, (req: AuthenticatedReque
   room.votes[voter.id] = targetPlayerId;
   voter.voteTargetId = targetPlayerId;
 
-  // Cek apakah seluruh pemain hidup telah memberikan suara
   const alivePlayers = room.players.filter((p: any) => p.isAlive && !p.isSpectator);
   const allVoted = alivePlayers.length > 0 && alivePlayers.every((p: any) => Boolean(room.votes[p.id]));
 
@@ -2218,18 +2344,28 @@ app.post('/api/games/rooms/:code/vote', authMiddleware, (req: AuthenticatedReque
       evaluated = evaluateMafiaVoting(room);
     }
     db.saveGameRoom(evaluated);
-    return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
+    try {
+      await db.saveAsync();
+    } catch (_) {}
+    return res.json({ room: sanitizeRoomForPlayer(evaluated, user.id, user.username) });
   }
 
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user.id, user.username) });
 });
 
 // Imposter Tebak Kata (Who's the Spy)
-app.post('/api/games/rooms/:code/spy-guess', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/spy-guess', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
 
+  const user = getGameUser(req);
   const { guess } = req.body;
   const cleanGuess = (guess || '').trim().toLowerCase();
   const actualWord = (room.civilianWord || '').trim().toLowerCase();
@@ -2239,30 +2375,39 @@ app.post('/api/games/rooms/:code/spy-guess', authMiddleware, (req: Authenticated
   room.spyGuessResult = {
     guess,
     isCorrect,
-    spyName: req.user!.name,
+    spyName: user?.name || 'Imposter',
   };
   room.status = 'ended';
   room.phase = 'ended';
 
   if (isCorrect) {
     room.winner = 'spies';
-    room.winReason = `Tebakan Imposter Benar! Imposter (${req.user!.name}) berhasil menebak kata pemain biasa: "${room.civilianWord}"!`;
+    room.winReason = `Tebakan Imposter Benar! Imposter (${user?.name || 'Imposter'}) berhasil menebak kata pemain biasa: "${room.civilianWord}"!`;
   } else {
     room.winner = 'civilians';
     room.winReason = `Tebakan Imposter Salah ("${guess}"). Kata sebenarnya adalah "${room.civilianWord}". Kemenangan mutlak untuk Pemain Biasa!`;
   }
 
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user?.id, user?.username) });
 });
 
 // Aksi Malam Mafia (Mafia, Dokter, Detektif)
-app.post('/api/games/rooms/:code/night-action', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/night-action', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
 
-  const cleanU = req.user!.username.toLowerCase();
-  const player = room.players.find((p: any) => p.userId === req.user!.id || p.username.toLowerCase() === cleanU);
+  const user = getGameUser(req);
+  if (!user) return res.status(401).json({ error: 'Pengguna wajib login.' });
+  const cleanU = (user.username || '').toLowerCase();
+
+  const player = room.players.find((p: any) => p.userId === user.id || (p.username && p.username.toLowerCase() === cleanU));
   if (!player || !player.isAlive || player.isSpectator) {
     return res.status(403).json({ error: 'Hanya peran aktif yang dapat melakukan aksi malam.' });
   }
@@ -2293,7 +2438,6 @@ app.post('/api/games/rooms/:code/night-action', authMiddleware, (req: Authentica
     }
   }
 
-  // Cek apakah semua peran penting yang masih hidup telah bertindak
   const aliveMafia = room.players.filter((p: any) => p.isAlive && p.role === 'mafia');
   const aliveDoctor = room.players.filter((p: any) => p.isAlive && p.role === 'doctor');
   const aliveDetective = room.players.filter((p: any) => p.isAlive && p.role === 'detective');
@@ -2305,17 +2449,29 @@ app.post('/api/games/rooms/:code/night-action', authMiddleware, (req: Authentica
   if (mafiaDone && doctorDone && detectiveDone) {
     const evaluated = evaluateMafiaNight(room);
     db.saveGameRoom(evaluated);
-    return res.json({ room: sanitizeRoomForPlayer(evaluated, req.user!.id, req.user!.username) });
+    try {
+      await db.saveAsync();
+    } catch (_) {}
+    return res.json({ room: sanitizeRoomForPlayer(evaluated, user.id, user.username) });
   }
 
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user.id, user.username) });
 });
 
 // Kirim Pesan Chat Room
-app.post('/api/games/rooms/:code/chat', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/chat', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
+
+  const user = getGameUser(req);
+  if (!user) return res.status(401).json({ error: 'Pengguna wajib login untuk mengirim chat.' });
 
   const { text } = req.body;
   if (!text || !text.trim()) return res.status(400).json({ error: 'Pesan chat tidak boleh kosong.' });
@@ -2323,9 +2479,9 @@ app.post('/api/games/rooms/:code/chat', authMiddleware, (req: AuthenticatedReque
   const now = Date.now();
   const newMsg = {
     id: `msg_${now}_${Math.random().toString(36).substring(2, 6)}`,
-    senderId: req.user!.id,
-    senderName: req.user!.name,
-    senderUsername: req.user!.username,
+    senderId: user.id,
+    senderName: user.name,
+    senderUsername: user.username,
     text: text.trim(),
     timestamp: now,
     isSystem: false,
@@ -2338,14 +2494,25 @@ app.post('/api/games/rooms/:code/chat', authMiddleware, (req: AuthenticatedReque
   }
 
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username), message: newMsg });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user.id, user.username), message: newMsg });
 });
 
 // Mulai Ulang Permainan (Restart Room ke Lobby)
-app.post('/api/games/rooms/:code/restart', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/restart', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.status(404).json({ error: 'Room tidak ditemukan.' });
-  if (room.hostId !== req.user!.id && room.hostUsername.toLowerCase() !== req.user!.username.toLowerCase()) {
+
+  const user = getGameUser(req);
+  if (!user) return res.status(401).json({ error: 'Pengguna wajib login.' });
+  const cleanU = (user.username || '').toLowerCase();
+
+  if (room.hostId !== user.id && (room.hostUsername || '').toLowerCase() !== cleanU) {
     return res.status(403).json({ error: 'Hanya host yang dapat me-restart room permainan.' });
   }
 
@@ -2390,24 +2557,36 @@ app.post('/api/games/rooms/:code/restart', authMiddleware, (req: AuthenticatedRe
   });
 
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user.id, user.username) });
 });
 
 // Tinggalkan Room
-app.post('/api/games/rooms/:code/leave', authMiddleware, (req: AuthenticatedRequest, res) => {
-  const room = db.getGameRoomByCode(req.params.code);
+app.post('/api/games/rooms/:code/leave', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.reloadFromGitHub().catch(() => {});
+  } catch (_) {}
+  let room = db.getGameRoomByCode(req.params.code);
   if (!room) return res.json({ message: 'Room tidak ada.' });
 
-  const cleanU = req.user!.username.toLowerCase();
-  room.players = room.players.filter((p: any) => p.userId !== req.user!.id && p.username.toLowerCase() !== cleanU);
+  const user = getGameUser(req);
+  if (!user) return res.json({ message: 'Room tidak ada.' });
+  const cleanU = (user.username || '').toLowerCase();
+
+  room.players = room.players.filter((p: any) => p.userId !== user.id && (p.username || '').toLowerCase() !== cleanU);
 
   if (room.players.length === 0) {
     db.deleteGameRoom(room.code);
+    try {
+      await db.saveAsync();
+    } catch (_) {}
     return res.json({ message: 'Room dihapus karena semua pemain keluar.' });
   }
 
   // Jika host keluar, alihkan host ke pemain pertama yang tersisa
-  if (room.hostId === req.user!.id || room.hostUsername.toLowerCase() === cleanU) {
+  if (room.hostId === user.id || (room.hostUsername || '').toLowerCase() === cleanU) {
     room.players[0].isHost = true;
     room.hostId = room.players[0].userId;
     room.hostUsername = room.players[0].username;
@@ -2420,13 +2599,16 @@ app.post('/api/games/rooms/:code/leave', authMiddleware, (req: AuthenticatedRequ
     senderId: 'system',
     senderName: 'Sistem TAMVESTA',
     senderUsername: 'system',
-    text: `${req.user!.name} meninggalkan room permainan.`,
+    text: `${user.name} meninggalkan room permainan.`,
     timestamp: now,
     isSystem: true,
   });
 
   db.saveGameRoom(room);
-  return res.json({ room: sanitizeRoomForPlayer(room, req.user!.id, req.user!.username) });
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({ room: sanitizeRoomForPlayer(room, user.id, user.username) });
 });
 
 // =============================================================

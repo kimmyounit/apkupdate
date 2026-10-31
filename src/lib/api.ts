@@ -1902,34 +1902,63 @@ export const api = {
   },
 
   // =============================================================
+  // =============================================================
   // MULTIPLAYER GAMES API: WHO'S THE SPY & MAFIA
   // =============================================================
 
   getGameRooms: async () => {
     try {
       const res = await tryServerRequest<{ rooms: GameRoom[] }>('/api/games/rooms');
-      if (res?.rooms && Array.isArray(res.rooms)) {
+      if (res?.rooms && Array.isArray(res.rooms) && res.rooms.length > 0) {
         res.rooms.forEach((r) => offlineStore.saveGameRoom(r));
-        return res.rooms;
+        return offlineStore.getGameRooms();
       }
-      return offlineStore.getGameRooms();
-    } catch (_) {
-      return offlineStore.getGameRooms();
-    }
+    } catch (_) {}
+
+    // Cloud fallback: fetch directly from data-sync on GitHub if serverless lambda has cold start/lag
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6000);
+      const cloudRes = await fetch(`https://raw.githubusercontent.com/kimmyounit/apkupdate/data-sync/data/tamvesta-data.json?_t=${Date.now()}`, {
+        signal: ctrl.signal,
+        cache: 'no-store',
+      });
+      clearTimeout(timer);
+      if (cloudRes.ok) {
+        const cloudData = await cloudRes.json().catch(() => null);
+        if (cloudData && Array.isArray(cloudData.gameRooms)) {
+          cloudData.gameRooms.forEach((r: GameRoom) => offlineStore.saveGameRoom(r));
+          return offlineStore.getGameRooms();
+        }
+      }
+    } catch (_) {}
+
+    return offlineStore.getGameRooms();
   },
 
   createGameRoom: async (gameType: GameType, spySettings?: Partial<SpySettings>, mafiaSettings?: Partial<MafiaSettings>) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = {
+      gameType,
+      spySettings,
+      mafiaSettings,
+      user: me,
+      userId: me?.id,
+      userName: me?.name,
+      userUsername: me?.username,
+      userKelas: me?.kelas,
+      userAvatarUrl: me?.avatarUrl,
+    };
     try {
       const res = await tryServerRequest<{ room: GameRoom }>('/api/games/rooms', {
         method: 'POST',
-        body: JSON.stringify({ gameType, spySettings, mafiaSettings }),
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
       }
       return res.room;
     } catch (_) {
-      const me = offlineStore.getCurrentUser();
       if (!me) throw new Error('Pengguna belum login.');
       const room = createGameRoom(me, gameType, spySettings, mafiaSettings);
       offlineStore.saveGameRoom(room);
@@ -1938,43 +1967,108 @@ export const api = {
   },
 
   getGameRoom: async (code: string) => {
+    const cleanCode = (code || '').trim().toUpperCase();
     try {
-      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}`);
+      const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(cleanCode)}`);
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
+        return res.room;
       }
-      return res.room;
-    } catch (_) {
-      const local = offlineStore.getGameRoom(code);
-      if (!local) throw new Error('Room tidak ditemukan.');
-      return local;
-    }
+    } catch (_) {}
+
+    // Periksa cache offlineStore (dengan 3-tier resilient matching)
+    let local = offlineStore.getGameRoom(cleanCode);
+    if (local) return local;
+
+    // Cloud fallback langsung ke branch data-sync
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6000);
+      const cloudRes = await fetch(`https://raw.githubusercontent.com/kimmyounit/apkupdate/data-sync/data/tamvesta-data.json?_t=${Date.now()}`, {
+        signal: ctrl.signal,
+        cache: 'no-store',
+      });
+      clearTimeout(timer);
+      if (cloudRes.ok) {
+        const cloudData = await cloudRes.json().catch(() => null);
+        if (cloudData && Array.isArray(cloudData.gameRooms)) {
+          cloudData.gameRooms.forEach((r: GameRoom) => offlineStore.saveGameRoom(r));
+          local = offlineStore.getGameRoom(cleanCode);
+          if (local) return local;
+        }
+      }
+    } catch (_) {}
+
+    throw new Error('Room tidak ditemukan.');
   },
 
   joinGameRoom: async (code: string) => {
+    const cleanCode = (code || '').trim().toUpperCase();
+    const me = offlineStore.getCurrentUser();
+    const payload = {
+      user: me,
+      userId: me?.id,
+      userName: me?.name,
+      userUsername: me?.username,
+      userKelas: me?.kelas,
+      userAvatarUrl: me?.avatarUrl,
+    };
+
     try {
-      const res = await tryServerRequest<{ room: GameRoom; player: GamePlayer }>(`/api/games/rooms/${encodeURIComponent(code)}/join`, {
+      const res = await tryServerRequest<{ room: GameRoom; player: GamePlayer }>(`/api/games/rooms/${encodeURIComponent(cleanCode)}/join`, {
         method: 'POST',
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
       }
       return res;
-    } catch (_) {
-      const local = offlineStore.getGameRoom(code);
-      if (!local) throw new Error('Room tidak ditemukan.');
-      const me = offlineStore.getCurrentUser();
+    } catch (err: any) {
+      let local = offlineStore.getGameRoom(cleanCode);
+      if (!local) {
+        try {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 6000);
+          const cloudRes = await fetch(`https://raw.githubusercontent.com/kimmyounit/apkupdate/data-sync/data/tamvesta-data.json?_t=${Date.now()}`, {
+            signal: ctrl.signal,
+            cache: 'no-store',
+          });
+          clearTimeout(timer);
+          if (cloudRes.ok) {
+            const cloudData = await cloudRes.json().catch(() => null);
+            if (cloudData && Array.isArray(cloudData.gameRooms)) {
+              cloudData.gameRooms.forEach((r: GameRoom) => offlineStore.saveGameRoom(r));
+              local = offlineStore.getGameRoom(cleanCode);
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!local) {
+        throw new Error(err?.message || 'Room tidak ditemukan. Pastikan kode room sudah sesuai.');
+      }
+
       if (!me) throw new Error('Pengguna belum login.');
       const result = joinOrReconnectRoom(local, me);
       offlineStore.saveGameRoom(result.room);
+
+      // Sinkronisasi background ke server jika memungkinkan
+      tryServerRequest(`/api/games/rooms/${encodeURIComponent(result.room.code)}/join`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+
       return result;
     }
   },
 
   toggleGameReady: async (code: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/ready`, {
         method: 'POST',
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
@@ -1983,7 +2077,6 @@ export const api = {
     } catch (_) {
       const local = offlineStore.getGameRoom(code);
       if (!local) throw new Error('Room tidak ditemukan.');
-      const me = offlineStore.getCurrentUser();
       if (!me) throw new Error('Pengguna belum login.');
       const cleanU = me.username.toLowerCase();
       const p = local.players.find((pl) => pl.userId === me.id || pl.username.toLowerCase() === cleanU);
@@ -1994,10 +2087,12 @@ export const api = {
   },
 
   updateGameSettings: async (code: string, settings: { spySettings?: Partial<SpySettings>; mafiaSettings?: Partial<MafiaSettings> }) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { ...settings, userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/settings`, {
         method: 'POST',
-        body: JSON.stringify(settings),
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
@@ -2014,9 +2109,12 @@ export const api = {
   },
 
   startGame: async (code: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/start`, {
         method: 'POST',
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
@@ -2032,10 +2130,12 @@ export const api = {
   },
 
   advanceGamePhase: async (code: string, targetPhase: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { targetPhase, userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/next-phase`, {
         method: 'POST',
-        body: JSON.stringify({ targetPhase }),
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
@@ -2125,10 +2225,12 @@ export const api = {
   },
 
   castGameVote: async (code: string, targetPlayerId: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { targetPlayerId, userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/vote`, {
         method: 'POST',
-        body: JSON.stringify({ targetPlayerId }),
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
@@ -2137,7 +2239,6 @@ export const api = {
     } catch (_) {
       const local = offlineStore.getGameRoom(code);
       if (!local) throw new Error('Room tidak ditemukan.');
-      const me = offlineStore.getCurrentUser();
       if (!me) throw new Error('Pengguna belum login.');
       const cleanU = me.username.toLowerCase();
       const voter = local.players.find((p) => p.userId === me.id || p.username.toLowerCase() === cleanU);
@@ -2159,10 +2260,12 @@ export const api = {
   },
 
   submitSpyGuess: async (code: string, guess: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { guess, userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/spy-guess`, {
         method: 'POST',
-        body: JSON.stringify({ guess }),
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
@@ -2171,7 +2274,6 @@ export const api = {
     } catch (_) {
       const local = offlineStore.getGameRoom(code);
       if (!local) throw new Error('Room tidak ditemukan.');
-      const me = offlineStore.getCurrentUser();
       const cleanGuess = (guess || '').trim().toLowerCase();
       const actual = (local.civilianWord || '').trim().toLowerCase();
       const isCorrect = cleanGuess === actual || (cleanGuess.length >= 4 && actual.includes(cleanGuess));
@@ -2191,10 +2293,12 @@ export const api = {
   },
 
   submitMafiaNightAction: async (code: string, actionType: 'mafia_kill' | 'doctor_heal' | 'detective_inspect', targetPlayerId: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { actionType, targetPlayerId, userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/night-action`, {
         method: 'POST',
-        body: JSON.stringify({ actionType, targetPlayerId }),
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
@@ -2203,7 +2307,6 @@ export const api = {
     } catch (_) {
       const local = offlineStore.getGameRoom(code);
       if (!local) throw new Error('Room tidak ditemukan.');
-      const me = offlineStore.getCurrentUser();
       const cleanU = me?.username.toLowerCase() || '';
       const player = local.players.find((p) => p.userId === me?.id || p.username.toLowerCase() === cleanU);
       if (!player) throw new Error('Pemain tidak ditemukan.');
@@ -2248,10 +2351,12 @@ export const api = {
   },
 
   sendGameChat: async (code: string, text: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { text, userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ room: GameRoom; message: any }>(`/api/games/rooms/${encodeURIComponent(code)}/chat`, {
         method: 'POST',
-        body: JSON.stringify({ text }),
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
@@ -2260,7 +2365,6 @@ export const api = {
     } catch (_) {
       const local = offlineStore.getGameRoom(code);
       if (!local) throw new Error('Room tidak ditemukan.');
-      const me = offlineStore.getCurrentUser();
       const now = Date.now();
       const msg = {
         id: `msg_${now}_${Math.random().toString(36).substring(2, 6)}`,
@@ -2279,9 +2383,12 @@ export const api = {
   },
 
   restartGame: async (code: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/restart`, {
         method: 'POST',
+        body: JSON.stringify(payload),
       });
       if (res?.room) {
         offlineStore.saveGameRoom(res.room);
@@ -2320,14 +2427,16 @@ export const api = {
   },
 
   leaveGameRoom: async (code: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       await tryServerRequest(`/api/games/rooms/${encodeURIComponent(code)}/leave`, {
         method: 'POST',
+        body: JSON.stringify(payload),
       });
     } catch (_) {
       const local = offlineStore.getGameRoom(code);
       if (local) {
-        const me = offlineStore.getCurrentUser();
         const cleanU = me?.username.toLowerCase() || '';
         local.players = local.players.filter((p) => p.userId !== me?.id && p.username.toLowerCase() !== cleanU);
         if (local.players.length === 0) {
@@ -2345,10 +2454,16 @@ export const api = {
   },
 
   addGameBot: async (code: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ success: boolean; room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/bot`, {
         method: 'POST',
+        body: JSON.stringify(payload),
       });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
       return res.room;
     } catch (_) {
       const local = offlineStore.getGameRoom(code);
@@ -2376,10 +2491,16 @@ export const api = {
   },
 
   removeGameBot: async (code: string) => {
+    const me = offlineStore.getCurrentUser();
+    const payload = { userId: me?.id, userName: me?.name, userUsername: me?.username };
     try {
       const res = await tryServerRequest<{ success: boolean; room: GameRoom }>(`/api/games/rooms/${encodeURIComponent(code)}/bot`, {
         method: 'DELETE',
+        body: JSON.stringify(payload),
       });
+      if (res?.room) {
+        offlineStore.saveGameRoom(res.room);
+      }
       return res.room;
     } catch (_) {
       const local = offlineStore.getGameRoom(code);

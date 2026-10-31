@@ -2353,9 +2353,32 @@ export const offlineStore = {
   },
 
   getGameRoom(code: string): GameRoom | null {
+    if (!code) return null;
     const rooms = this.getGameRooms();
-    const clean = (code || '').toUpperCase().trim();
-    return rooms.find((r) => r.code?.toUpperCase() === clean) || null;
+    const clean = code.toUpperCase().trim();
+    const cleanAlnum = clean.replace(/[^A-Z0-9]/g, '');
+
+    // 1. Exact match
+    const exact = rooms.find((r) => r.code?.toUpperCase().trim() === clean);
+    if (exact) return exact;
+
+    // 2. Alphanumeric match (e.g. SPY482 == SPY-482)
+    const alnumMatch = rooms.find((r) => {
+      const rAlnum = (r.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      return rAlnum === cleanAlnum;
+    });
+    if (alnumMatch) return alnumMatch;
+
+    // 3. Match 3 digit angka (e.g. "482" untuk "SPY-482")
+    if (cleanAlnum.length >= 3 && /^\d+$/.test(cleanAlnum)) {
+      const numMatch = rooms.find((r) => {
+        const rAlnum = (r.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        return rAlnum.endsWith(cleanAlnum);
+      });
+      if (numMatch) return numMatch;
+    }
+
+    return null;
   },
 
   saveGameRoom(room: GameRoom): GameRoom {

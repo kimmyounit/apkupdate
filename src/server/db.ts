@@ -655,6 +655,26 @@ class DatabaseManager {
         });
         this.data.quizParticipants = Array.from(partMap.values());
       }
+      if (Array.isArray(parsed.gameRooms)) {
+        const roomMap = new Map<string, any>();
+        (this.data.gameRooms || []).forEach((r) => { if (r.code) roomMap.set(r.code.toUpperCase(), r); });
+        parsed.gameRooms.forEach((r: any) => {
+          if (!r.code) return;
+          const cleanCode = r.code.toUpperCase();
+          if (!roomMap.has(cleanCode)) {
+            roomMap.set(cleanCode, r);
+          } else {
+            const existing = roomMap.get(cleanCode);
+            const rTime = r.updatedAt || r.createdAt || 0;
+            const exTime = existing.updatedAt || existing.createdAt || 0;
+            if (rTime >= exTime) {
+              roomMap.set(cleanCode, r);
+            }
+          }
+        });
+        const cutoff = Date.now() - 12 * 60 * 60 * 1000;
+        this.data.gameRooms = Array.from(roomMap.values()).filter((r: any) => (r.createdAt || 0) > cutoff);
+      }
       this.saveDataDirect(this.data);
     } catch (err) {
       console.warn('[DB] loadFromGitHub error:', err);
@@ -3096,8 +3116,31 @@ class DatabaseManager {
 
   getGameRoomByCode(code: string): any | null {
     if (!Array.isArray(this.data.gameRooms)) this.data.gameRooms = [];
-    const clean = (code || '').toUpperCase().trim();
-    return this.data.gameRooms.find((r: any) => r.code?.toUpperCase() === clean) || null;
+    if (!code) return null;
+    const clean = code.toUpperCase().trim();
+    const cleanAlnum = clean.replace(/[^A-Z0-9]/g, '');
+
+    // 1. Exact match
+    const exact = this.data.gameRooms.find((r: any) => r.code?.toUpperCase().trim() === clean);
+    if (exact) return exact;
+
+    // 2. Alphanumeric match (abaikan tanda strip/spasi, e.g. SPY482 == SPY-482)
+    const alnumMatch = this.data.gameRooms.find((r: any) => {
+      const rAlnum = (r.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      return rAlnum === cleanAlnum;
+    });
+    if (alnumMatch) return alnumMatch;
+
+    // 3. Match 3 digit angka (e.g. siswa hanya mengetik "482" untuk room "SPY-482")
+    if (cleanAlnum.length >= 3 && /^\d+$/.test(cleanAlnum)) {
+      const numMatch = this.data.gameRooms.find((r: any) => {
+        const rAlnum = (r.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        return rAlnum.endsWith(cleanAlnum);
+      });
+      if (numMatch) return numMatch;
+    }
+
+    return null;
   }
 
   saveGameRoom(room: any): any {
