@@ -508,7 +508,42 @@
   "posts": [],
   "stories": [],
   "notes": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif_welcome",
+      "title": "Selamat Datang di TAMVESTA Mobile!",
+      "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
+      "type": "general",
+      "isImportant": true,
+      "linkType": "none",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T09:10:51.741Z"
+    },
+    {
+      "id": "notif_announcement_1",
+      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
+      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
+      "type": "announcement",
+      "isImportant": true,
+      "linkType": "announcement",
+      "linkId": "ann_1",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T08:10:51.741Z"
+    },
+    {
+      "id": "notif_subject_1",
+      "title": "Pembaruan Jadwal: Matematika Wajib",
+      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
+      "type": "subject_change",
+      "isImportant": false,
+      "linkType": "subject",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T07:10:51.742Z"
+    }
+  ],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
