@@ -407,27 +407,6 @@
   "announcements": [],
   "quizzes": [
     {
-      "title": "hh",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [],
-      "isActive": true,
-      "token": "TVQ-4824",
-      "sourceType": "google_forms",
-      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "active",
-      "id": "quiz_1793438004502",
-      "createdAt": "2026-10-31T09:13:24.502Z"
-    },
-    {
       "title": "ppp",
       "subjectId": "sub_general",
       "subjectName": "Matematika Peminatan",
@@ -460,6 +439,27 @@
       "status": "inactive",
       "id": "quiz_1793433581388",
       "createdAt": "2026-10-31T07:59:41.388Z"
+    },
+    {
+      "title": "hh",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-4824",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793438004502",
+      "createdAt": "2026-10-31T09:13:24.502Z"
     }
   ],
   "quizAttempts": [
@@ -505,7 +505,8 @@
       "studentKelas": "Kelas 7",
       "tokenUsed": "TVQ-4824",
       "enteredAt": "2026-10-31T09:14:19.814Z",
-      "status": "in_progress"
+      "status": "completed",
+      "score": 100
     }
   ],
   "attendanceEvents": [],
@@ -571,6 +572,19 @@
   "notes": [],
   "notifications": [
     {
+      "id": "notif_1793438004503_gico1",
+      "title": "📢 Quiz Baru Tersedia!",
+      "message": "Endang Daryanti telah menerbitkan quiz: \"hh\" (Matematika Peminatan). Token: TVQ-4824",
+      "type": "quiz",
+      "isImportant": false,
+      "linkType": "quiz",
+      "linkId": "quiz_1793438004502",
+      "targetRole": "siswa",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T09:13:24.503Z"
+    },
+    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -579,7 +593,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T09:13:42.493Z"
+      "createdAt": "2026-10-31T09:10:51.465Z"
     },
     {
       "id": "notif_announcement_1",
@@ -591,7 +605,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T08:13:42.494Z"
+      "createdAt": "2026-10-31T08:10:51.465Z"
     },
     {
       "id": "notif_subject_1",
@@ -602,7 +616,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T07:13:42.494Z"
+      "createdAt": "2026-10-31T07:10:51.465Z"
     }
   ],
   "articles": [],
@@ -750,7 +764,18 @@
       "updatedAt": 1793437417435
     }
   ],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793438004533_tw12",
+      "userId": "user_staff_endang_daryanti",
+      "userName": "Endang Daryanti",
+      "userUsername": "endang.daryanti",
+      "userKelas": "Quiz: TVQ-4824",
+      "timestamp": "2026-10-31T09:13:24.505Z",
+      "formattedTime": "09.13.24 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
