@@ -405,7 +405,41 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [],
+  "quizzes": [
+    {
+      "title": "Ujian Uji Coba Cloud",
+      "subjectId": "sub_general",
+      "subjectName": "Teknologi Informasi",
+      "teacherId": "user_admin_tamansiswa",
+      "teacherName": "Administrator Tamansiswa Batam",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 70,
+      "questions": [
+        {
+          "id": "q1",
+          "question": "Apakah TAMVESTA aplikasi edukasi?",
+          "options": [
+            "Ya",
+            "Tidak",
+            "Mungkin",
+            "Bukan"
+          ],
+          "correctOptionIndex": 0
+        }
+      ],
+      "isActive": true,
+      "token": "TEST-CLOUD-77",
+      "sourceType": "interactive",
+      "externalUrl": "",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793433345901",
+      "createdAt": "2026-10-31T07:55:45.901Z"
+    }
+  ],
   "quizAttempts": [],
   "quizViolations": [],
   "attendanceEvents": [],
@@ -469,7 +503,21 @@
   ],
   "stories": [],
   "notes": [],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif_1793433345902_pd7p3",
+      "title": "📢 Quiz Baru Tersedia!",
+      "message": "Administrator Tamansiswa Batam telah menerbitkan quiz: \"Ujian Uji Coba Cloud\" (Teknologi Informasi). Token: TEST-CLOUD-77",
+      "type": "quiz",
+      "isImportant": false,
+      "linkType": "quiz",
+      "linkId": "quiz_1793433345901",
+      "targetRole": "siswa",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T07:55:45.902Z"
+    }
+  ],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
@@ -478,7 +526,18 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793433345932_ynaj",
+      "userId": "user_admin_tamansiswa",
+      "userName": "Administrator Tamansiswa Batam",
+      "userUsername": "TAMANSISWA",
+      "userKelas": "Quiz: TEST-CLOUD-77",
+      "timestamp": "2026-10-31T07:55:45.903Z",
+      "formattedTime": "07.55.45 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
