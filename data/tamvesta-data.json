@@ -407,40 +407,6 @@
   "announcements": [],
   "quizzes": [
     {
-      "title": "ppp",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [
-        {
-          "id": "q_guru_1",
-          "question": "siapa pendiri tamansiswa",
-          "options": [
-            "soekarno",
-            "khd",
-            "jookowi",
-            "pascabowo"
-          ],
-          "correctOptionIndex": 0,
-          "explanation": ""
-        }
-      ],
-      "isActive": false,
-      "token": "TVQ-4655",
-      "sourceType": "interactive",
-      "externalUrl": "",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "inactive",
-      "id": "quiz_1793433581388",
-      "createdAt": "2026-10-31T07:59:41.388Z"
-    },
-    {
       "title": "hh",
       "subjectId": "sub_general",
       "subjectName": "Matematika Peminatan",
