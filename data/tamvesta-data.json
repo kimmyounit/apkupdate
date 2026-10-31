@@ -29,8 +29,7 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_kepsek:d592cc82bedb9886",
       "createdAt": "2026-10-24T08:22:46.821Z",
       "updatedAt": "2026-10-24T08:22:46.821Z",
-      "password": "Tamvesta!B2601",
-      "isVerified": true
+      "password": "Tamvesta!B2601"
     },
     {
       "id": "user_staff_titus_yayasan",
@@ -286,8 +285,7 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_angga_satpam:b970654ecf6fa094",
       "createdAt": "2026-10-24T08:22:47.082Z",
       "updatedAt": "2026-10-24T08:22:47.082Z",
-      "password": "Tamvesta!A2617",
-      "isVerified": true
+      "password": "Tamvesta!A2617"
     },
     {
       "id": "user_support_tamvesta",
@@ -566,42 +564,7 @@
   "posts": [],
   "stories": [],
   "notes": [],
-  "notifications": [
-    {
-      "id": "notif_welcome",
-      "title": "Selamat Datang di TAMVESTA Mobile!",
-      "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
-      "type": "general",
-      "isImportant": true,
-      "linkType": "none",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T14:26:48.012Z"
-    },
-    {
-      "id": "notif_announcement_1",
-      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
-      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
-      "type": "announcement",
-      "isImportant": true,
-      "linkType": "announcement",
-      "linkId": "ann_1",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T13:26:48.012Z"
-    },
-    {
-      "id": "notif_subject_1",
-      "title": "Pembaruan Jadwal: Matematika Wajib",
-      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
-      "type": "subject_change",
-      "isImportant": false,
-      "linkType": "subject",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T12:26:48.012Z"
-    }
-  ],
+  "notifications": [],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
