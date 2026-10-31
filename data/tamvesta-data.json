@@ -539,8 +539,7 @@
       "studentKelas": "Kelas 8",
       "tokenUsed": "TVQ-4824",
       "enteredAt": "2026-10-31T14:28:18.000Z",
-      "status": "completed",
-      "score": 100
+      "status": "in_progress"
     }
   ],
   "attendanceEvents": [],
@@ -559,7 +558,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:25:39.173Z"
+      "createdAt": "2026-10-31T14:25:08.512Z"
     },
     {
       "id": "notif_announcement_1",
@@ -571,7 +570,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T13:25:39.173Z"
+      "createdAt": "2026-10-31T13:25:08.512Z"
     },
     {
       "id": "notif_subject_1",
@@ -582,7 +581,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T12:25:39.173Z"
+      "createdAt": "2026-10-31T12:25:08.512Z"
     }
   ],
   "articles": [],
