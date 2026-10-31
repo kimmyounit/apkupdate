@@ -405,42 +405,7 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [
-    {
-      "title": "ppp",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [
-        {
-          "id": "q_guru_1",
-          "question": "siapa pendiri tamansiswa",
-          "options": [
-            "soekarno",
-            "khd",
-            "jookowi",
-            "pascabowo"
-          ],
-          "correctOptionIndex": 0,
-          "explanation": ""
-        }
-      ],
-      "isActive": true,
-      "token": "TVQ-4655",
-      "sourceType": "interactive",
-      "externalUrl": "",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "active",
-      "id": "quiz_1793433581388",
-      "createdAt": "2026-10-31T07:59:41.388Z"
-    }
-  ],
+  "quizzes": [],
   "quizAttempts": [],
   "quizViolations": [],
   "quizParticipants": [],
@@ -497,7 +462,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T09:12:00.188Z"
+      "createdAt": "2026-10-31T09:09:36.853Z"
     },
     {
       "id": "notif_announcement_1",
@@ -509,7 +474,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T08:12:00.188Z"
+      "createdAt": "2026-10-31T08:09:36.853Z"
     },
     {
       "id": "notif_subject_1",
@@ -520,7 +485,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T07:12:00.188Z"
+      "createdAt": "2026-10-31T07:09:36.853Z"
     }
   ],
   "articles": [],
