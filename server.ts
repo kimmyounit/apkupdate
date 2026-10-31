@@ -694,7 +694,7 @@ app.delete('/api/announcements/:id', authMiddleware, requireRole(['admin', 'supp
 // -------------------------------------------------------------
 
 // GET /api/quizzes
-app.get('/api/quizzes', authMiddleware, async (req: AuthenticatedRequest, res) => {
+app.get('/api/quizzes', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
     await db.reloadFromGitHub();
   } catch (_) {}
@@ -707,7 +707,7 @@ app.get('/api/quizzes', authMiddleware, async (req: AuthenticatedRequest, res) =
 });
 
 // GET /api/quizzes/:id
-app.get('/api/quizzes/:id', authMiddleware, async (req, res) => {
+app.get('/api/quizzes/:id', optionalAuthMiddleware, async (req, res) => {
   try {
     await db.reloadFromGitHub();
   } catch (_) {}
@@ -720,7 +720,7 @@ app.get('/api/quizzes/:id', authMiddleware, async (req, res) => {
 });
 
 // POST /api/quizzes/verify-token (Siswa memasukkan nama dan token untuk akses kuis)
-app.post('/api/quizzes/verify-token', authMiddleware, async (req: AuthenticatedRequest, res) => {
+app.post('/api/quizzes/verify-token', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
     await db.reloadFromGitHub();
   } catch (_) {}
@@ -736,13 +736,30 @@ app.post('/api/quizzes/verify-token', authMiddleware, async (req: AuthenticatedR
 });
 
 // POST /api/quizzes/generate-token (Guru/Admin generate token otomatis)
-app.post('/api/quizzes/generate-token', authMiddleware, requireRole(['admin', 'guru']), (req, res) => {
+app.post('/api/quizzes/generate-token', authMiddleware, requireRole(['admin', 'guru', 'kepala_sekolah', 'tata_usaha', 'support']), (req, res) => {
   const token = generateRandomQuizToken();
   return res.json({ token });
 });
 
+// POST /api/quizzes/sync-local (Sinkronisasi kuis lokal ke cloud server)
+app.post('/api/quizzes/sync-local', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { quizzes } = req.body;
+    if (Array.isArray(quizzes) && quizzes.length > 0) {
+      const result = db.syncMultipleQuizzes(quizzes);
+      try {
+        await db.saveAsync();
+      } catch (_) {}
+      return res.json({ success: true, message: 'Sinkronisasi kuis berhasil', ...result });
+    }
+    return res.json({ success: true, message: 'Tidak ada kuis untuk disinkronkan' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Gagal sinkronisasi kuis' });
+  }
+});
+
 // POST /api/quizzes (Admin & Guru)
-app.post('/api/quizzes', authMiddleware, requireRole(['admin', 'guru']), async (req: AuthenticatedRequest, res) => {
+app.post('/api/quizzes', authMiddleware, requireRole(['admin', 'guru', 'kepala_sekolah', 'tata_usaha', 'support']), async (req: AuthenticatedRequest, res) => {
   const {
     title,
     subjectId,
@@ -774,6 +791,8 @@ app.post('/api/quizzes', authMiddleware, requireRole(['admin', 'guru']), async (
     return res.status(400).json({ error: 'Untuk kuis interaktif, minimal 1 butir pertanyaan wajib diisi.' });
   }
 
+  const cleanToken = token ? String(token).trim().toUpperCase() : generateRandomQuizToken();
+
   const newQuiz = db.addQuiz({
     title,
     subjectId: subjectId || 'sub_general',
@@ -785,7 +804,7 @@ app.post('/api/quizzes', authMiddleware, requireRole(['admin', 'guru']), async (
     passingScore: Number(passingScore) || 70,
     questions: Array.isArray(questions) ? questions : [],
     isActive: isActive !== false,
-    token: token || generateRandomQuizToken(),
+    token: cleanToken,
     sourceType: isGoogleForms ? 'google_forms' : 'interactive',
     externalUrl: externalUrl || '',
     password: password || '',
@@ -806,11 +825,28 @@ app.post('/api/quizzes', authMiddleware, requireRole(['admin', 'guru']), async (
     });
   } catch (_) {}
 
+  // Multi-device sync signal: Broadcast signal so other devices (Android APK, Web) get instant signal of active quiz
+  try {
+    db.addRefreshSignal({
+      userId: req.user?.id || 'guru',
+      userName: req.user?.name || 'Guru Pengampu',
+      userUsername: req.user?.username || 'guru',
+      userKelas: `Quiz: ${newQuiz.token}`,
+    });
+  } catch (_) {}
+
+  // AWAIT SAVE TO GITHUB SO VERCEL SERVERLESS DOES NOT DROP SYNC!
+  try {
+    await db.saveAsync();
+  } catch (err) {
+    console.error('[Quiz] Failed to sync new quiz to GitHub:', err);
+  }
+
   return res.status(201).json(newQuiz);
 });
 
 // POST /api/quizzes/:id/violation (Siswa melanggar aturan ujian / tab switch / minimize)
-app.post('/api/quizzes/:id/violation', authMiddleware, (req: AuthenticatedRequest, res) => {
+app.post('/api/quizzes/:id/violation', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const { studentName, violationType, violationDetail } = req.body;
   const quiz = db.findQuizById(id);
@@ -830,11 +866,15 @@ app.post('/api/quizzes/:id/violation', authMiddleware, (req: AuthenticatedReques
     violationDetail: violationDetail || 'Beralih tab / membuka aplikasi lain saat ujian berlangsung',
   });
 
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+
   return res.status(201).json({ success: true, violation });
 });
 
 // GET /api/quizzes/violations (Guru & Admin pantau pelanggaran ujian real-time)
-app.get('/api/quizzes/violations', authMiddleware, requireRole(['guru', 'admin']), async (req: AuthenticatedRequest, res) => {
+app.get('/api/quizzes/violations', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
     await db.reloadFromGitHub();
   } catch (_) {}
@@ -844,29 +884,35 @@ app.get('/api/quizzes/violations', authMiddleware, requireRole(['guru', 'admin']
 });
 
 // PUT /api/quizzes/:id (Admin & Guru)
-app.put('/api/quizzes/:id', authMiddleware, requireRole(['admin', 'guru']), (req, res) => {
+app.put('/api/quizzes/:id', authMiddleware, requireRole(['admin', 'guru', 'kepala_sekolah', 'tata_usaha', 'support']), async (req, res) => {
   const { id } = req.params;
   const updated = db.updateQuiz(id, req.body);
   if (!updated) {
     return res.status(404).json({ error: 'Quiz tidak ditemukan.' });
   }
+  try {
+    await db.saveAsync();
+  } catch (_) {}
   return res.json(updated);
 });
 
 // DELETE /api/quizzes/:id (Admin & Guru)
-app.delete('/api/quizzes/:id', authMiddleware, requireRole(['admin', 'guru']), (req, res) => {
+app.delete('/api/quizzes/:id', authMiddleware, requireRole(['admin', 'guru', 'kepala_sekolah', 'tata_usaha', 'support']), async (req, res) => {
   const { id } = req.params;
   const ok = db.deleteQuiz(id);
   if (!ok) {
     return res.status(404).json({ error: 'Quiz tidak ditemukan.' });
   }
+  try {
+    await db.saveAsync();
+  } catch (_) {}
   return res.json({ message: 'Quiz berhasil dihapus.' });
 });
 
 // POST /api/quizzes/:id/submit (Siswa mengerjakan quiz & auto-grading)
-app.post('/api/quizzes/:id/submit', authMiddleware, requireRole(['siswa', 'admin', 'guru']), (req: AuthenticatedRequest, res) => {
+app.post('/api/quizzes/:id/submit', optionalAuthMiddleware, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
-  const { answers, tokenUsed } = req.body; // array of { questionId, selectedOption }
+  const { answers, tokenUsed, studentName } = req.body; // array of { questionId, selectedOption }
 
   const quiz = db.findQuizById(id);
   if (!quiz) {
@@ -903,9 +949,9 @@ app.post('/api/quizzes/:id/submit', authMiddleware, requireRole(['siswa', 'admin
   const attempt = db.submitQuizAttempt({
     quizId: quiz.id,
     quizTitle: quiz.title,
-    studentId: req.user!.id,
-    studentName: req.user!.name,
-    username: req.user!.username,
+    studentId: req.user?.id || 'siswa_user',
+    studentName: req.user?.name || studentName || 'Siswa',
+    username: req.user?.username || '',
     tokenUsed: tokenUsed || quiz.token,
     score,
     totalQuestions,
@@ -913,6 +959,10 @@ app.post('/api/quizzes/:id/submit', authMiddleware, requireRole(['siswa', 'admin
     passed,
     answers: detailedAnswers,
   });
+
+  try {
+    await db.saveAsync();
+  } catch (_) {}
 
   return res.json({
     message: 'Quiz berhasil diselesaikan!',

@@ -267,6 +267,7 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
   const loadData = async () => {
     setLoading(true);
     try {
+      await api.syncLocalQuizzesToServer().catch(() => {});
       const [qz, att, sb, artList, stuList, viols] = await Promise.all([
         api.getQuizzes(),
         api.getQuizAttempts(),
@@ -444,9 +445,10 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
         status: 'active',
       };
 
-      await api.createQuiz(payload);
+      const created = await api.createQuiz(payload);
       setShowCreateModal(false);
       await loadData();
+      alert(`Quiz "${created.title}" berhasil diterbitkan ke Cloud!\n\nTOKEN UJIAN SISWA: ${created.token}\n\nToken ini aktif secara Real-Time dan dapat langsung dimasukkan oleh siswa di Web maupun Aplikasi Android.`);
     } catch (err: any) {
       alert(err.message || 'Gagal membuat quiz baru.');
     } finally {

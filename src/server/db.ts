@@ -824,6 +824,7 @@ class DatabaseManager {
           announcements: parsed.announcements || [],
           quizzes: parsed.quizzes || [],
           quizAttempts: parsed.quizAttempts || [],
+          quizViolations: parsed.quizViolations || [],
           attendanceEvents: parsed.attendanceEvents || [],
           attendanceRecords: parsed.attendanceRecords || [],
           passwordResetRequests: parsed.passwordResetRequests || [],
@@ -877,14 +878,12 @@ class DatabaseManager {
     this.save();
   }
 
+  private isSyncingGitHub = false;
+  private syncPromise: Promise<void> | null = null;
+
   private async syncToGitHub(dataToSave: DatabaseSchema) {
-    if (this.isSyncingGitHub) return;
-    this.isSyncingGitHub = true;
     const token = getGitHubToken();
-    if (!token) {
-      this.isSyncingGitHub = false;
-      return;
-    }
+    if (!token) return;
 
     try {
       const url = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json?ref=data-sync';
@@ -893,8 +892,10 @@ class DatabaseManager {
           Authorization: `Bearer ${token}`,
           'User-Agent': 'TAMVESTA-Cloud-Sync',
           Accept: 'application/vnd.github.v3+json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
         },
-        signal: AbortSignal.timeout(4000),
+        signal: AbortSignal.timeout(6000),
       });
       let sha = '';
       if (getRes.ok) {
@@ -904,7 +905,7 @@ class DatabaseManager {
 
       const content = Buffer.from(JSON.stringify(dataToSave, null, 2)).toString('base64');
       const putUrl = 'https://api.github.com/repos/kimmyounit/apkupdate/contents/data/tamvesta-data.json';
-      await fetch(putUrl, {
+      let putRes = await fetch(putUrl, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -918,12 +919,42 @@ class DatabaseManager {
           sha: sha || undefined,
           branch: 'data-sync',
         }),
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(8000),
       });
+
+      // Handle 409 Conflict with fresh SHA retry
+      if (!putRes.ok && putRes.status === 409) {
+        const retryGet = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'User-Agent': 'TAMVESTA-Cloud-Sync',
+            Accept: 'application/vnd.github.v3+json',
+            'Cache-Control': 'no-cache',
+          },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (retryGet.ok) {
+          const retryJson: any = await retryGet.json();
+          await fetch(putUrl, {
+            method: 'PUT',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'User-Agent': 'TAMVESTA-Cloud-Sync',
+              Accept: 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: 'Sync TAMVESTA cloud database (retry) [skip ci]',
+              content,
+              sha: retryJson.sha || undefined,
+              branch: 'data-sync',
+            }),
+            signal: AbortSignal.timeout(8000),
+          });
+        }
+      }
     } catch (err) {
       console.warn('[Cloud Sync] Failed to sync to GitHub:', err);
-    } finally {
-      this.isSyncingGitHub = false;
     }
   }
 
@@ -954,10 +985,16 @@ class DatabaseManager {
   public async saveAsync(): Promise<void> {
     this.saveDataDirect(this.data);
     if (process.env.VERCEL) {
+      if (this.syncPromise) {
+        try { await this.syncPromise; } catch (_) {}
+      }
+      this.syncPromise = this.syncToGitHub(this.data);
       try {
-        await this.syncToGitHub(this.data);
+        await this.syncPromise;
       } catch (err) {
         console.warn('[DB] saveAsync syncToGitHub failed:', err);
+      } finally {
+        this.syncPromise = null;
       }
     }
   }
@@ -1675,11 +1712,17 @@ class DatabaseManager {
     if (!token) return undefined;
     const clean = token.trim().toUpperCase();
     const cleanNoSpecial = clean.replace(/[\s\-_]/g, '');
+    const cleanAlphaNum = clean.replace(/[^A-Z0-9]/g, '');
     return (this.data.quizzes || []).find((q) => {
       if (!q.token) return false;
       const qToken = q.token.trim().toUpperCase();
       const qTokenNoSpecial = qToken.replace(/[\s\-_]/g, '');
-      return qToken === clean || qTokenNoSpecial === cleanNoSpecial;
+      const qAlphaNum = qToken.replace(/[^A-Z0-9]/g, '');
+      return (
+        qToken === clean ||
+        qTokenNoSpecial === cleanNoSpecial ||
+        (cleanAlphaNum.length > 0 && qAlphaNum === cleanAlphaNum)
+      );
     });
   }
 
@@ -1784,6 +1827,39 @@ class DatabaseManager {
       return true;
     }
     return false;
+  }
+
+  public syncMultipleQuizzes(incoming: Quiz[]): { added: number; updated: number; count: number } {
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      return { added: 0, updated: 0, count: (this.data.quizzes || []).length };
+    }
+    if (!Array.isArray(this.data.quizzes)) this.data.quizzes = [];
+    let added = 0;
+    let updated = 0;
+    incoming.forEach((q) => {
+      if (!q || !q.id) return;
+      const cleanToken = q.token ? q.token.trim().toUpperCase() : '';
+      const existingIdx = this.data.quizzes.findIndex(
+        (x) => x.id === q.id || (cleanToken && x.token && x.token.trim().toUpperCase() === cleanToken)
+      );
+      if (existingIdx === -1) {
+        this.data.quizzes.push({
+          ...q,
+          token: cleanToken || generateRandomQuizToken(),
+          status: q.status || (q.isActive ? 'active' : 'inactive'),
+        });
+        added++;
+      } else {
+        this.data.quizzes[existingIdx] = {
+          ...this.data.quizzes[existingIdx],
+          ...q,
+          token: cleanToken || this.data.quizzes[existingIdx].token,
+        };
+        updated++;
+      }
+    });
+    this.save();
+    return { added, updated, count: this.data.quizzes.length };
   }
 
   public submitQuizAttempt(attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): QuizAttempt {

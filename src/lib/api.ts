@@ -811,6 +811,19 @@ export const api = {
     }
   },
 
+  syncLocalQuizzesToServer: async () => {
+    try {
+      const localQuizzes = offlineStore.getQuizzes();
+      if (Array.isArray(localQuizzes) && localQuizzes.length > 0) {
+        return await tryServerRequest<{ success: boolean; count: number }>('/api/quizzes/sync-local', {
+          method: 'POST',
+          body: JSON.stringify({ quizzes: localQuizzes }),
+        });
+      }
+    } catch (_) {}
+    return null;
+  },
+
   getQuizById: async (id: string) => {
     try {
       const res = await tryServerRequest<Quiz>(`/api/quizzes/${id}`);
@@ -824,17 +837,21 @@ export const api = {
   },
 
   verifyQuizToken: async (payload: { token: string; studentName?: string; password?: string }) => {
+    const cleanPayload = {
+      ...payload,
+      token: payload.token ? payload.token.trim().toUpperCase() : '',
+    };
     try {
       const res = await tryServerRequest<{ success: boolean; quiz: Quiz }>('/api/quizzes/verify-token', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(cleanPayload),
       });
       if (res && res.quiz) {
         offlineStore.saveQuiz(res.quiz);
       }
       return res;
     } catch (_) {
-      return offlineStore.verifyQuizToken(payload.token, payload.password);
+      return offlineStore.verifyQuizToken(cleanPayload.token, cleanPayload.password);
     }
   },
 
@@ -850,29 +867,39 @@ export const api = {
   },
 
   createQuiz: async (data: Partial<Quiz>) => {
+    const cleanToken = data.token ? data.token.trim().toUpperCase() : `TVQ-${Math.floor(1000 + Math.random() * 9000)}`;
+    const preparedData = {
+      ...data,
+      token: cleanToken,
+    };
     try {
       const res = await tryServerRequest<Quiz>('/api/quizzes', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(preparedData),
       });
       if (res && res.id) {
         offlineStore.saveQuiz(res);
       }
       return res;
-    } catch (_) {
+    } catch (err: any) {
+      console.error('[API] Failed to create quiz on server:', err);
       const localQuiz = {
         id: 'quiz_' + Date.now(),
         title: data.title || '',
         subjectId: data.subjectId || '',
         subjectName: data.subjectName || '',
         durationMinutes: data.durationMinutes || 60,
-        token: data.token || `TVQ-${Math.floor(1000 + Math.random() * 9000)}`,
+        token: cleanToken,
         questions: data.questions || [],
         isActive: data.isActive !== false,
         status: data.status || 'active',
         createdAt: new Date().toISOString(),
       } as Quiz;
       offlineStore.saveQuiz(localQuiz);
+      if (err?.status === 400 || err?.status === 401 || err?.status === 403) {
+        throw new Error(err.message || 'Gagal menerbitkan kuis di server');
+      }
+      api.syncLocalQuizzesToServer().catch(() => {});
       return localQuiz;
     }
   },
