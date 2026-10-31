@@ -848,10 +848,37 @@ export const api = {
       });
       if (res && res.quiz) {
         offlineStore.saveQuiz(res.quiz);
+        try {
+          const currentUser = offlineStore.getCurrentUser();
+          offlineStore.recordQuizParticipant({
+            quizId: res.quiz.id,
+            quizTitle: res.quiz.title,
+            studentId: currentUser?.id || `stu_${Date.now()}`,
+            studentName: cleanPayload.studentName || currentUser?.name || 'Siswa',
+            studentUsername: currentUser?.username || '',
+            studentKelas: currentUser?.kelas || '-',
+            tokenUsed: cleanPayload.token,
+          });
+        } catch (_) {}
       }
       return res;
     } catch (_) {
-      return offlineStore.verifyQuizToken(cleanPayload.token, cleanPayload.password);
+      const fallback = offlineStore.verifyQuizToken(cleanPayload.token, cleanPayload.password);
+      if (fallback && fallback.quiz) {
+        try {
+          const currentUser = offlineStore.getCurrentUser();
+          offlineStore.recordQuizParticipant({
+            quizId: fallback.quiz.id,
+            quizTitle: fallback.quiz.title,
+            studentId: currentUser?.id || `stu_${Date.now()}`,
+            studentName: cleanPayload.studentName || currentUser?.name || 'Siswa',
+            studentUsername: currentUser?.username || '',
+            studentKelas: currentUser?.kelas || '-',
+            tokenUsed: cleanPayload.token,
+          });
+        } catch (_) {}
+      }
+      return fallback;
     }
   },
 
@@ -905,23 +932,41 @@ export const api = {
   },
 
   reportQuizViolation: async (quizId: string, data: { studentName: string; violationType: string; violationDetail: string }) => {
+    // Simpan di store lokal & broadcast secara real-time
+    try {
+      const q = (offlineStore.getQuizzes() || []).find((x) => x.id === quizId);
+      const currentUser = offlineStore.getCurrentUser();
+      offlineStore.recordQuizViolation({
+        quizId,
+        quizTitle: q?.title || 'Kuis & Ujian Sekolah',
+        studentId: currentUser?.id || '',
+        studentName: data.studentName || currentUser?.name || 'Siswa',
+        studentUsername: currentUser?.username || '',
+        violationType: data.violationType as any,
+        violationDetail: data.violationDetail,
+      });
+    } catch (_) {}
+
     try {
       return await tryServerRequest<{ success: boolean; violation?: any }>(`/api/quizzes/${quizId}/violation`, {
         method: 'POST',
         body: JSON.stringify(data),
       });
     } catch (_) {
-      return { success: false };
+      return { success: true };
     }
   },
 
   getQuizViolations: async (quizId?: string) => {
     try {
       const query = quizId ? `?quizId=${quizId}` : '';
-      return await tryServerRequest<any[]>(`/api/quizzes/violations${query}`);
-    } catch (_) {
-      return [];
-    }
+      const serverViolations = await tryServerRequest<any[]>(`/api/quizzes/violations${query}`);
+      if (Array.isArray(serverViolations) && serverViolations.length > 0) {
+        offlineStore.mergeQuizViolations(serverViolations);
+        return serverViolations;
+      }
+    } catch (_) {}
+    return offlineStore.getQuizViolations(quizId);
   },
 
   updateQuiz: async (id: string, data: Partial<Quiz>) => {
@@ -947,10 +992,16 @@ export const api = {
 
   submitQuiz: async (quizId: string, payload: { answers: { questionId: string; selectedOption: number }[] | Record<string, string>; tokenUsed?: string }) => {
     try {
-      return await tryServerRequest<{ message: string; attempt: QuizAttempt }>(`/api/quizzes/${quizId}/submit`, {
+      const res = await tryServerRequest<{ message: string; attempt: QuizAttempt }>(`/api/quizzes/${quizId}/submit`, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+      if (res && res.attempt) {
+        try {
+          offlineStore.completeQuizParticipant(quizId, res.attempt.studentId || res.attempt.studentName, res.attempt.score);
+        } catch (_) {}
+      }
+      return res;
     } catch (_) {
       const answersRecord: Record<string, string> = {};
       if (Array.isArray(payload.answers)) {
@@ -961,6 +1012,9 @@ export const api = {
         Object.assign(answersRecord, payload.answers);
       }
       const attempt = offlineStore.submitQuizAttempt(quizId, answersRecord);
+      try {
+        offlineStore.completeQuizParticipant(quizId, attempt.studentId || attempt.studentName, attempt.score);
+      } catch (_) {}
       return { message: 'Quiz berhasil diselesaikan!', attempt };
     }
   },
@@ -977,10 +1031,13 @@ export const api = {
   getQuizParticipants: async (quizId?: string) => {
     try {
       const query = quizId ? `?quizId=${quizId}` : '';
-      return await tryServerRequest<any[]>(`/api/quizzes/participants${query}`);
-    } catch (_) {
-      return [];
-    }
+      const serverParticipants = await tryServerRequest<any[]>(`/api/quizzes/participants${query}`);
+      if (Array.isArray(serverParticipants) && serverParticipants.length > 0) {
+        offlineStore.mergeQuizParticipants(serverParticipants);
+        return serverParticipants;
+      }
+    } catch (_) {}
+    return offlineStore.getQuizParticipants(quizId);
   },
 
   // Attendance

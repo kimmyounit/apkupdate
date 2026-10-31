@@ -6,6 +6,8 @@ import type {
   Announcement,
   Quiz,
   QuizAttempt,
+  QuizParticipant,
+  QuizViolation,
   AttendanceEvent,
   AttendanceRecord,
   PasswordResetRequest,
@@ -1392,6 +1394,144 @@ export const offlineStore = {
     }
 
     return { success: true, quiz: q };
+  },
+
+  getQuizParticipants(quizId?: string): QuizParticipant[] {
+    const db = loadDB();
+    const list = (db.quizParticipants || []) as QuizParticipant[];
+    if (quizId) {
+      return list.filter((p) => p.quizId === quizId);
+    }
+    return list;
+  },
+
+  recordQuizParticipant(data: {
+    quizId: string;
+    quizTitle: string;
+    studentId: string;
+    studentName: string;
+    studentUsername?: string;
+    studentKelas?: string;
+    tokenUsed: string;
+  }): QuizParticipant {
+    const db = loadDB();
+    if (!db.quizParticipants) db.quizParticipants = [];
+
+    const existingIdx = db.quizParticipants.findIndex(
+      (p: any) => p.quizId === data.quizId && (p.studentId === data.studentId || p.studentName === data.studentName)
+    );
+
+    const participant: QuizParticipant = {
+      id: existingIdx >= 0 ? db.quizParticipants[existingIdx].id : `part_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      quizId: data.quizId,
+      quizTitle: data.quizTitle,
+      studentId: data.studentId,
+      studentName: data.studentName,
+      studentUsername: data.studentUsername,
+      studentKelas: data.studentKelas,
+      tokenUsed: data.tokenUsed,
+      enteredAt: new Date().toISOString(),
+      status: 'in_progress',
+    };
+
+    if (existingIdx >= 0) {
+      db.quizParticipants[existingIdx] = participant;
+    } else {
+      db.quizParticipants.unshift(participant);
+    }
+
+    saveDB(db);
+
+    try {
+      const channel = new BroadcastChannel('tamvesta_quiz_monitor');
+      channel.postMessage({ type: 'PARTICIPANT_ENTERED', participant, timestamp: Date.now() });
+      channel.close();
+    } catch (_) {}
+
+    return participant;
+  },
+
+  completeQuizParticipant(quizId: string, studentId: string, score: number): void {
+    const db = loadDB();
+    if (!db.quizParticipants) return;
+    const participant = db.quizParticipants.find(
+      (p: any) => p.quizId === quizId && (p.studentId === studentId || p.studentName === studentId)
+    );
+    if (participant) {
+      participant.status = 'completed';
+      participant.score = score;
+      saveDB(db);
+      try {
+        const channel = new BroadcastChannel('tamvesta_quiz_monitor');
+        channel.postMessage({ type: 'PARTICIPANT_COMPLETED', quizId, studentId, score, timestamp: Date.now() });
+        channel.close();
+      } catch (_) {}
+    }
+  },
+
+  mergeQuizParticipants(serverParticipants: QuizParticipant[]): void {
+    if (!Array.isArray(serverParticipants) || serverParticipants.length === 0) return;
+    const db = loadDB();
+    if (!db.quizParticipants) db.quizParticipants = [];
+    serverParticipants.forEach((sp) => {
+      const idx = db.quizParticipants.findIndex((p: any) => p.id === sp.id || (p.quizId === sp.quizId && p.studentId === sp.studentId));
+      if (idx >= 0) {
+        db.quizParticipants[idx] = sp;
+      } else {
+        db.quizParticipants.push(sp);
+      }
+    });
+    saveDB(db);
+  },
+
+  getQuizViolations(quizId?: string): QuizViolation[] {
+    const db = loadDB();
+    const list = (db.quizViolations || []) as QuizViolation[];
+    if (quizId) {
+      return list.filter((v) => v.quizId === quizId);
+    }
+    return list;
+  },
+
+  recordQuizViolation(data: Partial<QuizViolation>): QuizViolation {
+    const db = loadDB();
+    if (!db.quizViolations) db.quizViolations = [];
+    const violation: QuizViolation = {
+      id: `viol_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      quizId: data.quizId || '',
+      quizTitle: data.quizTitle || 'Ujian Sekolah',
+      studentId: data.studentId || '',
+      studentName: data.studentName || 'Siswa',
+      studentUsername: data.studentUsername || '',
+      violationType: data.violationType || 'tab_switch',
+      violationDetail: data.violationDetail || 'Membuka tab atau aplikasi lain saat ujian berlangsung',
+      timestamp: new Date().toISOString(),
+    };
+    db.quizViolations.unshift(violation);
+    saveDB(db);
+
+    try {
+      const channel = new BroadcastChannel('tamvesta_quiz_monitor');
+      channel.postMessage({ type: 'VIOLATION_DETECTED', violation, timestamp: Date.now() });
+      channel.close();
+    } catch (_) {}
+
+    return violation;
+  },
+
+  mergeQuizViolations(serverViolations: QuizViolation[]): void {
+    if (!Array.isArray(serverViolations) || serverViolations.length === 0) return;
+    const db = loadDB();
+    if (!db.quizViolations) db.quizViolations = [];
+    serverViolations.forEach((sv) => {
+      const idx = db.quizViolations.findIndex((v: any) => v.id === sv.id);
+      if (idx >= 0) {
+        db.quizViolations[idx] = sv;
+      } else {
+        db.quizViolations.push(sv);
+      }
+    });
+    saveDB(db);
   },
 
   submitQuizAttempt(quizId: string, answers: Record<string, string>) {
