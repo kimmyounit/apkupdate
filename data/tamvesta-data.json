@@ -539,7 +539,8 @@
       "studentKelas": "Kelas 8",
       "tokenUsed": "TVQ-4824",
       "enteredAt": "2026-10-31T14:28:18.000Z",
-      "status": "in_progress"
+      "status": "completed",
+      "score": 100
     }
   ],
   "attendanceEvents": [],
@@ -550,6 +551,19 @@
   "notes": [],
   "notifications": [
     {
+      "id": "notif_1793456954120_fttjv",
+      "title": "🚨 Pelanggaran Kuis Terdeteksi!",
+      "message": "Siswa \"Alvaro Pratama Herlen\" terdeteksi Beralih tab / membuka aplikasi lain saat ujian berlangsung saat mengerjakan kuis \"hh\".",
+      "type": "quiz_violation",
+      "isImportant": false,
+      "linkType": "quiz",
+      "linkId": "quiz_1793438004502",
+      "targetRole": "guru",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T14:29:14.120Z"
+    },
+    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -558,7 +572,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:25:49.086Z"
+      "createdAt": "2026-10-31T14:27:52.653Z"
     },
     {
       "id": "notif_announcement_1",
@@ -570,7 +584,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T13:25:49.086Z"
+      "createdAt": "2026-10-31T13:27:52.653Z"
     },
     {
       "id": "notif_subject_1",
@@ -581,7 +595,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T12:25:49.086Z"
+      "createdAt": "2026-10-31T12:27:52.653Z"
     }
   ],
   "articles": [],
