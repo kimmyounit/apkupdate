@@ -287,7 +287,7 @@
       "createdAt": "2026-10-24T08:22:47.082Z",
       "updatedAt": "2026-10-24T08:22:47.082Z",
       "password": "Tamvesta!A2617",
-      "isVerified": false
+      "isVerified": true
     },
     {
       "id": "user_support_tamvesta",
