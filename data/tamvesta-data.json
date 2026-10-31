@@ -77,7 +77,8 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
       "createdAt": "2026-10-24T08:22:46.865Z",
       "updatedAt": "2026-10-24T08:22:46.865Z",
-      "password": "Tamvesta!B2604"
+      "password": "Tamvesta!B2604",
+      "isVerified": false
     },
     {
       "id": "user_staff_haliza_tu",
