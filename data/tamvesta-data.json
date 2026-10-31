@@ -426,27 +426,6 @@
   "announcements": [],
   "quizzes": [
     {
-      "title": "hh",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [],
-      "isActive": true,
-      "token": "TVQ-4824",
-      "sourceType": "google_forms",
-      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "active",
-      "id": "quiz_1793438004502",
-      "createdAt": "2026-10-31T09:13:24.502Z"
-    },
-    {
       "title": "ppp",
       "subjectId": "sub_general",
       "subjectName": "Matematika Peminatan",
@@ -479,6 +458,27 @@
       "status": "inactive",
       "id": "quiz_1793433581388",
       "createdAt": "2026-10-31T07:59:41.388Z"
+    },
+    {
+      "title": "hh",
+      "subjectId": "sub_general",
+      "subjectName": "Matematika Peminatan",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "description": "",
+      "durationMinutes": 15,
+      "passingScore": 75,
+      "questions": [],
+      "isActive": true,
+      "token": "TVQ-4824",
+      "sourceType": "google_forms",
+      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
+      "password": "",
+      "scheduleStart": "",
+      "scheduleEnd": "",
+      "status": "active",
+      "id": "quiz_1793438004502",
+      "createdAt": "2026-10-31T09:13:24.502Z"
     }
   ],
   "quizAttempts": [
@@ -539,8 +539,7 @@
       "studentKelas": "Kelas 8",
       "tokenUsed": "TVQ-4824",
       "enteredAt": "2026-10-31T14:28:18.000Z",
-      "status": "completed",
-      "score": 100
+      "status": "in_progress"
     }
   ],
   "attendanceEvents": [],
@@ -559,7 +558,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:28:02.679Z"
+      "createdAt": "2026-10-31T14:27:59.889Z"
     },
     {
       "id": "notif_announcement_1",
@@ -571,7 +570,18 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T13:28:02.679Z"
+      "createdAt": "2026-10-31T13:27:59.889Z"
+    },
+    {
+      "id": "notif_subject_1",
+      "title": "Pembaruan Jadwal: Matematika Wajib",
+      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
+      "type": "subject_change",
+      "isImportant": false,
+      "linkType": "subject",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T12:27:59.889Z"
     }
   ],
   "articles": [],
