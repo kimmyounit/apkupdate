@@ -29,8 +29,7 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_kepsek:d592cc82bedb9886",
       "createdAt": "2026-10-24T08:22:46.821Z",
       "updatedAt": "2026-10-24T08:22:46.821Z",
-      "password": "Tamvesta!B2601",
-      "isVerified": false
+      "password": "Tamvesta!B2601"
     },
     {
       "id": "user_staff_titus_yayasan",
@@ -552,6 +551,19 @@
   "notes": [],
   "notifications": [
     {
+      "id": "notif_1793456954120_fttjv",
+      "title": "🚨 Pelanggaran Kuis Terdeteksi!",
+      "message": "Siswa \"Alvaro Pratama Herlen\" terdeteksi Beralih tab / membuka aplikasi lain saat ujian berlangsung saat mengerjakan kuis \"hh\".",
+      "type": "quiz_violation",
+      "isImportant": false,
+      "linkType": "quiz",
+      "linkId": "quiz_1793438004502",
+      "targetRole": "guru",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T14:29:14.120Z"
+    },
+    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -560,19 +572,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:26:18.954Z"
-    },
-    {
-      "id": "notif_announcement_1",
-      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
-      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
-      "type": "announcement",
-      "isImportant": true,
-      "linkType": "announcement",
-      "linkId": "ann_1",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T13:26:18.954Z"
+      "createdAt": "2026-10-31T14:27:52.653Z"
     },
     {
       "id": "notif_subject_1",
@@ -583,7 +583,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T12:26:18.954Z"
+      "createdAt": "2026-10-31T12:27:52.653Z"
     }
   ],
   "articles": [],
