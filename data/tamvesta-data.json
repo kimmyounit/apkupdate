@@ -539,8 +539,7 @@
       "studentKelas": "Kelas 8",
       "tokenUsed": "TVQ-4824",
       "enteredAt": "2026-10-31T14:28:18.000Z",
-      "status": "completed",
-      "score": 100
+      "status": "in_progress"
     }
   ],
   "attendanceEvents": [],
@@ -551,18 +550,6 @@
   "notes": [],
   "notifications": [
     {
-      "id": "notif_1793457158172_wh9q0",
-      "title": "TEST",
-      "message": "TEST",
-      "type": "announcement",
-      "isImportant": true,
-      "linkType": "announcement",
-      "targetRole": "siswa",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T14:32:38.172Z"
-    },
-    {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
       "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
@@ -571,7 +558,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T14:28:02.679Z"
+      "createdAt": "2026-10-31T14:25:49.086Z"
     },
     {
       "id": "notif_announcement_1",
@@ -583,7 +570,18 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-10-31T13:28:02.679Z"
+      "createdAt": "2026-10-31T13:25:49.086Z"
+    },
+    {
+      "id": "notif_subject_1",
+      "title": "Pembaruan Jadwal: Matematika Wajib",
+      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
+      "type": "subject_change",
+      "isImportant": false,
+      "linkType": "subject",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-10-31T12:25:49.086Z"
     }
   ],
   "articles": [],
@@ -594,18 +592,7 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [
-    {
-      "id": "sig_1793457158201_0cm0",
-      "userId": "user_admin_tamansiswa",
-      "userName": "Administrator Tamansiswa Batam",
-      "userUsername": "TAMANSISWA",
-      "userKelas": "Notif ke siswa",
-      "timestamp": "2026-10-31T14:32:38.173Z",
-      "formattedTime": "14.32.38 WIB",
-      "status": "received"
-    }
-  ],
+  "refreshSignals": [],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
