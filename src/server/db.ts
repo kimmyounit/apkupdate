@@ -620,20 +620,22 @@ class DatabaseManager {
       if (Array.isArray(parsed.appReports)) {
         this.data.appReports = parsed.appReports;
       }
-      if (Array.isArray(parsed.deletedQuizIds)) {
-        this.data.deletedQuizIds = Array.from(new Set([
-          ...(this.data.deletedQuizIds || []),
-          ...parsed.deletedQuizIds,
-        ]));
-      }
-      const deletedQuizSet = new Set(this.data.deletedQuizIds || []);
+      const purgedSeedQuizIds = ['quiz_1793433581388', 'quiz_1793438004502', 'quiz_1793438743437'];
+      this.data.deletedQuizIds = Array.from(new Set([
+        ...purgedSeedQuizIds,
+        ...(this.data.deletedQuizIds || []),
+        ...(Array.isArray(parsed.deletedQuizIds) ? parsed.deletedQuizIds : []),
+      ]));
+      const deletedQuizSet = new Set((this.data.deletedQuizIds || []).map((id) => (id || '').trim().toLowerCase()));
       if (Array.isArray(parsed.quizzes)) {
         const quizMap = new Map<string, Quiz>();
         (this.data.quizzes || []).forEach((q) => {
-          if (q.id && !deletedQuizSet.has(q.id)) quizMap.set(q.id, q);
+          if (q.id && !deletedQuizSet.has(q.id.trim().toLowerCase()) && q.title !== 'ppp' && q.title !== 'hh' && q.teacherId !== 'user_staff_endang_daryanti') {
+            quizMap.set(q.id, q);
+          }
         });
         parsed.quizzes.forEach((q: Quiz) => {
-          if (q.id && !deletedQuizSet.has(q.id)) {
+          if (q.id && !deletedQuizSet.has(q.id.trim().toLowerCase()) && q.title !== 'ppp' && q.title !== 'hh' && q.teacherId !== 'user_staff_endang_daryanti') {
             if (!quizMap.has(q.id)) {
               quizMap.set(q.id, q);
             } else {
@@ -867,8 +869,17 @@ class DatabaseManager {
 
         this.saveDataDirect(parsed);
 
-        const parsedDeletedQuizSet = new Set((parsed.deletedQuizIds || []).map((id: string) => (id || '').trim().toLowerCase()));
-        const cleanQuizzes = (parsed.quizzes || []).filter((q: Quiz) => !parsedDeletedQuizSet.has((q.id || '').trim().toLowerCase()));
+        const purgedSeedQuizIds = ['quiz_1793433581388', 'quiz_1793438004502', 'quiz_1793438743437'];
+        const parsedDeletedQuizSet = new Set([
+          ...purgedSeedQuizIds,
+          ...(parsed.deletedQuizIds || []).map((id: string) => (id || '').trim().toLowerCase())
+        ]);
+        const cleanQuizzes = (parsed.quizzes || []).filter((q: Quiz) => {
+          if (parsedDeletedQuizSet.has((q.id || '').trim().toLowerCase())) return false;
+          if (q.teacherId === 'user_staff_endang_daryanti' || q.teacherName === 'Endang Daryanti') return false;
+          if (q.title === 'ppp' || q.title === 'hh') return false;
+          return true;
+        });
         const cleanQuizIdSet = new Set(cleanQuizzes.map((q: Quiz) => (q.id || '').trim().toLowerCase()));
 
         return {

@@ -28,16 +28,21 @@ const PERMANENT_BIOS_KEY = 'tamvesta_permanent_bios_v1';
 export const ADMIN_STUDENTS_BACKUP_KEY = 'tamvesta_admin_registered_students_v1';
 export const ADMIN_DELETED_STUDENTS_KEY = 'tamvesta_admin_deleted_students_v1';
 export const EXPLICITLY_DELETED_QUIZZES_KEY = 'tamvesta_deleted_quizzes_ids_v1';
+const SEED_DELETED_QUIZ_IDS = [
+  'quiz_1793433581388', // ppp
+  'quiz_1793438004502', // hh
+  'quiz_1793438743437',
+];
 
 export function getExplicitlyDeletedQuizIds(): string[] {
   try {
     const raw = localStorage.getItem(EXPLICITLY_DELETED_QUIZZES_KEY);
     if (raw) {
       const list = JSON.parse(raw);
-      if (Array.isArray(list)) return list;
+      if (Array.isArray(list)) return Array.from(new Set([...SEED_DELETED_QUIZ_IDS, ...list]));
     }
   } catch (_) {}
-  return [];
+  return SEED_DELETED_QUIZ_IDS;
 }
 
 export function addExplicitlyDeletedQuizId(id: string) {
@@ -341,7 +346,13 @@ function loadDB(): StandaloneDB {
   const explicitlyDeletedQuizzes = getExplicitlyDeletedQuizIds().map((id) => (id || '').trim().toLowerCase());
   const deletedQuizSet = new Set(explicitlyDeletedQuizzes);
   if (Array.isArray(db.quizzes)) {
-    db.quizzes = db.quizzes.filter((q) => !deletedQuizSet.has((q.id || '').trim().toLowerCase()));
+    db.quizzes = db.quizzes.filter((q) => {
+      const qId = (q.id || '').trim().toLowerCase();
+      if (deletedQuizSet.has(qId)) return false;
+      if (q.teacherId === 'user_staff_endang_daryanti' || q.teacherName === 'Endang Daryanti') return false;
+      if (q.title === 'ppp' || q.title === 'hh') return false;
+      return true;
+    });
   }
   const currentQuizIds = new Set((db.quizzes || []).map((q) => (q.id || '').trim().toLowerCase()));
 
