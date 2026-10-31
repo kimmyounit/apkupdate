@@ -7,8 +7,8 @@
       "role": "admin",
       "jabatan": "Administrator Utama TAMVESTA",
       "initialPassword": "TAMVESTA123",
-      "passwordHash": "f7ee0512c32c6754db14fa447e6f43ab0be585350a7f120bd732c3a5d1ed128daff2c5aa2dccff836ac33853b2b90b3b4f96fc5848e21077528901b23d4c777d",
-      "salt": "1a94b603202efe1b60c705f8abd3a485",
+      "passwordHash": "3b340132b6f10c6612e4e9602491e64090afd8412a7b310226b95e3beb70686bbbb33803636870087359539ff7f5ecb4bdaf1d1f93e7f6adf0d3c4df24551c7c",
+      "salt": "ba50b6d46746dae18cb7b2b4cebdb587",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_admin_tamansiswa:785efa956b468c8f",
@@ -70,8 +70,8 @@
       "role": "admin",
       "jabatan": "Operator Dapodik Sekolah",
       "initialPassword": "Tamvesta!B2604",
-      "passwordHash": "f7ee0512c32c6754db14fa447e6f43ab0be585350a7f120bd732c3a5d1ed128daff2c5aa2dccff836ac33853b2b90b3b4f96fc5848e21077528901b23d4c777d",
-      "salt": "1a94b603202efe1b60c705f8abd3a485",
+      "passwordHash": "3b340132b6f10c6612e4e9602491e64090afd8412a7b310226b95e3beb70686bbbb33803636870087359539ff7f5ecb4bdaf1d1f93e7f6adf0d3c4df24551c7c",
+      "salt": "ba50b6d46746dae18cb7b2b4cebdb587",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
@@ -295,8 +295,8 @@
       "jabatan": "Developer Resmi TAMVESTA",
       "initialPassword": "TAMVESTATAMSIS",
       "password": "TAMVESTATAMSIS",
-      "passwordHash": "41cd1a13eba9e36c9cab63ff96835c13dcda3d2183ae7d0baaf4624cb2f9425d5dd1988ef85c4614648ffbdbf69da751aeea028d7d5e442193bbc53bea8d9ad4",
-      "salt": "f90a1e3c8907c7817f3e8d6842496a67",
+      "passwordHash": "ac67bd7c01dedac009c74545297f853cf84b4d51612ff0ef5a14be4076643d3a83b7a1d44520daeff6a3dee7d93e5d8faaa23dc2bded1c4dcd83725758e37f16",
+      "salt": "beece16b685465d5e42c80d1be2fd58f",
       "mustChangePassword": false,
       "isActive": true,
       "isVerified": true,
@@ -464,6 +464,27 @@
   ],
   "quizAttempts": [
     {
+      "quizId": "quiz_1793433581388",
+      "quizTitle": "ppp",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "username": "siswa.rian.resmi",
+      "tokenUsed": "TVQ-4655",
+      "score": 0,
+      "totalQuestions": 1,
+      "correctAnswersCount": 0,
+      "passed": false,
+      "answers": [
+        {
+          "questionId": "q_guru_1",
+          "selectedOption": 1,
+          "isCorrect": false
+        }
+      ],
+      "id": "att_1793433680628",
+      "completedAt": "2026-10-31T08:01:20.628Z"
+    },
+    {
       "quizId": "quiz_1793438004502",
       "quizTitle": "hh",
       "studentId": "stu_1793377010945_uzghx",
@@ -480,6 +501,32 @@
     }
   ],
   "quizViolations": [
+    {
+      "quizId": "quiz_1793433581388",
+      "quizTitle": "ppp",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "studentUsername": "siswa.rian.resmi",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "violationType": "tab_switch",
+      "violationDetail": "Beralih tab / membuka aplikasi lain saat ujian berlangsung",
+      "id": "violation_1793433618580_xhch",
+      "timestamp": "2026-10-31T08:00:18.580Z"
+    },
+    {
+      "quizId": "quiz_1793433581388",
+      "quizTitle": "ppp",
+      "studentId": "stu_1793377010945_uzghx",
+      "studentName": "Rian Pratama",
+      "studentUsername": "siswa.rian.resmi",
+      "teacherId": "user_staff_endang_daryanti",
+      "teacherName": "Endang Daryanti",
+      "violationType": "tab_switch",
+      "violationDetail": "Beralih tab / membuka aplikasi lain saat ujian berlangsung",
+      "id": "violation_1793433658676_d4gk",
+      "timestamp": "2026-10-31T08:00:58.676Z"
+    },
     {
       "quizId": "quiz_1793438004502",
       "quizTitle": "hh",
@@ -549,58 +596,28 @@
       "adminNote": "Telah Disetujui"
     }
   ],
-  "posts": [],
-  "stories": [],
-  "notes": [],
-  "notifications": [
+  "posts": [
     {
-      "id": "notif_1793438004503_gico1",
-      "title": "📢 Quiz Baru Tersedia!",
-      "message": "Endang Daryanti telah menerbitkan quiz: \"hh\" (Matematika Peminatan). Token: TVQ-4824",
-      "type": "quiz",
-      "isImportant": false,
-      "linkType": "quiz",
-      "linkId": "quiz_1793438004502",
-      "targetRole": "siswa",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T09:13:24.503Z"
-    },
-    {
-      "id": "notif_welcome",
-      "title": "Selamat Datang di TAMVESTA Mobile!",
-      "message": "Aplikasi resmi siswa Tamansiswa Batam kini aktif dengan fitur Feed, Story, QR, Arsip, dan Quiz.",
-      "type": "general",
-      "isImportant": true,
-      "linkType": "none",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T09:10:51.465Z"
-    },
-    {
-      "id": "notif_announcement_1",
-      "title": "Pengumuman: Ujian Tengah Semester & Event Budaya",
-      "message": "Jadwal persiapan UTS dan perayaan Hari Pendidikan Nasional Tamansiswa Batam telah diterbitkan.",
-      "type": "announcement",
-      "isImportant": true,
-      "linkType": "announcement",
-      "linkId": "ann_1",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T08:10:51.465Z"
-    },
-    {
-      "id": "notif_subject_1",
-      "title": "Pembaruan Jadwal: Matematika Wajib",
-      "message": "Jadwal mata pelajaran Matematika dipindahkan ke Ruang Multimedia 2 pada jam 08:45 WIB.",
-      "type": "subject_change",
-      "isImportant": false,
-      "linkType": "subject",
-      "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-10-31T07:10:51.465Z"
+      "id": "post_1793380339460_ugvfu",
+      "authorId": "stu_1793377010945_uzghx",
+      "authorName": "Rian Pratama",
+      "authorUsername": "siswa.rian.resmi",
+      "authorKelas": "Kelas 7",
+      "authorAvatar": "https://api.dicebear.com/7.x/initials/svg?seed=Rian%20Pratama&backgroundColor=0284c7",
+      "authorIsVerified": false,
+      "authorIsAlumni": false,
+      "authorIsDeveloper": false,
+      "isPinned": false,
+      "caption": "Hai",
+      "mediaType": "none",
+      "likes": [],
+      "comments": [],
+      "createdAt": "2026-10-30T17:12:19.460Z"
     }
   ],
+  "stories": [],
+  "notes": [],
+  "notifications": [],
   "articles": [],
   "classAttendance": [],
   "tuitionBills": [],
@@ -608,25 +625,155 @@
   "tuDocuments": [],
   "tuChatMessages": [],
   "tuMonthlyReports": [],
-  "gameRooms": [],
-  "refreshSignals": [
+  "gameRooms": [
     {
-      "id": "sig_1793438004533_tw12",
-      "userId": "user_staff_endang_daryanti",
-      "userName": "Endang Daryanti",
-      "userUsername": "endang.daryanti",
-      "userKelas": "Quiz: TVQ-4824",
-      "timestamp": "2026-10-31T09:13:24.505Z",
-      "formattedTime": "09.13.24 WIB",
-      "status": "received"
+      "id": "room_1793437424540_omcsp",
+      "code": "SPY-325",
+      "gameType": "spy",
+      "hostId": "u1",
+      "hostUsername": "user1",
+      "status": "waiting",
+      "phase": "lobby",
+      "round": 1,
+      "players": [
+        {
+          "id": "p_user1",
+          "userId": "u1",
+          "username": "user1",
+          "name": "User 1",
+          "kelas": "XII",
+          "isHost": true,
+          "isReady": true,
+          "isAlive": true,
+          "joinedAt": 1793437424540,
+          "lastSeenAt": 1793437424540
+        },
+        {
+          "id": "p_user2_4543",
+          "userId": "u2",
+          "username": "user2",
+          "name": "User 2",
+          "kelas": "XII",
+          "isHost": false,
+          "isReady": false,
+          "isAlive": true,
+          "isSpectator": false,
+          "joinedAt": 1793437424543,
+          "lastSeenAt": 1793437424543
+        }
+      ],
+      "spySettings": {
+        "playerCount": 4,
+        "spyCount": 1,
+        "category": "campuran",
+        "clueDuration": 30,
+        "discussionDuration": 60,
+        "votingDuration": 30,
+        "allowSpyGuess": true,
+        "tieRule": "no_elimination"
+      },
+      "mafiaSettings": {
+        "playerCount": 5,
+        "mafiaCount": 1,
+        "doctorCount": 1,
+        "detectiveCount": 1,
+        "nightDuration": 30,
+        "discussionDuration": 60,
+        "votingDuration": 30,
+        "tieRule": "no_elimination"
+      },
+      "chatMessages": [
+        {
+          "id": "msg_sys_1793437424540",
+          "senderId": "system",
+          "senderName": "Sistem TAMVESTA",
+          "senderUsername": "system",
+          "text": "Room SPY-325 berhasil dibuat oleh User 1. Selamat bermain!",
+          "timestamp": 1793437424540,
+          "isSystem": true
+        },
+        {
+          "id": "msg_join_1793437424543",
+          "senderId": "system",
+          "senderName": "Sistem TAMVESTA",
+          "senderUsername": "system",
+          "text": "User 2 (@user2) bergabung ke room.",
+          "timestamp": 1793437424543,
+          "isSystem": true
+        }
+      ],
+      "createdAt": 1793437424540,
+      "updatedAt": 1793437424543
+    },
+    {
+      "id": "room_1793437417427_3m5gx",
+      "code": "SPY-292",
+      "gameType": "spy",
+      "hostId": "user_host_1",
+      "hostUsername": "host123",
+      "status": "waiting",
+      "phase": "lobby",
+      "round": 1,
+      "players": [
+        {
+          "id": "p_host123",
+          "userId": "user_host_1",
+          "username": "host123",
+          "name": "Host Guru",
+          "kelas": "XII-RPL",
+          "isHost": true,
+          "isReady": true,
+          "isAlive": true,
+          "joinedAt": 1793437417427,
+          "lastSeenAt": 1793437417427
+        }
+      ],
+      "spySettings": {
+        "playerCount": 4,
+        "spyCount": 1,
+        "category": "campuran",
+        "clueDuration": 30,
+        "discussionDuration": 60,
+        "votingDuration": 30,
+        "allowSpyGuess": true,
+        "tieRule": "no_elimination"
+      },
+      "mafiaSettings": {
+        "playerCount": 5,
+        "mafiaCount": 1,
+        "doctorCount": 1,
+        "detectiveCount": 1,
+        "nightDuration": 30,
+        "discussionDuration": 60,
+        "votingDuration": 30,
+        "tieRule": "no_elimination"
+      },
+      "chatMessages": [
+        {
+          "id": "msg_sys_1793437417427",
+          "senderId": "system",
+          "senderName": "Sistem TAMVESTA",
+          "senderUsername": "system",
+          "text": "Room SPY-292 berhasil dibuat oleh Host Guru. Selamat bermain!",
+          "timestamp": 1793437417427,
+          "isSystem": true
+        }
+      ],
+      "createdAt": 1793437417427,
+      "updatedAt": 1793437417435
     }
   ],
+  "refreshSignals": [],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
   "lostFoundItems": [],
   "activityPermissions": [],
   "appReports": [],
+  "deletedPostIds": [],
+  "deletedQuizIds": [
+    "quiz_1793438743437"
+  ],
   "deletedUserIds": [
     "siswa.smp7a.001",
     "siswa.smp7a.002",
