@@ -424,124 +424,8 @@
   "subjects": [],
   "books": [],
   "announcements": [],
-  "quizzes": [
-    {
-      "title": "hh",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [],
-      "isActive": true,
-      "token": "TVQ-4824",
-      "sourceType": "google_forms",
-      "externalUrl": "https://forms.gle/XfS8X717oBKzB6w99",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "active",
-      "id": "quiz_1793438004502",
-      "createdAt": "2026-10-31T09:13:24.502Z"
-    },
-    {
-      "title": "ppp",
-      "subjectId": "sub_general",
-      "subjectName": "Matematika Peminatan",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "description": "",
-      "durationMinutes": 15,
-      "passingScore": 75,
-      "questions": [
-        {
-          "id": "q_guru_1",
-          "question": "siapa pendiri tamansiswa",
-          "options": [
-            "soekarno",
-            "khd",
-            "jookowi",
-            "pascabowo"
-          ],
-          "correctOptionIndex": 0,
-          "explanation": ""
-        }
-      ],
-      "isActive": false,
-      "token": "TVQ-4655",
-      "sourceType": "interactive",
-      "externalUrl": "",
-      "password": "",
-      "scheduleStart": "",
-      "scheduleEnd": "",
-      "status": "inactive",
-      "id": "quiz_1793433581388",
-      "createdAt": "2026-10-31T07:59:41.388Z"
-    }
-  ],
-  "quizAttempts": [
-    {
-      "quizId": "quiz_1793438004502",
-      "quizTitle": "hh",
-      "studentId": "stu_1793373992097_jv1v1",
-      "studentName": "Alvaro Pratama Herlen",
-      "username": "graniat",
-      "tokenUsed": "TVQ-4824",
-      "score": 100,
-      "totalQuestions": 0,
-      "correctAnswersCount": 0,
-      "passed": true,
-      "answers": [],
-      "id": "att_1793457020357",
-      "completedAt": "2026-10-31T14:30:20.357Z"
-    },
-    {
-      "quizId": "quiz_1793438004502",
-      "quizTitle": "hh",
-      "studentId": "stu_1793373992097_jv1v1",
-      "studentName": "Alvaro Pratama Herlen",
-      "username": "graniat",
-      "tokenUsed": "TVQ-4824",
-      "score": 100,
-      "totalQuestions": 0,
-      "correctAnswersCount": 0,
-      "passed": true,
-      "answers": [],
-      "id": "att_1793457006948",
-      "completedAt": "2026-10-31T14:30:06.948Z"
-    }
-  ],
-  "quizViolations": [
-    {
-      "quizId": "quiz_1793438004502",
-      "quizTitle": "hh",
-      "studentId": "stu_1793373992097_jv1v1",
-      "studentName": "Alvaro Pratama Herlen",
-      "studentUsername": "graniat",
-      "teacherId": "user_staff_endang_daryanti",
-      "teacherName": "Endang Daryanti",
-      "violationType": "tab_switch",
-      "violationDetail": "Beralih tab / membuka aplikasi lain saat ujian berlangsung",
-      "id": "violation_1793456954119_ecij",
-      "timestamp": "2026-10-31T14:29:14.119Z"
-    }
-  ],
-  "quizParticipants": [
-    {
-      "id": "part_1793456898000_ugug",
-      "quizId": "quiz_1793438004502",
-      "quizTitle": "hh",
-      "studentId": "stu_1793373992097_jv1v1",
-      "studentName": "Alvaro Pratama Herlen",
-      "studentUsername": "graniat",
-      "studentKelas": "Kelas 8",
-      "tokenUsed": "TVQ-4824",
-      "enteredAt": "2026-10-31T14:28:18.000Z",
-      "status": "in_progress"
-    }
-  ],
+  "quizzes": [],
+  "quizAttempts": [],
   "attendanceEvents": [],
   "attendanceRecords": [],
   "passwordResetRequests": [
@@ -611,6 +495,9 @@
     "guru.matematika",
     "guru.bahasa",
     "kepala.sekolah",
-    "panitia.osis"
+    "panitia.osis",
+    "alvaro1234",
+    "itskimzz",
+    "tamansiswa1"
   ]
 }
