@@ -29,7 +29,8 @@
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_kepsek:d592cc82bedb9886",
       "createdAt": "2026-10-24T08:22:46.821Z",
       "updatedAt": "2026-10-24T08:22:46.821Z",
-      "password": "Tamvesta!B2601"
+      "password": "Tamvesta!B2601",
+      "isVerified": false
     },
     {
       "id": "user_staff_titus_yayasan",
@@ -325,7 +326,7 @@
       "qrToken": "TAMVESTA:STUDENT:stu_1793844798317_cpi1b:486252839b8c94ed",
       "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Alvaro%20Pratama%20Herlen&backgroundColor=0284c7",
       "createdAt": "2026-11-05T02:13:18.317Z",
-      "updatedAt": "2026-11-05T02:13:18.317Z",
+      "updatedAt": "2026-11-05T02:14:17.967Z",
       "isOfficial": true,
       "isCustom": true,
       "source": "admin",
@@ -355,7 +356,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-11-05T02:14:17.962Z"
+      "createdAt": "2026-11-05T02:14:40.424Z"
     },
     {
       "id": "notif_announcement_1",
@@ -367,7 +368,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-11-05T01:14:17.962Z"
+      "createdAt": "2026-11-05T01:14:40.424Z"
     },
     {
       "id": "notif_subject_1",
@@ -378,7 +379,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-11-05T00:14:17.962Z"
+      "createdAt": "2026-11-05T00:14:40.424Z"
     }
   ],
   "articles": [],
