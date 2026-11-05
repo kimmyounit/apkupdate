@@ -355,7 +355,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-11-05T02:18:23.887Z"
+      "createdAt": "2026-11-05T02:16:54.385Z"
     },
     {
       "id": "notif_announcement_1",
@@ -365,9 +365,11 @@
       "isImportant": true,
       "linkType": "announcement",
       "linkId": "ann_1",
-      "readBy": [],
+      "readBy": [
+        "user_admin_tamansiswa"
+      ],
       "deletedBy": [],
-      "createdAt": "2026-11-05T01:18:23.887Z"
+      "createdAt": "2026-11-05T01:16:54.385Z"
     },
     {
       "id": "notif_subject_1",
@@ -377,8 +379,10 @@
       "isImportant": false,
       "linkType": "subject",
       "readBy": [],
-      "deletedBy": [],
-      "createdAt": "2026-11-05T00:18:23.887Z"
+      "deletedBy": [
+        "user_admin_tamansiswa"
+      ],
+      "createdAt": "2026-11-05T00:16:54.385Z"
     }
   ],
   "articles": [],
