@@ -355,7 +355,7 @@
       "linkType": "none",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-11-05T02:13:46.703Z"
+      "createdAt": "2026-11-05T02:12:45.227Z"
     },
     {
       "id": "notif_announcement_1",
@@ -367,7 +367,7 @@
       "linkId": "ann_1",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-11-05T01:13:46.703Z"
+      "createdAt": "2026-11-05T01:12:45.228Z"
     },
     {
       "id": "notif_subject_1",
@@ -378,7 +378,7 @@
       "linkType": "subject",
       "readBy": [],
       "deletedBy": [],
-      "createdAt": "2026-11-05T00:13:46.703Z"
+      "createdAt": "2026-11-05T00:12:45.228Z"
     }
   ],
   "articles": [],
@@ -391,13 +391,10 @@
   "gameRooms": [],
   "refreshSignals": [
     {
-      "id": "sig_1793844819048_7lrw",
-      "userId": "user_admin_tamansiswa",
-      "userName": "Administrator Tamansiswa Batam",
-      "userUsername": "TAMANSISWA",
+      "id": "sig_1793844798356_39bz",
       "userKelas": "-",
-      "timestamp": "2026-11-05T02:13:39.017Z",
-      "formattedTime": "02.13.39 WIB",
+      "timestamp": "2026-11-05T02:13:18.326Z",
+      "formattedTime": "02.13.18 WIB",
       "status": "received"
     }
   ],
