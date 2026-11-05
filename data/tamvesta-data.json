@@ -354,7 +354,18 @@
   "tuChatMessages": [],
   "tuMonthlyReports": [],
   "gameRooms": [],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1793844819048_7lrw",
+      "userId": "user_admin_tamansiswa",
+      "userName": "Administrator Tamansiswa Batam",
+      "userUsername": "TAMANSISWA",
+      "userKelas": "-",
+      "timestamp": "2026-11-05T02:13:39.017Z",
+      "formattedTime": "02.13.39 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
