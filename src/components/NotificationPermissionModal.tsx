@@ -34,21 +34,32 @@ export const NotificationPermissionModal: React.FC<NotificationPermissionModalPr
   } | null>(null);
 
   useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    const handlePermChange = (e: any) => {
+      if (e.detail === 'granted') {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('tamvesta_open_notification_prompt', handleOpen);
+    window.addEventListener('tamvesta_notification_permission_changed', handlePermChange);
+    return () => {
+      window.removeEventListener('tamvesta_open_notification_prompt', handleOpen);
+      window.removeEventListener('tamvesta_notification_permission_changed', handlePermChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (forceOpen) {
       setIsOpen(true);
       return;
     }
 
-    if (!isNotificationSupported()) {
-      return;
-    }
-
     const perm = getNotificationPermission();
-    if (perm === 'default' && !isNotificationPromptDismissed()) {
-      // Tampilkan popup setelah delay 1.5 detik agar pengguna tidak kaget saat halaman baru termuat
+    if (perm !== 'granted' && !isNotificationPromptDismissed()) {
+      // Tampilkan popup setelah delay 1 detik agar pengguna dapat melihat permintaan izin
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 1500);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [forceOpen]);
@@ -71,21 +82,16 @@ export const NotificationPermissionModal: React.FC<NotificationPermissionModalPr
     if (result === 'granted') {
       setStatusMessage({
         type: 'success',
-        text: 'Notifikasi berhasil diaktifkan! Pengumuman dan pesan support akan otomatis masuk ke perangkat Anda.',
+        text: 'Notifikasi berhasil diizinkan & diaktifkan! Pengumuman, kuis, dan pesan sekolah akan langsung masuk ke perangkat Anda.',
       });
       setTimeout(() => {
         setIsOpen(false);
         if (onClose) onClose();
-      }, 2200);
-    } else if (result === 'denied') {
-      setStatusMessage({
-        type: 'denied',
-        text: 'Izin notifikasi diblokir di browser. Buka Setelan / Info Situs browser Anda untuk mengizinkan notifikasi.',
-      });
+      }, 1800);
     } else {
       setStatusMessage({
-        type: 'unsupported',
-        text: 'Perangkat atau browser ini belum mendukung Web Notification API.',
+        type: 'denied',
+        text: 'Izin notifikasi belum diaktifkan. Buka Setelan HP atau peramban Anda untuk mengizinkan notifikasi TAMVESTA.',
       });
     }
   };

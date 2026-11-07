@@ -10,22 +10,35 @@ const SEEN_NOTIF_IDS_KEY = 'tamvesta_seen_notif_ids_v1';
 export type NotificationPermissionState = NotificationPermission | 'unsupported';
 
 /**
- * Cek apakah browser / webview mendukung Web Notification API
+ * Cek apakah browser / webview / APK mendukung sistem notifikasi TAMVESTA
  */
 export function isNotificationSupported(): boolean {
-  return typeof window !== 'undefined' && 'Notification' in window;
+  return typeof window !== 'undefined';
 }
 
 /**
  * Ambil status izin notifikasi saat ini
  */
 export function getNotificationPermission(): NotificationPermissionState {
-  if (!isNotificationSupported()) return 'unsupported';
+  if (typeof window === 'undefined') return 'unsupported';
+
+  // 1. Cek izin native Notification API jika tersedia di peramban/OS
   try {
-    return Notification.permission;
-  } catch (_) {
-    return 'unsupported';
-  }
+    if ('Notification' in window && Notification.permission) {
+      if (Notification.permission === 'granted') return 'granted';
+      if (Notification.permission === 'denied') return 'denied';
+    }
+  } catch (_) {}
+
+  // 2. Cek status aktivasi tersimpan di perangkat (Webview APK / PWA)
+  try {
+    const saved = localStorage.getItem('tamvesta_notif_enabled');
+    const perm = localStorage.getItem('tamvesta_notif_permission');
+    if (saved === 'true' || perm === 'granted') return 'granted';
+    if (perm === 'denied') return 'denied';
+  } catch (_) {}
+
+  return 'default';
 }
 
 /**
@@ -54,68 +67,116 @@ export function dismissNotificationPrompt(hours = 24): void {
 }
 
 /**
- * Minta izin notifikasi perangkat ke browser / sistem OS
+ * Minta izin notifikasi perangkat ke browser / sistem OS / Android WebView
  */
 export async function requestNotificationPermission(): Promise<NotificationPermissionState> {
-  if (!isNotificationSupported()) return 'unsupported';
+  if (typeof window === 'undefined') return 'unsupported';
 
+  let nativePerm: NotificationPermissionState = 'default';
+
+  // 1. Jika Web Notification API didukung, minta izin native ke OS
   try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      try {
-        localStorage.removeItem(NOTIF_DISMISSED_KEY);
-      } catch (_) {}
-
-      // Bunyikan denting dan kirim notifikasi sambutan
-      playNotificationChime();
-      sendNativeNotification('🔔 Notifikasi TAMVESTA Berhasil Aktif!', {
-        body: 'Anda sekarang akan menerima pengumuman sekolah dan info resmi langsung di perangkat ini.',
-        icon: '/assets/tamvesta_mascot.jpg',
-        tag: 'tamvesta-welcome',
-      });
+    if ('Notification' in window && typeof Notification.requestPermission === 'function') {
+      nativePerm = await Notification.requestPermission();
     }
-    return permission;
   } catch (err) {
-    console.error('Error requesting notification permission:', err);
-    return 'unsupported';
+    console.warn('Native Notification.requestPermission error:', err);
   }
+
+  // Jika pengguna secara spesifik memblokir di level OS
+  if (nativePerm === 'denied') {
+    try {
+      localStorage.setItem('tamvesta_notif_permission', 'denied');
+    } catch (_) {}
+    return 'denied';
+  }
+
+  // 2. Aktifkan sistem notifikasi TAMVESTA (Suara denting, getar, in-app banner, dan push)
+  try {
+    localStorage.setItem('tamvesta_notif_enabled', 'true');
+    localStorage.setItem('tamvesta_notif_permission', 'granted');
+    localStorage.removeItem(NOTIF_DISMISSED_KEY);
+  } catch (_) {}
+
+  // Bunyikan denting dan getar perangkat
+  try {
+    playNotificationChime();
+  } catch (_) {}
+
+  // Kirim notifikasi sambutan ke perangkat
+  sendNativeNotification('🔔 Notifikasi TAMVESTA Berhasil Aktif!', {
+    body: 'Anda sekarang akan menerima pengumuman sekolah, kuis, dan pesan resmi langsung di HP ini.',
+    icon: '/assets/tamvesta_mascot.jpg',
+    tag: 'tamvesta-welcome',
+  });
+
+  // Beritahu seluruh komponen aplikasi bahwa izin notifikasi telah aktif
+  try {
+    window.dispatchEvent(
+      new CustomEvent('tamvesta_notification_permission_changed', { detail: 'granted' })
+    );
+  } catch (_) {}
+
+  return 'granted';
 }
 
 /**
- * Kirim notifikasi native sistem OS / perangkat HP
+ * Kirim notifikasi native sistem OS / perangkat HP & In-App Banner
  */
 export function sendNativeNotification(title: string, options?: NotificationOptions): boolean {
-  if (!isNotificationSupported()) return false;
-  if (getNotificationPermission() !== 'granted') return false;
+  if (typeof window === 'undefined') return false;
 
+  // Bunyikan denting dan getaran
   try {
-    const finalOptions: NotificationOptions = {
-      icon: '/assets/tamvesta_mascot.jpg',
-      badge: '/assets/tamvesta_mascot.jpg',
-      ...options,
-    };
+    playNotificationChime();
+  } catch (_) {}
 
-    const notif = new Notification(title, finalOptions);
+  // Selalu kirimkan event notifikasi in-app agar banner melayang muncul di layar aplikasi
+  try {
+    window.dispatchEvent(
+      new CustomEvent('tamvesta_inapp_notification', {
+        detail: {
+          title,
+          body: options?.body || '',
+          icon: options?.icon || '/assets/tamvesta_mascot.jpg',
+          tag: options?.tag,
+        },
+      })
+    );
+  } catch (_) {}
 
-    notif.onclick = () => {
-      try {
-        window.focus();
-      } catch (_) {}
-      notif.close();
+  // Coba kirimkan ke native OS Notification jika didukung oleh peramban/OS
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const finalOptions: NotificationOptions = {
+        icon: '/assets/tamvesta_mascot.jpg',
+        badge: '/assets/tamvesta_mascot.jpg',
+        ...options,
+      };
 
-      // Jika ada navigasi khusus berdasarkan tag
-      if (options?.tag?.startsWith('tamvesta-ann-')) {
-        window.dispatchEvent(new CustomEvent('tamvesta_navigate', { detail: 'pengumuman' }));
-      } else if (options?.tag?.startsWith('tamvesta-post-')) {
-        window.dispatchEvent(new CustomEvent('tamvesta_navigate', { detail: 'home' }));
-      }
-    };
+      const notif = new Notification(title, finalOptions);
 
-    return true;
+      notif.onclick = () => {
+        try {
+          window.focus();
+        } catch (_) {}
+        notif.close();
+
+        // Jika ada navigasi khusus berdasarkan tag
+        if (options?.tag?.startsWith('tamvesta-ann-')) {
+          window.dispatchEvent(new CustomEvent('tamvesta_navigate', { detail: 'pengumuman' }));
+        } else if (options?.tag?.startsWith('tamvesta-post-')) {
+          window.dispatchEvent(new CustomEvent('tamvesta_navigate', { detail: 'home' }));
+        }
+      };
+
+      return true;
+    }
   } catch (err) {
     console.warn('Native notification failed:', err);
-    return false;
   }
+
+  return true;
 }
 
 /**

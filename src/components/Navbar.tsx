@@ -62,10 +62,15 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 20000);
     const handleRefresh = () => fetchUnreadCount();
+    const handlePermChange = (e: any) => {
+      setNotifPerm(e.detail || getNotificationPermission());
+    };
     window.addEventListener('tamvesta_refresh_notifications', handleRefresh);
+    window.addEventListener('tamvesta_notification_permission_changed', handlePermChange);
     return () => {
       clearInterval(interval);
       window.removeEventListener('tamvesta_refresh_notifications', handleRefresh);
+      window.removeEventListener('tamvesta_notification_permission_changed', handlePermChange);
     };
   }, []);
 
@@ -129,7 +134,7 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
       {/* Banner Izin Notifikasi Perangkat (Android, iOS & Web) */}
-      {isNotificationSupported() && notifPerm !== 'granted' && !bannerDismissed && (
+      {notifPerm !== 'granted' && !bannerDismissed && (
         <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 text-slate-950 px-3.5 py-2 text-xs font-bold flex flex-col sm:flex-row items-center justify-between gap-2 shadow-xs border-b border-amber-400">
           <div className="flex items-center gap-2 text-center sm:text-left">
             <span className="p-1 rounded-full bg-white/30 text-slate-950 animate-bounce shrink-0">

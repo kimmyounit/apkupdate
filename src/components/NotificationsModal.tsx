@@ -62,6 +62,14 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    const handlePermChange = (e: any) => {
+      setNotifPerm(e.detail || getNotificationPermission());
+    };
+    window.addEventListener('tamvesta_notification_permission_changed', handlePermChange);
+    return () => window.removeEventListener('tamvesta_notification_permission_changed', handlePermChange);
+  }, []);
+
   if (!isOpen) return null;
 
   const handleMarkRead = async (notifId: string) => {
@@ -172,7 +180,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
         </div>
 
         {/* Device Notification Activation Banner */}
-        {isNotificationSupported() && notifPerm !== 'granted' && (
+        {notifPerm !== 'granted' && (
           <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-between gap-2.5">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-amber-700 shrink-0 animate-pulse" />
