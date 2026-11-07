@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YUKTAM! - Portal Pendaftaran Siswa Baru Perguruan Tamansiswa Batam</title>
+  <link rel="icon" type="image/jpeg" href="/assets/tamvesta_mascot.jpg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    @media print {
+      body * { visibility: hidden; }
+      #successBox, #successBox * { visibility: visible; }
+      #successBox { position: absolute; left: 0; top: 0; width: 100%; border: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
+
+  <!-- Header / Navbar -->
+  <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl overflow-hidden border border-emerald-500/40 bg-slate-800 flex items-center justify-center shrink-0">
+          <img src="/assets/tamvesta_mascot.jpg" alt="Logo Tamansiswa Batam" class="w-full h-full object-cover" onerror="this.style.display='none'">
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-base sm:text-xl font-black text-white tracking-tight">YUKTAM!</span>
+            <span class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Pendaftaran 2026/2027</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Yuk Tamansiswa! Portal Pendaftaran Siswa Baru Perguruan Tamansiswa Batam</p>
+        </div>
+      </div>
+
+      <div>
+        <a href="/" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">
+          <span>&larr; Masuk ke TAMVESTA</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
+    <!-- Hero Header -->
+    <div class="text-center max-w-2xl mx-auto mb-8 space-y-3">
+      <div class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+        <span>✨ YUKTAM! — Portal Resmi Pendaftaran Siswa Baru ✨</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
+        Selamat Datang di YUKTAM!
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+        Yuk Tamansiswa! Daftarkan diri Anda secara langsung melalui portal resmi <strong>YUKTAM!</strong>. Data pendaftaran otomatis bertambah dan masuk ke sistem database sekolah dengan status <strong>Menunggu Persetujuan (ACC)</strong> dari Bagian Tata Usaha.
+      </p>
+    </div>
+
+    <!-- 3 Langkah Alur -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">1</div>
+        <div>
+          <p class="text-xs font-bold text-white">Isi Formulir</p>
+          <p class="text-[11px] text-slate-400">Lengkapi data diri dan buat akun login</p>
+        </div>
+      </div>
+      <div class="bg-slate-900/80 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-xs shrink-0">2</div>
+        <div>
+          <p class="text-xs font-bold text-amber-300">Menunggu ACC</p>
+          <p class="text-[11px] text-slate-400">Tata Usaha memverifikasi data Anda</p>
+        </div>
+      </div>
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/30 flex items-center justify-center font-bold text-xs shrink-0">3</div>
+        <div>
+          <p class="text-xs font-bold text-white">Akun Langsung Aktif</p>
+          <p class="text-[11px] text-slate-400">Login ke aplikasi TAMVESTA</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Buttons -->
+    <div class="flex border-b border-slate-800 mb-6 gap-3">
+      <button id="tabFormBtn" onclick="switchTab('form')" class="py-2.5 px-4 font-bold text-xs sm:text-sm border-b-2 border-emerald-500 text-emerald-400">
+        Formulir Pendaftaran
+      </button>
+      <button id="tabStatusBtn" onclick="switchTab('status')" class="py-2.5 px-4 font-bold text-xs sm:text-sm border-b-2 border-transparent text-slate-400 hover:text-white">
+        Cek Status Pendaftaran
+      </button>
+    </div>
+
+    <!-- FORM PENDAFTARAN -->
+    <div id="tabForm" class="space-y-6">
+      <div id="formContainer" class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+        <div class="border-b border-slate-800 pb-4 mb-6">
+          <h2 class="text-lg sm:text-xl font-black text-white">Formulir Biodata Calon Siswa</h2>
+          <p class="text-xs text-slate-400 mt-1">Lengkapi data di bawah ini untuk memulai proses pendaftaran.</p>
+        </div>
+
+        <div id="alertBox" class="hidden mb-6 p-4 rounded-2xl text-xs font-semibold leading-relaxed"></div>
+
+        <form id="regForm" onsubmit="submitRegistration(event)" class="space-y-6">
+          <!-- Data Siswa -->
+          <div class="space-y-4">
+            <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">1. Data Pribadi Calon Siswa</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Lengkap <span class="text-rose-400">*</span></label>
+                <input type="text" id="regName" required placeholder="Contoh: Muhammad Rizky" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">NISN (Nomor Induk Siswa Nasional)</label>
+                <input type="text" id="regNisn" placeholder="Nomor NISN (opsional)" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Jenis Kelamin <span class="text-rose-400">*</span></label>
+                <select id="regGender" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500">
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Pilihan Jenjang & Kelas <span class="text-rose-400">*</span></label>
+                <select id="regKelas" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500">
+                  <optgroup label="Tingkat SD">
+                    <option value="Kelas 1">Kelas 1 SD</option>
+                    <option value="Kelas 2">Kelas 2 SD</option>
+                    <option value="Kelas 3">Kelas 3 SD</option>
+                    <option value="Kelas 4">Kelas 4 SD</option>
+                    <option value="Kelas 5">Kelas 5 SD</option>
+                    <option value="Kelas 6">Kelas 6 SD</option>
+                  </optgroup>
+                  <optgroup label="Tingkat SMP">
+                    <option value="Kelas 7" selected>Kelas 7 SMP</option>
+                    <option value="Kelas 8">Kelas 8 SMP</option>
+                    <option value="Kelas 9">Kelas 9 SMP</option>
+                  </optgroup>
+                  <optgroup label="Tingkat SMA / SMK">
+                    <option value="Kelas 10 RPL">Kelas 10 RPL (Rekayasa Perangkat Lunak)</option>
+                    <option value="Kelas 10 TKJ">Kelas 10 TKJ (Teknik Komputer & Jaringan)</option>
+                    <option value="Kelas 10 Bisnis">Kelas 10 Bisnis Daring & Pemasaran</option>
+                    <option value="Kelas 10 Akuntansi">Kelas 10 Akuntansi</option>
+                    <option value="Kelas 11 RPL">Kelas 11 RPL</option>
+                    <option value="Kelas 11 TKJ">Kelas 11 TKJ</option>
+                    <option value="Kelas 12 RPL">Kelas 12 RPL</option>
+                    <option value="Kelas 12 TKJ">Kelas 12 TKJ</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Tempat & Tanggal Lahir</label>
+                <input type="text" id="regBirth" placeholder="Contoh: Batam, 10 Maret 2012" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Alamat Tinggal di Batam</label>
+                <input type="text" id="regAddress" placeholder="Alamat rumah / domisili" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Kontak WhatsApp & Data Orang Tua -->
+          <div class="space-y-4 pt-4 border-t border-slate-800">
+            <div>
+              <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">2. Kontak WhatsApp & Data Orang Tua</h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">Kontak WhatsApp aktif untuk verifikasi pendaftaran oleh pihak sekolah.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Nomor WhatsApp / HP Aktif <span class="text-rose-400">*</span></label>
+                <input type="tel" id="regPhone" required placeholder="Contoh: 081234567890 (WhatsApp Siswa / Wali)" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+                <span class="text-[10px] text-slate-500 mt-0.5 block">Digunakan sekolah untuk pemberitahuan status ACC</span>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Orang Tua / Wali (Opsional)</label>
+                <input type="text" id="regParent" placeholder="Nama Ayah / Ibu / Wali Siswa" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+                <span class="text-[10px] text-slate-500 mt-0.5 block">Dapat diisi nama orang tua atau wali</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Akun TAMVESTA -->
+          <div class="space-y-4 pt-4 border-t border-slate-800">
+            <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">3. Buat Akun Login TAMVESTA</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Username Akun <span class="text-rose-400">*</span></label>
+                <input type="text" id="regUsername" required placeholder="rizky.tamansiswa" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm font-mono text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+                <span class="text-[10px] text-slate-500 mt-0.5 block">Huruf kecil tanpa spasi</span>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Password <span class="text-rose-400">*</span></label>
+                <input type="password" id="regPassword" required minlength="6" placeholder="Minimal 6 karakter" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Ulangi Password <span class="text-rose-400">*</span></label>
+                <input type="password" id="regConfirmPassword" required minlength="6" placeholder="Konfirmasi password" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-4 border-t border-slate-800">
+            <button type="submit" id="btnSubmit" class="w-full py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm shadow-xl shadow-emerald-600/20 active:scale-[0.99] transition cursor-pointer">
+              Kirim Pendaftaran Siswa Baru
+            </button>
+            <p class="text-[11px] text-center text-slate-500 mt-2">
+              Pendaftaran Anda akan otomatis tercatat dan menunggu persetujuan (ACC) dari Tata Usaha sekolah.
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Bukti Sukses Pendaftaran (Hidden by default) -->
+      <div id="successBox" class="hidden bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+          <div>
+            <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Pendaftaran Berhasil</span>
+            <h2 class="text-xl sm:text-2xl font-black text-white">Tanda Bukti Pendaftaran Siswa Baru</h2>
+          </div>
+          <span class="px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold self-start sm:self-auto">
+            STATUS: MENUNGGU ACC ADMIN / TU
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950 p-5 rounded-2xl border border-slate-800">
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Nomor Registrasi</span>
+            <p id="resRegNum" class="text-xl font-mono font-black text-emerald-400 mt-0.5">-</p>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Nama Calon Siswa</span>
+            <p id="resName" class="text-base font-bold text-white mt-0.5">-</p>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Username Akun</span>
+            <p id="resUsername" class="text-sm font-mono text-slate-300 mt-0.5">-</p>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Kelas Pilihan</span>
+            <p id="resKelas" class="text-sm font-semibold text-emerald-300 mt-0.5">-</p>
+          </div>
+        </div>
+
+        <div class="p-4 bg-amber-950/30 border border-amber-500/30 rounded-2xl text-xs text-amber-200 leading-relaxed">
+          <strong>Pemberitahuan:</strong> Data Anda telah otomatis masuk ke sistem sekolah. Tata Usaha Perguruan Tamansiswa Batam akan segera memeriksa data Anda. Setelah di-ACC, akun Anda langsung dapat digunakan untuk masuk ke aplikasi TAMVESTA.
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="window.print()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 transition">
+            Cetak Bukti Pendaftaran
+          </button>
+          <button onclick="checkThisStatus()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition">
+            Cek Status Pendaftaran
+          </button>
+          <button onclick="resetForm()" class="px-4 py-2.5 bg-transparent hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition">
+            Daftarkan Siswa Lain
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB CEK STATUS -->
+    <div id="tabStatus" class="hidden bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <h2 class="text-lg sm:text-xl font-black text-white">Cek Status ACC Pendaftaran</h2>
+        <p class="text-xs text-slate-400 mt-1">Masukkan Nomor Registrasi (REG-2026-XXXX), Username, atau Nomor WhatsApp Anda.</p>
+      </div>
+
+      <form onsubmit="searchStatus(event)" class="flex gap-2">
+        <input type="text" id="statusInput" required placeholder="Ketik No Registrasi / Username / No HP..." class="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+        <button type="submit" id="btnSearchStatus" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-xl transition">
+          Cari Status
+        </button>
+      </form>
+
+      <div id="statusResultBox" class="hidden"></div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+    <p>© 2026 Perguruan Tamansiswa Batam. All rights reserved.</p>
+    <p class="text-[11px] text-slate-600 mt-1">YUKTAM! • Website Resmi Pendaftaran Siswa Baru Perguruan Tamansiswa Batam</p>
+  </footer>
+
+  <script>
+    let currentRegNumber = '';
+
+    function switchTab(tab) {
+      const tabForm = document.getElementById('tabForm');
+      const tabStatus = document.getElementById('tabStatus');
+      const tabFormBtn = document.getElementById('tabFormBtn');
+      const tabStatusBtn = document.getElementById('tabStatusBtn');
+
+      if (tab === 'form') {
+        tabForm.classList.remove('hidden');
+        tabStatus.classList.add('hidden');
+        tabFormBtn.className = 'py-2.5 px-4 font-bold text-xs sm:text-sm border-b-2 border-emerald-500 text-emerald-400';
+        tabStatusBtn.className = 'py-2.5 px-4 font-bold text-xs sm:text-sm border-b-2 border-transparent text-slate-400 hover:text-white';
+      } else {
+        tabForm.classList.add('hidden');
+        tabStatus.classList.remove('hidden');
+        tabFormBtn.className = 'py-2.5 px-4 font-bold text-xs sm:text-sm border-b-2 border-transparent text-slate-400 hover:text-white';
+        tabStatusBtn.className = 'py-2.5 px-4 font-bold text-xs sm:text-sm border-b-2 border-emerald-500 text-emerald-400';
+      }
+    }
+
+    async function submitRegistration(e) {
+      e.preventDefault();
+      const alertBox = document.getElementById('alertBox');
+      alertBox.classList.add('hidden');
+
+      const name = document.getElementById('regName').value.trim();
+      const username = document.getElementById('regUsername').value.trim().toLowerCase().replace(/^@+/, '');
+      const password = document.getElementById('regPassword').value;
+      const confirmPassword = document.getElementById('regConfirmPassword').value;
+      const gender = document.getElementById('regGender').value;
+      const kelas = document.getElementById('regKelas').value;
+      const nisn = document.getElementById('regNisn').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
+      const parentName = document.getElementById('regParent').value.trim();
+      const birthPlaceDate = document.getElementById('regBirth').value.trim();
+      const address = document.getElementById('regAddress').value.trim();
+
+      if (password !== confirmPassword) {
+        alertBox.className = 'mb-6 p-4 rounded-2xl text-xs font-semibold leading-relaxed bg-rose-950/50 border border-rose-500/40 text-rose-300';
+        alertBox.textContent = 'Password dan konfirmasi password tidak cocok.';
+        alertBox.classList.remove('hidden');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmit');
+      btn.disabled = true;
+      btn.textContent = 'Mengirim Data Pendaftaran...';
+
+      try {
+        const res = await fetch('/api/auth/register-portal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name, username, password, confirmPassword, gender, kelas,
+            nisn, phone, parentName, birthPlaceDate, address
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Terjadi kesalahan saat pendaftaran.');
+        }
+
+        currentRegNumber = data.registrationNumber || '-';
+        document.getElementById('resRegNum').textContent = currentRegNumber;
+        document.getElementById('resName').textContent = name;
+        document.getElementById('resUsername').textContent = '@' + username;
+        document.getElementById('resKelas').textContent = kelas;
+
+        document.getElementById('formContainer').classList.add('hidden');
+        document.getElementById('successBox').classList.remove('hidden');
+      } catch (err) {
+        alertBox.className = 'mb-6 p-4 rounded-2xl text-xs font-semibold leading-relaxed bg-rose-950/50 border border-rose-500/40 text-rose-300';
+        alertBox.textContent = err.message || 'Gagal mengirim pendaftaran.';
+        alertBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kirim Pendaftaran Siswa Baru';
+      }
+    }
+
+    function checkThisStatus() {
+      switchTab('status');
+      document.getElementById('statusInput').value = currentRegNumber;
+      searchStatus();
+    }
+
+    async function searchStatus(e) {
+      if (e) e.preventDefault();
+      const query = document.getElementById('statusInput').value.trim();
+      if (!query) return;
+
+      const resultBox = document.getElementById('statusResultBox');
+      const btn = document.getElementById('btnSearchStatus');
+      btn.disabled = true;
+      btn.textContent = 'Mencari...';
+
+      try {
+        const res = await fetch('/api/public/registration-status/' + encodeURIComponent(query));
+        const data = await res.json();
+
+        resultBox.classList.remove('hidden');
+        if (data.found && data.user) {
+          const u = data.user;
+          const isAppr = u.status === 'approved' || u.isActive;
+          const isRej = u.status === 'rejected';
+
+          resultBox.innerHTML = `
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <div>
+                  <span class="text-[10px] text-slate-400 font-bold uppercase">Calon Siswa</span>
+                  <h3 class="text-base font-bold text-white">${u.name}</h3>
+                </div>
+                <div>
+                  ${isAppr ? '<span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold">TELAH DI-ACC (AKTIF)</span>' :
+                    isRej ? '<span class="px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 text-xs font-bold">DITOLAK / TIDAK LOLOS</span>' :
+                    '<span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold">MENUNGGU ACC SEKOLAH</span>'}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div class="bg-slate-900 p-3 rounded-xl">
+                  <span class="text-[10px] text-slate-400 block font-semibold">No. Registrasi</span>
+                  <span class="font-mono font-bold text-emerald-400 mt-0.5 block">${u.registrationNumber}</span>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl">
+                  <span class="text-[10px] text-slate-400 block font-semibold">Username</span>
+                  <span class="font-mono font-bold text-slate-200 mt-0.5 block">@${u.username}</span>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl">
+                  <span class="text-[10px] text-slate-400 block font-semibold">Kelas</span>
+                  <span class="font-bold text-slate-200 mt-0.5 block">${u.kelas}</span>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl">
+                  <span class="text-[10px] text-slate-400 block font-semibold">Status Akun</span>
+                  <span class="font-bold mt-0.5 block ${isAppr ? 'text-emerald-400' : 'text-amber-400'}">${isAppr ? 'Aktif' : 'Menunggu ACC'}</span>
+                </div>
+              </div>
+
+              ${isAppr ? `
+                <div class="p-4 bg-emerald-950/40 border border-emerald-500/30 rounded-xl flex items-center justify-between">
+                  <span class="text-xs text-emerald-300">Pendaftaran Anda telah disetujui! Anda dapat langsung masuk ke aplikasi TAMVESTA.</span>
+                  <a href="/" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shrink-0">Masuk ke Aplikasi</a>
+                </div>
+              ` : `
+                <div class="p-4 bg-amber-950/30 border border-amber-500/30 rounded-xl text-xs text-amber-200">
+                  Data pendaftaran sedang diverifikasi oleh Tata Usaha Tamansiswa Batam. Mohon pantau halaman ini secara berkala.
+                </div>
+              `}
+            </div>
+          `;
+        } else {
+          resultBox.innerHTML = `
+            <div class="p-6 bg-slate-950 border border-slate-800 rounded-2xl text-center text-xs text-slate-400">
+              ${data.message || 'Data pendaftaran tidak ditemukan.'}
+            </div>
+          `;
+        }
+      } catch (err) {
+        resultBox.classList.remove('hidden');
+        resultBox.innerHTML = `
+          <div class="p-6 bg-slate-950 border border-slate-800 rounded-2xl text-center text-xs text-rose-400">
+            Gagal mengecek status pendaftaran. Periksa koneksi internet Anda.
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Cari Status';
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('formContainer').classList.remove('hidden');
+      document.getElementById('successBox').classList.add('hidden');
+      document.getElementById('regForm').reset();
+    }
+  </script>
+</body>
+</html>

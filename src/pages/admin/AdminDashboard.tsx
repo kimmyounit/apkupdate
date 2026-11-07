@@ -2042,7 +2042,7 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
               </div>
             </div>
 
-            {/* Banner Calon Siswa Menunggu ACC */}
+            {/* Banner Calon Siswa Menunggu ACC di YUKTAM! */}
             {pendingRegistrationsCount > 0 && (
               <div className="p-4 bg-gradient-to-r from-amber-50 to-amber-100/70 border border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
                 <div className="flex items-center gap-3">
@@ -2052,10 +2052,10 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   <div>
                     <h4 className="text-sm font-black text-amber-950 flex items-center gap-2">
                       <span>Ada {pendingRegistrationsCount} Calon Siswa Menunggu ACC!</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">PPDB Online</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">YUKTAM!</span>
                     </h4>
                     <p className="text-xs text-amber-800 mt-0.5">
-                      Calon siswa mendaftar melalui Portal PPDB. Setujui (ACC) akun mereka agar dapat langsung masuk ke aplikasi TAMVESTA.
+                      Calon siswa mendaftar melalui portal <strong>YUKTAM!</strong>. Setujui (ACC) akun mereka agar dapat langsung masuk ke aplikasi TAMVESTA.
                     </p>
                   </div>
                 </div>
@@ -2072,9 +2072,9 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                     target="_blank"
                     rel="noreferrer"
                     className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-amber-200 text-xs font-bold rounded-xl transition"
-                    title="Buka Website Pendaftaran Siswa"
+                    title="Buka Website Pendaftaran YUKTAM!"
                   >
-                    Buka Portal &rarr;
+                    Buka YUKTAM! &rarr;
                   </a>
                 </div>
               </div>

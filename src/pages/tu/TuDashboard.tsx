@@ -1039,7 +1039,7 @@ Tembusan:
           }`}
         >
           <UserCheck className="w-4 h-4" />
-          <span>PPDB & Pendaftaran</span>
+          <span>YUKTAM! & Pendaftaran</span>
           {pendingRegistrationsCount > 0 && (
             <span className="px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-black animate-pulse">
               {pendingRegistrationsCount} ACC
@@ -2089,7 +2089,7 @@ Tembusan:
       )}
 
       {/* ============================================================= */}
-      {/* 9. TAB PPDB & VERIFIKASI PENDAFTARAN SISWA (MENUNGGU ACC) */}
+      {/* 9. TAB PPDB & VERIFIKASI PENDAFTARAN SISWA (YUKTAM! - MENUNGGU ACC) */}
       {/* ============================================================= */}
       {activeTab === 'registrations' && (
         <div className="space-y-6">
@@ -2098,13 +2098,13 @@ Tembusan:
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
               <div>
                 <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
-                  LAYANAN ADMINISTRASI PPDB ONLINE
+                  PORTAL PENDAFTARAN SISWA BARU — YUKTAM!
                 </span>
                 <h2 className="text-xl font-black text-slate-950 mt-1">
-                  Verifikasi Pendaftaran Siswa Baru (PPDB)
+                  Verifikasi Pendaftaran Siswa Baru (YUKTAM!)
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Tinjau dan setujui (ACC) calon siswa yang mendaftar mandiri. Akun yang disetujui akan langsung aktif dan dapat digunakan untuk login.
+                  Tinjau dan setujui (ACC) calon siswa yang mendaftar melalui portal YUKTAM!. Akun yang disetujui akan langsung aktif dan dapat digunakan untuk login.
                 </p>
               </div>
 
@@ -2120,7 +2120,7 @@ Tembusan:
                   className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                  <span>{copiedLink ? 'Link Tersalin!' : 'Salin Link PPDB'}</span>
+                  <span>{copiedLink ? 'Link Tersalin!' : 'Salin Link YUKTAM!'}</span>
                 </button>
 
                 <a
@@ -2130,7 +2130,7 @@ Tembusan:
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs transition"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Buka Website PPDB</span>
+                  <span>Buka Website YUKTAM!</span>
                 </a>
               </div>
             </div>

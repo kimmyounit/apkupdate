@@ -183,15 +183,15 @@ export const RegistrationPortalPage: React.FC<RegistrationPortalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base sm:text-lg font-black text-white tracking-tight">
-                  TAMVESTA
+                <span className="text-base sm:text-xl font-black text-white tracking-tight">
+                  YUKTAM!
                 </span>
                 <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  PPDB 2026/2027
+                  Pendaftaran 2026/2027
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">
-                Portal Pendaftaran Siswa Baru Perguruan Tamansiswa Batam
+                Yuk Tamansiswa! Portal Pendaftaran Siswa Baru Perguruan Tamansiswa Batam
               </p>
             </div>
           </div>
@@ -215,13 +215,13 @@ export const RegistrationPortalPage: React.FC<RegistrationPortalProps> = ({
         <div className="text-center max-w-2xl mx-auto mb-8 space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Pendaftaran Mandiri Siswa Baru (Online)</span>
+            <span>YUKTAM! — Portal Resmi Pendaftaran Siswa Baru</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-            Selamat Datang di Portal PPDB Tamansiswa Batam
+            Selamat Datang di YUKTAM!
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-            Daftarkan diri Anda atau putra/putri Anda secara langsung. Data pendaftaran akan otomatis masuk ke sistem sekolah dan menunggu proses verifikasi (ACC) dari Bagian Tata Usaha.
+            Yuk Tamansiswa! Daftarkan diri Anda atau putra/putri Anda secara langsung melalui portal resmi <strong>YUKTAM!</strong>. Data pendaftaran akan otomatis masuk ke sistem sekolah dan menunggu proses verifikasi (ACC) dari Bagian Tata Usaha / Admin.
           </p>
         </div>
 
@@ -433,8 +433,13 @@ export const RegistrationPortalPage: React.FC<RegistrationPortalProps> = ({
               /* Formulir Pendaftaran */
               <div className="bg-slate-800/80 border border-slate-700 rounded-3xl p-6 sm:p-8 shadow-2xl">
                 <div className="border-b border-slate-700/80 pb-4 mb-6">
-                  <h2 className="text-lg sm:text-xl font-black text-white">
-                    Formulir Pendaftaran Siswa Baru (PPDB Online)
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      YUKTAM! ONLINE
+                    </span>
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-black text-white mt-1">
+                    Formulir Pendaftaran Siswa Baru — YUKTAM!
                   </h2>
                   <p className="text-xs text-slate-400 mt-1">
                     Silakan isi seluruh formulir berikut dengan data yang valid dan benar.
@@ -560,26 +565,18 @@ export const RegistrationPortalPage: React.FC<RegistrationPortalProps> = ({
                     </div>
                   </div>
 
-                  {/* SEKSI 2: KONTAK & ORANG TUA */}
+                  {/* SEKSI 2: KONTAK & INFORMASI WHATSAPP */}
                   <div className="space-y-4 pt-4 border-t border-slate-700/80">
-                    <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5" /> Kontak & Data Orang Tua
-                    </h3>
+                    <div>
+                      <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5" /> Kontak WhatsApp & Data Orang Tua
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Masukkan kontak WhatsApp aktif untuk konfirmasi pendaftaran oleh pihak sekolah.
+                      </p>
+                    </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-300 mb-1">
-                          Nama Orang Tua / Wali
-                        </label>
-                        <input
-                          type="text"
-                          value={parentName}
-                          onChange={(e) => setParentName(e.target.value)}
-                          placeholder="Nama Ayah/Ibu/Wali Siswa"
-                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                        />
-                      </div>
-
                       <div>
                         <label className="block text-xs font-semibold text-slate-300 mb-1">
                           Nomor WhatsApp / HP Aktif <span className="text-rose-400">*</span>
@@ -588,10 +585,25 @@ export const RegistrationPortalPage: React.FC<RegistrationPortalProps> = ({
                           type="tel"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          placeholder="Contoh: 081234567890"
+                          placeholder="Contoh: 081234567890 (WhatsApp Siswa / Wali)"
                           required
                           className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                         />
+                        <span className="text-[10px] text-slate-500 mt-0.5 block">Digunakan sekolah untuk pemberitahuan status ACC</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">
+                          Nama Orang Tua / Wali (Opsional)
+                        </label>
+                        <input
+                          type="text"
+                          value={parentName}
+                          onChange={(e) => setParentName(e.target.value)}
+                          placeholder="Nama Ayah / Ibu / Wali Siswa"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                        />
+                        <span className="text-[10px] text-slate-500 mt-0.5 block">Dapat diisi nama orang tua atau wali</span>
                       </div>
                     </div>
                   </div>
@@ -698,10 +710,10 @@ export const RegistrationPortalPage: React.FC<RegistrationPortalProps> = ({
           <div className="bg-slate-800/80 border border-slate-700 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
             <div className="border-b border-slate-700/80 pb-4">
               <h2 className="text-lg sm:text-xl font-black text-white">
-                Live Status Tracker Pendaftaran PPDB
+                Live Status Tracker Pendaftaran YUKTAM!
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Ketik Nomor Registrasi (misal: REG-2026-XXXX), Username akun, atau Nomor WhatsApp untuk mengecek status ACC Anda.
+                Ketik Nomor Registrasi (misal: REG-2026-XXXX), Username akun, atau Nomor WhatsApp untuk mengecek status ACC Anda di portal YUKTAM!.
               </p>
             </div>
 
@@ -823,12 +835,12 @@ export const RegistrationPortalPage: React.FC<RegistrationPortalProps> = ({
           </div>
         )}
 
-        {/* TAB 3: INFORMASI & BANTUAN PPDB */}
+        {/* TAB 3: INFORMASI & BANTUAN YUKTAM! */}
         {activeTab === 'info' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-slate-800/80 border border-slate-700 rounded-3xl p-6 space-y-4">
               <h3 className="text-base font-black text-white flex items-center gap-2">
-                <Award className="w-5 h-5 text-emerald-400" /> Syarat & Ketentuan PPDB
+                <Award className="w-5 h-5 text-emerald-400" /> Syarat & Ketentuan Pendaftaran YUKTAM!
               </h3>
               <ul className="space-y-2.5 text-xs text-slate-300 leading-relaxed list-disc list-inside">
                 <li>Mengisi data calon siswa secara lengkap dan benar sesuai identitas resmi (Akta Kelahiran / Kartu Keluarga).</li>
@@ -875,7 +887,7 @@ export const RegistrationPortalPage: React.FC<RegistrationPortalProps> = ({
       {/* Footer */}
       <footer className="mt-auto border-t border-slate-800 py-6 text-center text-xs text-slate-500">
         <p>© 2026 Perguruan Tamansiswa Batam. Seluruh hak cipta dilindungi.</p>
-        <p className="text-[11px] text-slate-600 mt-1">Portal Pendaftaran Resmi TAMVESTA</p>
+        <p className="text-[11px] text-slate-600 mt-1">YUKTAM! • Portal Pendaftaran Resmi Perguruan Tamansiswa Batam</p>
       </footer>
     </div>
   );

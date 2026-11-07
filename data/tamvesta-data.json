@@ -7,8 +7,8 @@
       "role": "admin",
       "jabatan": "Administrator Utama TAMVESTA",
       "initialPassword": "TAMVESTA123",
-      "passwordHash": "f7ee0512c32c6754db14fa447e6f43ab0be585350a7f120bd732c3a5d1ed128daff2c5aa2dccff836ac33853b2b90b3b4f96fc5848e21077528901b23d4c777d",
-      "salt": "1a94b603202efe1b60c705f8abd3a485",
+      "passwordHash": "19ba988990c96b323fec5cdbb10b89b1395dc772d6fb2766e4063295b6f95973fd98813a0477ffe883ce3b482205b3e07df88deae9061a6115f62678481538fa",
+      "salt": "f6de067c08242bcfabd3bdffeba559b2",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_admin_tamansiswa:785efa956b468c8f",
@@ -70,8 +70,8 @@
       "role": "admin",
       "jabatan": "Operator Dapodik Sekolah",
       "initialPassword": "Tamvesta!B2604",
-      "passwordHash": "f7ee0512c32c6754db14fa447e6f43ab0be585350a7f120bd732c3a5d1ed128daff2c5aa2dccff836ac33853b2b90b3b4f96fc5848e21077528901b23d4c777d",
-      "salt": "1a94b603202efe1b60c705f8abd3a485",
+      "passwordHash": "19ba988990c96b323fec5cdbb10b89b1395dc772d6fb2766e4063295b6f95973fd98813a0477ffe883ce3b482205b3e07df88deae9061a6115f62678481538fa",
+      "salt": "f6de067c08242bcfabd3bdffeba559b2",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
@@ -317,8 +317,8 @@
       "jabatan": "Developer Resmi TAMVESTA",
       "initialPassword": "TAMVESTATAMSIS",
       "password": "TAMVESTATAMSIS",
-      "passwordHash": "41cd1a13eba9e36c9cab63ff96835c13dcda3d2183ae7d0baaf4624cb2f9425d5dd1988ef85c4614648ffbdbf69da751aeea028d7d5e442193bbc53bea8d9ad4",
-      "salt": "f90a1e3c8907c7817f3e8d6842496a67",
+      "passwordHash": "573c45512cd8f02c1cd95efb21b5db70985ab1327da18d93059a5073645c37f06e9cf23d9de319e58accf8bb9421d8634b0b1248ad182fd498102907347b4098",
+      "salt": "7149d6cebd3f5204ee620ec5b551f2e8",
       "mustChangePassword": false,
       "isActive": true,
       "isVerified": true,
@@ -493,6 +493,28 @@
   "stories": [],
   "notes": [],
   "notifications": [
+    {
+      "id": "notif_1794044519451_8fhlo",
+      "title": "✅ Pendaftaran Siswa Di-ACC",
+      "message": "Pendaftaran akun siswa Siswa Percobaan PPDB (@test.siswa.1794044519232) telah disetujui (ACC) oleh Admin Penguji. Akun kini aktif.",
+      "type": "system",
+      "isImportant": false,
+      "linkType": "none",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-11-07T09:41:59.451Z"
+    },
+    {
+      "id": "notif_1794044519265_sww7u",
+      "title": "📋 Pendaftaran Siswa Baru (Menunggu ACC)",
+      "message": "Calon siswa: Siswa Percobaan PPDB (REG-2026-16538) mendaftar untuk kelas Kelas 7. Menunggu verifikasi dan persetujuan (ACC).",
+      "type": "system",
+      "isImportant": false,
+      "linkType": "none",
+      "readBy": [],
+      "deletedBy": [],
+      "createdAt": "2026-11-07T09:41:59.265Z"
+    },
     {
       "id": "notif_welcome",
       "title": "Selamat Datang di TAMVESTA Mobile!",
@@ -673,13 +695,34 @@
       "updatedAt": 1793437417435
     }
   ],
-  "refreshSignals": [],
+  "refreshSignals": [
+    {
+      "id": "sig_1794044519462_c63l",
+      "userKelas": "-",
+      "timestamp": "2026-11-07T09:41:59.462Z",
+      "formattedTime": "16.41.59 WIB",
+      "status": "received"
+    },
+    {
+      "id": "sig_1794044519440_qcza",
+      "userKelas": "-",
+      "timestamp": "2026-11-07T09:41:59.270Z",
+      "formattedTime": "16.41.59 WIB",
+      "status": "received"
+    }
+  ],
   "moderationLogs": [],
   "directMessages": [],
   "studentNotes": [],
   "lostFoundItems": [],
   "activityPermissions": [],
   "appReports": [],
+  "deletedPostIds": [],
+  "deletedQuizIds": [
+    "quiz_1793433581388",
+    "quiz_1793438004502",
+    "quiz_1793438743437"
+  ],
   "deletedUserIds": [
     "siswa.smp7a.001",
     "siswa.smp7a.002",
@@ -712,10 +755,5 @@
     "guru.bahasa",
     "kepala.sekolah",
     "panitia.osis"
-  ],
-  "deletedQuizIds": [
-    "quiz_1793433581388",
-    "quiz_1793438004502",
-    "quiz_1793438743437"
   ]
 }

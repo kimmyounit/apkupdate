@@ -209,22 +209,22 @@ export const Login: React.FC<LoginProps> = ({ onOpenRegistrationPortal, initialU
           </div>
         </div>
 
-        {/* Portal Pendaftaran Siswa Baru (PPDB Online) */}
+        {/* Portal Pendaftaran Siswa Baru (YUKTAM!) */}
         <div className="mt-4 bg-gradient-to-r from-emerald-950/90 via-slate-900/90 to-teal-950/90 backdrop-blur-md p-4 rounded-3xl border border-emerald-500/30 text-white shadow-xl space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-bold text-white tracking-wide">
-                Pendaftaran Siswa Baru (PPDB)
+              <span className="text-xs font-black text-white tracking-wide">
+                Pendaftaran Siswa Baru — YUKTAM!
               </span>
             </div>
             <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
-              Online 2026/2027
+              YUKTAM! 2026/2027
             </span>
           </div>
 
           <p className="text-[11px] text-slate-300 leading-relaxed">
-            Belum memiliki akun? Calon siswa dapat mendaftar langsung secara online melalui portal PPDB resmi Tamansiswa Batam.
+            Belum memiliki akun? Calon siswa dapat mendaftar langsung secara online melalui portal resmi <strong>YUKTAM!</strong> Perguruan Tamansiswa Batam.
           </p>
 
           <button
@@ -233,7 +233,7 @@ export const Login: React.FC<LoginProps> = ({ onOpenRegistrationPortal, initialU
             className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-[0.98] cursor-pointer"
           >
             <UserCheck className="w-4 h-4" />
-            <span>Buka Website Pendaftaran Siswa</span>
+            <span>Buka Website YUKTAM! (Daftar Siswa Baru)</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

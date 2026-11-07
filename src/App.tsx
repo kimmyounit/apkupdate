@@ -91,7 +91,15 @@ function AppContent() {
     const p = window.location.pathname.toLowerCase();
     const s = window.location.search.toLowerCase();
     const h = window.location.hash.toLowerCase();
-    return p.includes('/pendaftaran') || p.includes('/daftar') || s.includes('portal=pendaftaran') || h === '#pendaftaran';
+    return (
+      p.includes('/pendaftaran') ||
+      p.includes('/daftar') ||
+      p.includes('/yuktam') ||
+      s.includes('portal=pendaftaran') ||
+      s.includes('portal=yuktam') ||
+      h === '#pendaftaran' ||
+      h === '#yuktam'
+    );
   });
   const [loginPrefillUsername, setLoginPrefillUsername] = useState<string>('');
   const [showWelcome, setShowWelcome] = useState<boolean>(() => {
@@ -108,7 +116,7 @@ function AppContent() {
     return () => stopSync();
   }, []);
 
-  // Sinkronisasi rute URL untuk website pendaftaran
+  // Sinkronisasi rute URL untuk website pendaftaran (YUKTAM!)
   React.useEffect(() => {
     const handlePopState = () => {
       if (typeof window === 'undefined') return;
@@ -116,7 +124,13 @@ function AppContent() {
       const s = window.location.search.toLowerCase();
       const h = window.location.hash.toLowerCase();
       setIsRegistrationPortal(
-        p.includes('/pendaftaran') || p.includes('/daftar') || s.includes('portal=pendaftaran') || h === '#pendaftaran'
+        p.includes('/pendaftaran') ||
+        p.includes('/daftar') ||
+        p.includes('/yuktam') ||
+        s.includes('portal=pendaftaran') ||
+        s.includes('portal=yuktam') ||
+        h === '#pendaftaran' ||
+        h === '#yuktam'
       );
     };
     window.addEventListener('popstate', handlePopState);
@@ -165,7 +179,7 @@ function AppContent() {
           onOpenRegistrationPortal={() => {
             setIsRegistrationPortal(true);
             try {
-              if (window.history.pushState) window.history.pushState(null, '', '/pendaftaran');
+              if (window.history.pushState) window.history.pushState(null, '', '/yuktam');
             } catch (_) {}
           }}
         />
