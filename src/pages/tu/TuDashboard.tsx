@@ -2210,7 +2210,7 @@ Tembusan:
                     <th className="p-3">Calon Siswa & No. Registrasi</th>
                     <th className="p-3">Pilihan Kelas & Gender</th>
                     <th className="p-3">Username Login</th>
-                    <th className="p-3">Kontak & Orang Tua</th>
+                    <th className="p-3">Kontak WhatsApp</th>
                     <th className="p-3 text-center">Status</th>
                     <th className="p-3 text-center">Aksi Verifikasi</th>
                   </tr>
