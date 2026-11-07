@@ -7,8 +7,8 @@
       "role": "admin",
       "jabatan": "Administrator Utama TAMVESTA",
       "initialPassword": "TAMVESTA123",
-      "passwordHash": "9d37ea0c7c0131947a4b2b9250842b23d6d899ebd3035320033aa3dc8cbe315a7a1b5b4a54da72e7f6ef6974bcfa1b26f37820884fd53d54423542760763eebe",
-      "salt": "0920850b46171b6f9addb87fb6100779",
+      "passwordHash": "d4bae61bf8df72d9c7e3fbdebc287799160eb93c6af184f68c153d0f761a1130ccc5566e6ff3a9d71f8ffc66658ab19e63c68b9421315c464def351429add7ee",
+      "salt": "fcba470ddfb14a8529cd4d298dba4bb2",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_admin_tamansiswa:785efa956b468c8f",
@@ -70,8 +70,8 @@
       "role": "admin",
       "jabatan": "Operator Dapodik Sekolah",
       "initialPassword": "Tamvesta!B2604",
-      "passwordHash": "9d37ea0c7c0131947a4b2b9250842b23d6d899ebd3035320033aa3dc8cbe315a7a1b5b4a54da72e7f6ef6974bcfa1b26f37820884fd53d54423542760763eebe",
-      "salt": "0920850b46171b6f9addb87fb6100779",
+      "passwordHash": "d4bae61bf8df72d9c7e3fbdebc287799160eb93c6af184f68c153d0f761a1130ccc5566e6ff3a9d71f8ffc66658ab19e63c68b9421315c464def351429add7ee",
+      "salt": "fcba470ddfb14a8529cd4d298dba4bb2",
       "mustChangePassword": false,
       "isActive": true,
       "qrToken": "TAMVESTA:STUDENT:user_staff_bambang_operator:fc992c0f9fb9de13",
@@ -317,8 +317,8 @@
       "jabatan": "Developer Resmi TAMVESTA",
       "initialPassword": "TAMVESTATAMSIS",
       "password": "TAMVESTATAMSIS",
-      "passwordHash": "cd077e4fb12f92cba4be5c4ef90b5d6c7f96455881fcf161f0ed0c217496a5e7bd3f926c7464fa26589b17d53cabba5c12c8d3b3a7afe9ddc8e98dc5581ec22e",
-      "salt": "7fb467f6d255f84fbd53d0bd6fd959df",
+      "passwordHash": "104a95db68fc989911a0258df34c3a5ccc0203c75be95620f01bb65ddf5beae02ebf7435e02876511b3d0f6a0b85a67ea3d04905fba68fb97b431e5bbd4999cf",
+      "salt": "17aa74be455daab61421bf7b2127bbdc",
       "mustChangePassword": false,
       "isActive": true,
       "isVerified": true,
@@ -372,8 +372,8 @@
       "initialPassword": "123456",
       "password": "123456",
       "bio": "Developer Tamvesta \nYang Asli Ini",
-      "passwordHash": "2e666ad0450949ee296f2634e62471db45d1df66651bc716ac01fa85053e4ff28fe69fac585df32a5c9fe7afcb96a725cf764de0721d33b2b1c1820d4d1f0148",
-      "salt": "7e1e10ed5203669f3d107fecf5f68dfa",
+      "passwordHash": "0671c6472086f76e4f0b817fb39b46f32766f5bb96fec34e6671dfaeffdb312f2e9c68df62c6dd15fb3aeec82d36498e980f053d0f554f04da765e492a9a47c8",
+      "salt": "0b45fa10891688dd836b9e0c62fcf232",
       "phone": "0895410591097",
       "email": "paro.pratama.herlenn@gmail.com",
       "passwordChanged": true
@@ -535,144 +535,7 @@
   "tuDocuments": [],
   "tuChatMessages": [],
   "tuMonthlyReports": [],
-  "gameRooms": [
-    {
-      "id": "room_1793437424540_omcsp",
-      "code": "SPY-325",
-      "gameType": "spy",
-      "hostId": "u1",
-      "hostUsername": "user1",
-      "status": "waiting",
-      "phase": "lobby",
-      "round": 1,
-      "players": [
-        {
-          "id": "p_user1",
-          "userId": "u1",
-          "username": "user1",
-          "name": "User 1",
-          "kelas": "XII",
-          "isHost": true,
-          "isReady": true,
-          "isAlive": true,
-          "joinedAt": 1793437424540,
-          "lastSeenAt": 1793437424540
-        },
-        {
-          "id": "p_user2_4543",
-          "userId": "u2",
-          "username": "user2",
-          "name": "User 2",
-          "kelas": "XII",
-          "isHost": false,
-          "isReady": false,
-          "isAlive": true,
-          "isSpectator": false,
-          "joinedAt": 1793437424543,
-          "lastSeenAt": 1793437424543
-        }
-      ],
-      "spySettings": {
-        "playerCount": 4,
-        "spyCount": 1,
-        "category": "campuran",
-        "clueDuration": 30,
-        "discussionDuration": 60,
-        "votingDuration": 30,
-        "allowSpyGuess": true,
-        "tieRule": "no_elimination"
-      },
-      "mafiaSettings": {
-        "playerCount": 5,
-        "mafiaCount": 1,
-        "doctorCount": 1,
-        "detectiveCount": 1,
-        "nightDuration": 30,
-        "discussionDuration": 60,
-        "votingDuration": 30,
-        "tieRule": "no_elimination"
-      },
-      "chatMessages": [
-        {
-          "id": "msg_sys_1793437424540",
-          "senderId": "system",
-          "senderName": "Sistem TAMVESTA",
-          "senderUsername": "system",
-          "text": "Room SPY-325 berhasil dibuat oleh User 1. Selamat bermain!",
-          "timestamp": 1793437424540,
-          "isSystem": true
-        },
-        {
-          "id": "msg_join_1793437424543",
-          "senderId": "system",
-          "senderName": "Sistem TAMVESTA",
-          "senderUsername": "system",
-          "text": "User 2 (@user2) bergabung ke room.",
-          "timestamp": 1793437424543,
-          "isSystem": true
-        }
-      ],
-      "createdAt": 1793437424540,
-      "updatedAt": 1793437424543
-    },
-    {
-      "id": "room_1793437417427_3m5gx",
-      "code": "SPY-292",
-      "gameType": "spy",
-      "hostId": "user_host_1",
-      "hostUsername": "host123",
-      "status": "waiting",
-      "phase": "lobby",
-      "round": 1,
-      "players": [
-        {
-          "id": "p_host123",
-          "userId": "user_host_1",
-          "username": "host123",
-          "name": "Host Guru",
-          "kelas": "XII-RPL",
-          "isHost": true,
-          "isReady": true,
-          "isAlive": true,
-          "joinedAt": 1793437417427,
-          "lastSeenAt": 1793437417427
-        }
-      ],
-      "spySettings": {
-        "playerCount": 4,
-        "spyCount": 1,
-        "category": "campuran",
-        "clueDuration": 30,
-        "discussionDuration": 60,
-        "votingDuration": 30,
-        "allowSpyGuess": true,
-        "tieRule": "no_elimination"
-      },
-      "mafiaSettings": {
-        "playerCount": 5,
-        "mafiaCount": 1,
-        "doctorCount": 1,
-        "detectiveCount": 1,
-        "nightDuration": 30,
-        "discussionDuration": 60,
-        "votingDuration": 30,
-        "tieRule": "no_elimination"
-      },
-      "chatMessages": [
-        {
-          "id": "msg_sys_1793437417427",
-          "senderId": "system",
-          "senderName": "Sistem TAMVESTA",
-          "senderUsername": "system",
-          "text": "Room SPY-292 berhasil dibuat oleh Host Guru. Selamat bermain!",
-          "timestamp": 1793437417427,
-          "isSystem": true
-        }
-      ],
-      "createdAt": 1793437417427,
-      "updatedAt": 1793437417435
-    }
-  ],
+  "gameRooms": [],
   "refreshSignals": [],
   "moderationLogs": [],
   "directMessages": [],
@@ -680,6 +543,12 @@
   "lostFoundItems": [],
   "activityPermissions": [],
   "appReports": [],
+  "deletedPostIds": [],
+  "deletedQuizIds": [
+    "quiz_1793433581388",
+    "quiz_1793438004502",
+    "quiz_1793438743437"
+  ],
   "deletedUserIds": [
     "siswa.smp7a.001",
     "siswa.smp7a.002",
@@ -712,10 +581,5 @@
     "guru.bahasa",
     "kepala.sekolah",
     "panitia.osis"
-  ],
-  "deletedQuizIds": [
-    "quiz_1793433581388",
-    "quiz_1793438004502",
-    "quiz_1793438743437"
   ]
 }
