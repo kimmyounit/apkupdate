@@ -31,6 +31,11 @@ import {
   Share2,
   FileSpreadsheet,
   Package,
+  UserCheck,
+  ExternalLink,
+  Copy,
+  XCircle,
+  Bell,
 } from 'lucide-react';
 import { LostFoundManagementPanel } from '../../components/LostFoundManagementPanel.tsx';
 import { NotificationBroadcastPanel } from '../../components/NotificationBroadcastPanel.tsx';
@@ -45,7 +50,7 @@ import type {
 } from '../../types/index.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
-type TuTab = 'bills' | 'finance' | 'documents' | 'chat' | 'lost_found' | 'reports' | 'backup' | 'notifications';
+type TuTab = 'bills' | 'finance' | 'documents' | 'chat' | 'lost_found' | 'reports' | 'backup' | 'notifications' | 'registrations';
 
 export const TuDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -113,6 +118,39 @@ export const TuDashboard: React.FC = () => {
   const [selectedChatStudentId, setSelectedChatStudentId] = useState<string>('user_siswa_bintang');
   const [chatInput, setChatInput] = useState('');
   const [allStudents, setAllStudents] = useState<UserType[]>([]);
+
+  // --- 6. Registrations (PPDB Online) State ---
+  const [regSearch, setRegSearch] = useState('');
+  const [regStatusFilter, setRegStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const pendingRegistrationsCount = allStudents.filter(
+    (s) => s.registrationStatus === 'pending' || (s.isActive === false && !!(s as any).registrationNumber)
+  ).length;
+
+  const handleTuApprove = async (student: UserType) => {
+    try {
+      await api.approveStudentRegistration(student.id);
+      setAllStudents((prev) =>
+        prev.map((s) => (s.id === student.id ? { ...s, isActive: true, registrationStatus: 'approved' } : s))
+      );
+      alert(`Pendaftaran siswa "${student.name}" berhasil disetujui (ACC)! Akun siswa kini aktif.`);
+    } catch (err: any) {
+      alert(err.message || 'Gagal menyetujui pendaftaran.');
+    }
+  };
+
+  const handleTuReject = async (student: UserType) => {
+    if (!confirm(`Apakah Anda yakin ingin menolak pendaftaran calon siswa "${student.name}"?`)) return;
+    try {
+      await api.rejectStudentRegistration(student.id);
+      setAllStudents((prev) =>
+        prev.map((s) => (s.id === student.id ? { ...s, isActive: false, registrationStatus: 'rejected' } : s))
+      );
+    } catch (err: any) {
+      alert(err.message || 'Gagal menolak pendaftaran.');
+    }
+  };
 
   useEffect(() => {
     loadAllData();
@@ -990,6 +1028,23 @@ Tembusan:
         >
           <Bell className="w-4 h-4 text-amber-300" />
           <span>Siaran Notifikasi</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('registrations')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+            activeTab === 'registrations'
+              ? 'bg-emerald-700 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <UserCheck className="w-4 h-4" />
+          <span>PPDB & Pendaftaran</span>
+          {pendingRegistrationsCount > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-black animate-pulse">
+              {pendingRegistrationsCount} ACC
+            </span>
+          )}
         </button>
       </div>
 
@@ -2031,6 +2086,250 @@ Tembusan:
       {/* ============================================================= */}
       {activeTab === 'notifications' && (
         <NotificationBroadcastPanel userRole="tata_usaha" userName={user?.name || 'Tata Usaha'} />
+      )}
+
+      {/* ============================================================= */}
+      {/* 9. TAB PPDB & VERIFIKASI PENDAFTARAN SISWA (MENUNGGU ACC) */}
+      {/* ============================================================= */}
+      {activeTab === 'registrations' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+              <div>
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
+                  LAYANAN ADMINISTRASI PPDB ONLINE
+                </span>
+                <h2 className="text-xl font-black text-slate-950 mt-1">
+                  Verifikasi Pendaftaran Siswa Baru (PPDB)
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Tinjau dan setujui (ACC) calon siswa yang mendaftar mandiri. Akun yang disetujui akan langsung aktif dan dapat digunakan untuk login.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const link = window.location.origin + '/pendaftaran.html';
+                    navigator.clipboard?.writeText(link);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>{copiedLink ? 'Link Tersalin!' : 'Salin Link PPDB'}</span>
+                </button>
+
+                <a
+                  href="/pendaftaran.html"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs transition"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Buka Website PPDB</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-amber-800">Menunggu ACC</span>
+                  <p className="text-2xl font-black text-amber-950 mt-0.5">{pendingRegistrationsCount}</p>
+                  <span className="text-[10px] text-amber-700 font-medium">Perlu verifikasi Tata Usaha</span>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
+                  <Clock className="w-5 h-5 animate-spin" />
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-emerald-800">Telah Disetujui (Aktif)</span>
+                  <p className="text-2xl font-black text-emerald-950 mt-0.5">
+                    {allStudents.filter((s) => s.isActive !== false && s.registrationStatus !== 'pending').length}
+                  </p>
+                  <span className="text-[10px] text-emerald-700 font-medium">Siswa terdaftar aktif</span>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-700">Total Akun Siswa</span>
+                  <p className="text-2xl font-black text-slate-900 mt-0.5">{allStudents.length}</p>
+                  <span className="text-[10px] text-slate-500 font-medium">Seluruh database sekolah</span>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-slate-700 text-white flex items-center justify-center font-bold">
+                  <Users className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-6 pt-5 border-t border-slate-100">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  value={regSearch}
+                  onChange={(e) => setRegSearch(e.target.value)}
+                  placeholder="Cari nama, username, no reg, kelas, WA..."
+                  className="w-full px-3 py-2 pl-9 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Filter className="w-3.5 h-3.5 text-slate-400" />
+                <select
+                  value={regStatusFilter}
+                  onChange={(e) => setRegStatusFilter(e.target.value as any)}
+                  className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700"
+                >
+                  <option value="all">Semua Status</option>
+                  <option value="pending">Menunggu ACC ({pendingRegistrationsCount})</option>
+                  <option value="approved">Telah Disetujui (Aktif)</option>
+                  <option value="rejected">Ditolak</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Table of Registrations */}
+            <div className="overflow-x-auto mt-4 rounded-2xl border border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="p-3 text-center">No</th>
+                    <th className="p-3">Calon Siswa & No. Registrasi</th>
+                    <th className="p-3">Pilihan Kelas & Gender</th>
+                    <th className="p-3">Username Login</th>
+                    <th className="p-3">Kontak & Orang Tua</th>
+                    <th className="p-3 text-center">Status</th>
+                    <th className="p-3 text-center">Aksi Verifikasi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {allStudents
+                    .filter((s) => {
+                      const matchesSearch =
+                        s.name.toLowerCase().includes(regSearch.toLowerCase()) ||
+                        s.username.toLowerCase().includes(regSearch.toLowerCase()) ||
+                        ((s as any).registrationNumber && (s as any).registrationNumber.toLowerCase().includes(regSearch.toLowerCase())) ||
+                        (s.phone && s.phone.includes(regSearch)) ||
+                        (s.kelas && s.kelas.toLowerCase().includes(regSearch.toLowerCase()));
+
+                      const matchesStatus =
+                        regStatusFilter === 'all' ||
+                        (regStatusFilter === 'pending' && (s.registrationStatus === 'pending' || (s.isActive === false && !!(s as any).registrationNumber))) ||
+                        (regStatusFilter === 'approved' && s.isActive !== false && s.registrationStatus !== 'pending') ||
+                        (regStatusFilter === 'rejected' && s.registrationStatus === 'rejected');
+
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map((s, idx) => {
+                      const isPending = s.registrationStatus === 'pending' || (s.isActive === false && !!(s as any).registrationNumber);
+                      return (
+                        <tr key={s.id} className="hover:bg-slate-50/80 transition">
+                          <td className="p-3 text-center font-bold text-slate-400">{idx + 1}</td>
+                          <td className="p-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                                <img
+                                  src={s.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(s.name)}&backgroundColor=0284c7`}
+                                  alt={s.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div>
+                                <span className="font-bold text-slate-900 block">{s.name}</span>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  {(s as any).registrationNumber ? (
+                                    <span className="font-mono text-[10px] text-amber-800 font-bold bg-amber-50 px-1 rounded border border-amber-200">
+                                      {(s as any).registrationNumber}
+                                    </span>
+                                  ) : (
+                                    <span className="font-mono text-[10px] text-slate-400">ID: {s.id}</span>
+                                  )}
+                                  {s.nisn && <span className="text-[10px] text-slate-500">NISN: {s.nisn}</span>}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <span className="font-bold text-slate-800 block">{s.kelas || '-'}</span>
+                            <span className="text-[11px] text-slate-500">{s.gender || 'Laki-laki'}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className="font-mono font-bold text-emerald-800">@{s.username}</span>
+                          </td>
+                          <td className="p-3">
+                            {s.phone ? (
+                              <span className="font-mono text-slate-700 block">{s.phone}</span>
+                            ) : (
+                              <span className="text-slate-400 block">-</span>
+                            )}
+                            {(s as any).parentName && (
+                              <span className="text-[10px] text-slate-500">Wali: {(s as any).parentName}</span>
+                            )}
+                          </td>
+                          <td className="p-3 text-center">
+                            {isPending ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                                MENUNGGU ACC
+                              </span>
+                            ) : s.registrationStatus === 'rejected' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                DITOLAK
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                AKTIF
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              {isPending ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleTuApprove(s)}
+                                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow-xs transition cursor-pointer"
+                                    title="Setujui pendaftaran calon siswa (ACC)"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    <span>ACC Siswa</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleTuReject(s)}
+                                    className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold inline-flex items-center gap-1 transition cursor-pointer"
+                                    title="Tolak pendaftaran"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    <span>Tolak</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-[11px] text-slate-400 font-medium">Terverifikasi</span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       )}
 
 

@@ -795,6 +795,27 @@ export const offlineStore = {
 
   login(credentials: { username: string; password: string }) {
     const inputPass = credentials.password.trim();
+    const cleanUsername = (credentials.username || '').toLowerCase().trim().replace(/^@+/, '');
+
+    // Cek apakah akun berstatus pending ACC atau nonaktif
+    const db = loadDB();
+    const pendingCandidate = db.users.find(
+      (u) => (u.username || '').toLowerCase().replace(/^@+/, '') === cleanUsername && u.isActive === false
+    );
+    if (pendingCandidate) {
+      if (pendingCandidate.registrationStatus === 'pending') {
+        throw new Error(
+          `Pendaftaran akun Anda (${pendingCandidate.name}) dengan No. Registrasi ${pendingCandidate.registrationNumber || '-'} sedang MENUNGGU PERSETUJUAN (ACC) dari Admin / Tata Usaha (TU) Tamansiswa Batam. Mohon tunggu verifikasi sekolah.`
+        );
+      }
+      if (pendingCandidate.registrationStatus === 'rejected') {
+        throw new Error(
+          'Pendaftaran akun Anda belum dapat disetujui oleh pihak sekolah. Silakan hubungi bagian Tata Usaha Perguruan Tamansiswa Batam.'
+        );
+      }
+      throw new Error('Akun Anda dinonaktifkan oleh Administrator. Silakan hubungi bagian tata usaha sekolah.');
+    }
+
     const user = this.findUser(credentials.username, inputPass);
 
     if (!user) {
@@ -802,14 +823,14 @@ export const offlineStore = {
     }
 
     const passwords = getStoredPasswords();
-    const cleanUsername = (user.username || '').toLowerCase().replace(/^@+/, '');
-    const userStoredPass = passwords[cleanUsername] || passwords[user.username] || passwords[`@${cleanUsername}`] || (user as any).password;
+    const userCleanUsername = (user.username || '').toLowerCase().replace(/^@+/, '');
+    const userStoredPass = passwords[userCleanUsername] || passwords[user.username] || passwords[`@${userCleanUsername}`] || (user as any).password;
     const isPasswordChanged = Boolean((user as any).passwordChanged);
 
     let isMatch = false;
     if (isPasswordChanged) {
       // Hanya sandi yang baru diubah yang berlaku
-      const changedPass = userStoredPass || passwords[cleanUsername] || passwords[user.username];
+      const changedPass = userStoredPass || passwords[userCleanUsername] || passwords[user.username];
       if (changedPass && (changedPass === inputPass || changedPass.toLowerCase() === inputPass.toLowerCase())) {
         isMatch = true;
       }
@@ -2187,6 +2208,85 @@ export const offlineStore = {
 
     // Ensure user is at the top of db.users without duplicates
     db.users = [user, ...(db.users || []).filter((u) => u.id !== user.id && (u.username || '').toLowerCase() !== username)];
+    saveDB(db);
+    return user;
+  },
+
+  registerPortalStudent(data: {
+    name: string;
+    username: string;
+    password: string;
+    gender: 'Laki-laki' | 'Perempuan';
+    kelas: string;
+    nisn?: string;
+    phone?: string;
+    parentName?: string;
+    birthPlaceDate?: string;
+    address?: string;
+  }) {
+    const db = loadDB();
+    const rawUsername = data.username || `siswa_${Date.now()}`;
+    const username = rawUsername.trim().toLowerCase().replace(/^@+/, '');
+    const existing = db.users.find((u) => (u.username || '').toLowerCase().replace(/^@+/, '') === username);
+    if (existing) throw new Error(`Username "${username}" sudah digunakan.`);
+
+    const regNumber = `REG-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+    const now = new Date().toISOString();
+    const user: User = {
+      id: `stu_reg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      username,
+      name: data.name.trim(),
+      role: 'siswa',
+      gender: data.gender || 'Laki-laki',
+      kelas: data.kelas || 'Kelas 7',
+      nisn: data.nisn?.trim() || undefined,
+      phone: data.phone?.trim() || undefined,
+      parentName: data.parentName?.trim() || undefined,
+      birthPlaceDate: data.birthPlaceDate?.trim() || undefined,
+      address: data.address?.trim() || undefined,
+      initialPassword: data.password.trim(),
+      password: data.password.trim(),
+      passwordHash: '',
+      salt: '',
+      mustChangePassword: false,
+      isActive: false, // Menunggu ACC
+      registrationStatus: 'pending',
+      registrationNumber: regNumber,
+      registeredAt: now,
+      qrToken: `TAMVESTA:STUDENT:${username}`,
+      avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(data.name)}&backgroundColor=0284c7`,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    savePassword(user.username, data.password.trim());
+    savePassword(username, data.password.trim());
+
+    db.users.push(user);
+    saveDB(db);
+    return { user, registrationNumber: regNumber };
+  },
+
+  approveRegistration(studentId: string, approverName: string = 'Admin') {
+    const db = loadDB();
+    const user = db.users.find((u) => u.id === studentId);
+    if (!user) throw new Error('Data pendaftar tidak ditemukan.');
+    user.isActive = true;
+    user.registrationStatus = 'approved';
+    user.approvedAt = new Date().toISOString();
+    user.approvedBy = approverName;
+    user.updatedAt = new Date().toISOString();
+    saveDB(db);
+    return user;
+  },
+
+  rejectRegistration(studentId: string) {
+    const db = loadDB();
+    const user = db.users.find((u) => u.id === studentId);
+    if (!user) throw new Error('Data pendaftar tidak ditemukan.');
+    user.isActive = false;
+    user.registrationStatus = 'rejected';
+    user.updatedAt = new Date().toISOString();
     saveDB(db);
     return user;
   },

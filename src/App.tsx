@@ -13,6 +13,7 @@ import { PasswordChangeModal } from './components/PasswordChangeModal.tsx';
 import { WelcomeAnimation } from './components/WelcomeAnimation.tsx';
 import { NotificationPermissionModal } from './components/NotificationPermissionModal.tsx';
 import { InAppNotificationBanner } from './components/InAppNotificationBanner.tsx';
+import { RegistrationPortalPage } from './pages/registration/RegistrationPortalPage.tsx';
 import { startNotificationSync } from './lib/notificationService.ts';
 import { School } from 'lucide-react';
 
@@ -85,6 +86,14 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 function AppContent() {
   const { user, loading, mustChangePassword } = useAuth();
   const [currentView, setCurrentView] = useState<'dashboard' | 'scanner'>('dashboard');
+  const [isRegistrationPortal, setIsRegistrationPortal] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const p = window.location.pathname.toLowerCase();
+    const s = window.location.search.toLowerCase();
+    const h = window.location.hash.toLowerCase();
+    return p.includes('/pendaftaran') || p.includes('/daftar') || s.includes('portal=pendaftaran') || h === '#pendaftaran';
+  });
+  const [loginPrefillUsername, setLoginPrefillUsername] = useState<string>('');
   const [showWelcome, setShowWelcome] = useState<boolean>(() => {
     try {
       return sessionStorage.getItem('tamvesta_welcome_shown') !== 'true';
@@ -97,6 +106,21 @@ function AppContent() {
   React.useEffect(() => {
     const stopSync = startNotificationSync();
     return () => stopSync();
+  }, []);
+
+  // Sinkronisasi rute URL untuk website pendaftaran
+  React.useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window === 'undefined') return;
+      const p = window.location.pathname.toLowerCase();
+      const s = window.location.search.toLowerCase();
+      const h = window.location.hash.toLowerCase();
+      setIsRegistrationPortal(
+        p.includes('/pendaftaran') || p.includes('/daftar') || s.includes('portal=pendaftaran') || h === '#pendaftaran'
+      );
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   if (loading) {
@@ -112,10 +136,39 @@ function AppContent() {
     );
   }
 
+  // Tampilkan Website / Portal Pendaftaran Siswa Baru Mandiri
+  if (isRegistrationPortal) {
+    return (
+      <RegistrationPortalPage
+        onBackToLogin={() => {
+          setIsRegistrationPortal(false);
+          try {
+            if (window.history.pushState) window.history.pushState(null, '', '/');
+          } catch (_) {}
+        }}
+        onLoginWithCredentials={(uname) => {
+          setLoginPrefillUsername(uname);
+          setIsRegistrationPortal(false);
+          try {
+            if (window.history.pushState) window.history.pushState(null, '', '/');
+          } catch (_) {}
+        }}
+      />
+    );
+  }
+
   if (!user) {
     return (
       <>
-        <Login />
+        <Login
+          initialUsername={loginPrefillUsername}
+          onOpenRegistrationPortal={() => {
+            setIsRegistrationPortal(true);
+            try {
+              if (window.history.pushState) window.history.pushState(null, '', '/pendaftaran');
+            } catch (_) {}
+          }}
+        />
         <NotificationPermissionModal />
         <InAppNotificationBanner />
       </>

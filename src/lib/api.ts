@@ -261,6 +261,110 @@ export const api = {
     }
   },
 
+  registerPortalStudent: async (data: {
+    name: string;
+    username: string;
+    password: string;
+    confirmPassword?: string;
+    gender: 'Laki-laki' | 'Perempuan';
+    kelas: string;
+    nisn?: string;
+    phone?: string;
+    parentName?: string;
+    birthPlaceDate?: string;
+    address?: string;
+  }) => {
+    try {
+      return await tryServerRequest<{ success: boolean; message: string; registrationNumber: string; user: User }>('/api/auth/register-portal', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch (err: any) {
+      if (err.message && (err.message.includes('sudah') || err.message.includes('wajib') || err.message.includes('minimal') || err.message.includes('cocok'))) {
+        throw err;
+      }
+      const local = offlineStore.registerPortalStudent(data);
+      return {
+        success: true,
+        message: 'Pendaftaran berhasil dikirim! Status akun Anda saat ini: MENUNGGU ACC dari pihak sekolah.',
+        registrationNumber: local.registrationNumber,
+        user: local.user,
+      };
+    }
+  },
+
+  checkRegistrationStatus: async (query: string) => {
+    try {
+      return await tryServerRequest<{
+        found: boolean;
+        message?: string;
+        user?: {
+          name: string;
+          username: string;
+          registrationNumber: string;
+          kelas: string;
+          gender: string;
+          registeredAt?: string;
+          approvedAt?: string;
+          approvedBy?: string;
+          status: string;
+          isActive: boolean;
+        };
+      }>(`/api/public/registration-status/${encodeURIComponent(query.trim())}`);
+    } catch (_) {
+      const cleanQ = query.trim().toLowerCase().replace(/^@+/, '');
+      const allUsers = await api.getPublicUsers();
+      const match = allUsers.find((u) => {
+        if (u.role !== 'siswa') return false;
+        const reg = (u.registrationNumber || '').toLowerCase();
+        const uname = (u.username || '').toLowerCase().replace(/^@+/, '');
+        const phone = (u.phone || '').replace(/[^0-9]/g, '');
+        const qDigits = query.replace(/[^0-9]/g, '');
+        return reg === cleanQ || uname === cleanQ || (qDigits.length >= 7 && phone.includes(qDigits));
+      });
+      if (!match) {
+        return { found: false, message: 'Data pendaftaran tidak ditemukan.' };
+      }
+      return {
+        found: true,
+        user: {
+          name: match.name,
+          username: match.username,
+          registrationNumber: match.registrationNumber || '-',
+          kelas: match.kelas || '-',
+          gender: match.gender || '-',
+          registeredAt: match.registeredAt || match.createdAt,
+          approvedAt: match.approvedAt,
+          approvedBy: match.approvedBy,
+          status: match.registrationStatus || (match.isActive ? 'approved' : 'pending'),
+          isActive: match.isActive,
+        },
+      };
+    }
+  },
+
+  approveStudentRegistration: async (studentId: string) => {
+    try {
+      return await tryServerRequest<{ message: string; user: User }>(`/api/admin/registrations/${studentId}/approve`, {
+        method: 'POST',
+      });
+    } catch (_) {
+      const user = offlineStore.approveRegistration(studentId);
+      return { message: `Pendaftaran siswa ${user.name} berhasil disetujui (ACC)!`, user };
+    }
+  },
+
+  rejectStudentRegistration: async (studentId: string) => {
+    try {
+      return await tryServerRequest<{ message: string; user: User }>(`/api/admin/registrations/${studentId}/reject`, {
+        method: 'POST',
+      });
+    } catch (_) {
+      const user = offlineStore.rejectRegistration(studentId);
+      return { message: 'Pendaftaran siswa telah ditolak.', user };
+    }
+  },
+
   login: async (credentials: { username: string; password: string }) => {
     let serverError: any = null;
     const cleanCredentials = {

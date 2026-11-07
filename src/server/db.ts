@@ -1436,6 +1436,133 @@ class DatabaseManager {
     return { success: true, user: newUser };
   }
 
+  public createPortalRegistration(userData: {
+    name: string;
+    username: string;
+    password: string;
+    gender?: 'Laki-laki' | 'Perempuan';
+    kelas?: string;
+    nisn?: string;
+    phone?: string;
+    parentName?: string;
+    birthPlaceDate?: string;
+    address?: string;
+  }): { success: boolean; user?: User; registrationNumber?: string; error?: string } {
+    const rawUsername = userData.username || '';
+    const cleanUsername = rawUsername.trim().toLowerCase().replace(/^@+/, '');
+    if (!cleanUsername) {
+      return { success: false, error: 'Username wajib diisi.' };
+    }
+    if (!userData.name || !userData.name.trim()) {
+      return { success: false, error: 'Nama lengkap calon siswa wajib diisi.' };
+    }
+    if (!userData.password || userData.password.length < 6) {
+      return { success: false, error: 'Password minimal 6 karakter demi keamanan akun.' };
+    }
+
+    // Check unique username
+    const exists = this.findUserByUsername(cleanUsername);
+    if (exists) {
+      return { success: false, error: `Username "${cleanUsername}" sudah terdaftar. Silakan pilih username lain.` };
+    }
+
+    const now = new Date().toISOString();
+    const id = `stu_reg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const pass = hashPassword(userData.password.trim());
+    const qrToken = generateQrToken(id, cleanUsername);
+    const regNumber = `REG-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    // Hapus dari deletedUserIds jika username didaftarkan ulang
+    this.data.deletedUserIds = (this.data.deletedUserIds || []).filter(
+      (did) => did !== id && did.toLowerCase() !== cleanUsername
+    );
+
+    const newUser: User = {
+      id,
+      username: cleanUsername,
+      name: userData.name.trim(),
+      role: 'siswa',
+      gender: userData.gender || 'Laki-laki',
+      kelas: userData.kelas?.trim() || 'Kelas 7',
+      nisn: userData.nisn?.trim() || undefined,
+      phone: userData.phone?.trim() || undefined,
+      parentName: userData.parentName?.trim() || undefined,
+      birthPlaceDate: userData.birthPlaceDate?.trim() || undefined,
+      address: userData.address?.trim() || undefined,
+      initialPassword: userData.password.trim(),
+      password: userData.password.trim(),
+      passwordHash: pass.hash,
+      salt: pass.salt,
+      mustChangePassword: false,
+      isActive: false, // Menunggu ACC dari admin/TU
+      registrationStatus: 'pending',
+      registrationNumber: regNumber,
+      registeredAt: now,
+      qrToken,
+      avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=0284c7`,
+      createdAt: now,
+      updatedAt: now,
+      isOfficial: true,
+      isCustom: true,
+      source: 'portal_registration',
+      isDemo: false,
+    } as any;
+
+    this.data.users.push(newUser);
+    this.save();
+
+    // Notifikasi untuk admin & TU
+    try {
+      this.createNotification({
+        title: '📋 Pendaftaran Siswa Baru (Menunggu ACC)',
+        message: `Calon siswa: ${newUser.name} (${regNumber}) mendaftar untuk kelas ${newUser.kelas}. Menunggu verifikasi dan persetujuan (ACC).`,
+        type: 'system',
+        targetRoles: ['admin', 'tu'],
+      });
+    } catch (_) {}
+
+    this.addRefreshSignal('users');
+
+    return { success: true, user: newUser, registrationNumber: regNumber };
+  }
+
+  public approveRegistration(id: string, approverName: string = 'Admin'): { success: boolean; user?: User; error?: string } {
+    const user = this.findUserById(id);
+    if (!user) return { success: false, error: 'Data pendaftar tidak ditemukan.' };
+
+    user.isActive = true;
+    user.registrationStatus = 'approved';
+    user.approvedAt = new Date().toISOString();
+    user.approvedBy = approverName;
+    user.updatedAt = new Date().toISOString();
+    this.save();
+
+    try {
+      this.createNotification({
+        title: '✅ Pendaftaran Siswa Di-ACC',
+        message: `Pendaftaran akun siswa ${user.name} (@${user.username}) telah disetujui (ACC) oleh ${approverName}. Akun kini aktif.`,
+        type: 'system',
+        targetRoles: ['admin', 'tu'],
+      });
+    } catch (_) {}
+
+    this.addRefreshSignal('users');
+    return { success: true, user };
+  }
+
+  public rejectRegistration(id: string): { success: boolean; user?: User; error?: string } {
+    const user = this.findUserById(id);
+    if (!user) return { success: false, error: 'Data pendaftar tidak ditemukan.' };
+
+    user.isActive = false;
+    user.registrationStatus = 'rejected';
+    user.updatedAt = new Date().toISOString();
+    this.save();
+
+    this.addRefreshSignal('users');
+    return { success: true, user };
+  }
+
   public updateStudent(id: string, data: { name?: string; gender?: 'Laki-laki' | 'Perempuan'; kelas?: string; username?: string; phone?: string; email?: string; bio?: string }): { success: boolean; user?: User; error?: string } {
     const user = this.findUserById(id);
     if (!user || user.role !== 'siswa') return { success: false, error: 'Data siswa tidak ditemukan.' };

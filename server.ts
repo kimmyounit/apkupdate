@@ -127,6 +127,87 @@ app.post('/api/auth/register', async (req, res) => {
   });
 });
 
+// POST /api/auth/register-portal (Website / Portal Pendaftaran Siswa Baru Khusus PPDB - Menunggu ACC)
+app.post('/api/auth/register-portal', async (req, res) => {
+  const { name, username, password, confirmPassword, gender, kelas, nisn, phone, parentName, birthPlaceDate, address } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Nama lengkap calon siswa wajib diisi.' });
+  if (!gender || (gender !== 'Laki-laki' && gender !== 'Perempuan')) return res.status(400).json({ error: 'Pilih jenis kelamin (Laki-laki / Perempuan).' });
+  if (!kelas || !kelas.trim()) return res.status(400).json({ error: 'Pilih jenjang/kelas yang diinginkan.' });
+  if (!username || !username.trim()) return res.status(400).json({ error: 'Username akun wajib diisi.' });
+  if (!password || password.length < 6) return res.status(400).json({ error: 'Password minimal 6 karakter demi keamanan.' });
+  if (confirmPassword && password !== confirmPassword) return res.status(400).json({ error: 'Password dan konfirmasi password tidak cocok.' });
+
+  const result = db.createPortalRegistration({
+    name,
+    username,
+    password,
+    gender,
+    kelas,
+    nisn,
+    phone,
+    parentName,
+    birthPlaceDate,
+    address,
+  });
+
+  if (!result.success) {
+    return res.status(400).json({ error: result.error });
+  }
+
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+
+  return res.status(201).json({
+    success: true,
+    message: 'Pendaftaran berhasil dikirim! Data Anda otomatis tercatat dalam sistem dan saat ini MENUNGGU PERSETUJUAN (ACC) dari Admin / Tata Usaha Tamansiswa Batam.',
+    registrationNumber: result.registrationNumber,
+    user: sanitizeUser(result.user),
+  });
+});
+
+// GET /api/public/registration-status/:query (Live Status Pendaftaran Siswa)
+app.get('/api/public/registration-status/:query', (req, res) => {
+  const query = (req.params.query || '').trim().toLowerCase().replace(/^@+/, '');
+  if (!query) {
+    return res.status(400).json({ error: 'Masukkan Nomor Registrasi, Username, atau Nomor WhatsApp untuk cek status.' });
+  }
+
+  const match = db.data.users.find((u) => {
+    if (u.role !== 'siswa') return false;
+    const regNum = (u.registrationNumber || '').toLowerCase();
+    const uname = (u.username || '').toLowerCase().replace(/^@+/, '');
+    const phone = (u.phone || '').replace(/[^0-9]/g, '');
+    const cleanQ = query.replace(/[^0-9]/g, '');
+    return regNum === query || uname === query || (cleanQ.length >= 7 && phone.includes(cleanQ));
+  });
+
+  if (!match) {
+    return res.json({
+      found: false,
+      message: 'Data pendaftaran tidak ditemukan. Mohon pastikan Nomor Registrasi, Username, atau No HP sudah benar.',
+    });
+  }
+
+  const status = match.registrationStatus || (match.isActive ? 'approved' : 'pending');
+
+  return res.json({
+    found: true,
+    user: {
+      name: match.name,
+      username: match.username,
+      registrationNumber: match.registrationNumber || '-',
+      kelas: match.kelas,
+      gender: match.gender,
+      registeredAt: match.registeredAt || match.createdAt,
+      approvedAt: match.approvedAt,
+      approvedBy: match.approvedBy,
+      status,
+      isActive: match.isActive,
+    },
+  });
+});
+
 // POST /api/auth/login
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
@@ -153,6 +234,19 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   if (!user.isActive) {
+    if (user.registrationStatus === 'pending') {
+      return res.status(403).json({
+        error: `Pendaftaran akun Anda (${user.name || user.username}) dengan Nomor Registrasi ${user.registrationNumber || '-'} sedang MENUNGGU PERSETUJUAN (ACC) dari Admin / Tata Usaha (TU) Tamansiswa Batam. Silakan tunggu verifikasi sebelum masuk.`,
+        registrationStatus: 'pending',
+        registrationNumber: user.registrationNumber,
+      });
+    }
+    if (user.registrationStatus === 'rejected') {
+      return res.status(403).json({
+        error: 'Pendaftaran akun Anda belum dapat disetujui oleh pihak sekolah. Silakan hubungi bagian Tata Usaha Perguruan Tamansiswa Batam.',
+        registrationStatus: 'rejected',
+      });
+    }
     return res.status(403).json({
       error: 'Akun Anda dinonaktifkan oleh Administrator. Silakan hubungi bagian tata usaha sekolah.',
     });
@@ -472,6 +566,49 @@ app.patch('/api/admin/students/:id/toggle-active', authMiddleware, requireRole([
   return res.json({
     message: `Status akun siswa berhasil ${result.isActive ? 'diaktifkan' : 'dinonaktifkan'}.`,
     isActive: result.isActive,
+  });
+});
+
+// POST /api/admin/registrations/:id/approve (ACC Pendaftaran Siswa oleh Admin atau TU)
+app.post('/api/admin/registrations/:id/approve', authMiddleware, requireRole(['admin', 'tu']), async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const approverName = req.user?.name || (req.user?.role === 'tu' ? 'Tata Usaha' : 'Administrator');
+  const result = db.approveRegistration(id, approverName);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error });
+  }
+
+  try {
+    db.addRefreshSignal({
+      type: 'users',
+      source: (req.user?.role as any) || 'admin',
+      message: `Pendaftaran siswa (${result.user?.name}) berhasil di-ACC oleh ${approverName}`,
+    });
+  } catch (_) {}
+
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+
+  return res.json({
+    message: `Pendaftaran siswa ${result.user?.name} berhasil disetujui (ACC)! Akun kini aktif dan dapat langsung digunakan untuk login.`,
+    user: sanitizeUser(result.user),
+  });
+});
+
+// POST /api/admin/registrations/:id/reject (Tolak Pendaftaran Siswa)
+app.post('/api/admin/registrations/:id/reject', authMiddleware, requireRole(['admin', 'tu']), async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const result = db.rejectRegistration(id);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error });
+  }
+  try {
+    await db.saveAsync();
+  } catch (_) {}
+  return res.json({
+    message: `Pendaftaran siswa telah ditolak.`,
+    user: sanitizeUser(result.user),
   });
 });
 

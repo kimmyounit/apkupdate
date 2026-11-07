@@ -30,6 +30,15 @@ export interface User {
   passwordChanged?: boolean; // True jika siswa sudah pernah mengganti kata sandi dari default
   contactInfoCompleted?: boolean; // True jika siswa sudah melengkapi nomor HP & Gmail
   lastUsernameChange?: string; // Catatan waktu perubahan username terakhir (maksimal 1x per 30 hari)
+  // Pendaftaran Siswa Baru Mandiri (PPDB Portal)
+  registrationStatus?: 'pending' | 'approved' | 'rejected';
+  registrationNumber?: string;
+  registeredAt?: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  parentName?: string;
+  birthPlaceDate?: string;
+  address?: string;
   usernameChangeHistory?: { oldUsername: string; newUsername: string; changedAt: string }[];
   following?: string[]; // Daftar ID pengguna yang diikuti
   followers?: string[]; // Daftar ID pengikut

@@ -1171,6 +1171,32 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     }
   };
 
+  const handleApproveStudent = async (student: User) => {
+    try {
+      const res = await api.approveStudentRegistration(student.id);
+      setStudents((prev) =>
+        prev.map((s) => (s.id === student.id ? { ...s, isActive: true, registrationStatus: 'approved' } : s))
+      );
+      alert(`Pendaftaran siswa "${student.name}" berhasil di-ACC! Akun kini aktif dan dapat langsung masuk ke aplikasi.`);
+      notifyMultiDeviceSync();
+    } catch (err: any) {
+      alert(err.message || 'Gagal menyetujui pendaftaran siswa.');
+    }
+  };
+
+  const handleRejectStudent = async (student: User) => {
+    if (!confirm(`Apakah Anda yakin ingin menolak pendaftaran siswa "${student.name}"?`)) return;
+    try {
+      await api.rejectStudentRegistration(student.id);
+      setStudents((prev) =>
+        prev.map((s) => (s.id === student.id ? { ...s, isActive: false, registrationStatus: 'rejected' } : s))
+      );
+      notifyMultiDeviceSync();
+    } catch (err: any) {
+      alert(err.message || 'Gagal menolak pendaftaran siswa.');
+    }
+  };
+
   const handleResetPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resettingStudent || !resetNewPassword) return;
@@ -1431,6 +1457,10 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
     }
   };
 
+  const pendingRegistrationsCount = students.filter(
+    (s) => s.registrationStatus === 'pending' || (s.isActive === false && !!(s as any).registrationNumber)
+  ).length;
+
   const filteredStudents = students.filter((s) => {
     const matchesSearch =
       s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -1445,8 +1475,9 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
 
     const matchesStatus =
       studentStatusFilter === 'all' ||
-      (studentStatusFilter === 'active' && s.isActive !== false) ||
-      (studentStatusFilter === 'inactive' && s.isActive === false);
+      (studentStatusFilter === 'pending' && (s.registrationStatus === 'pending' || (s.isActive === false && !!(s as any).registrationNumber))) ||
+      (studentStatusFilter === 'active' && s.isActive !== false && s.registrationStatus !== 'pending') ||
+      (studentStatusFilter === 'inactive' && s.isActive === false && s.registrationStatus !== 'pending');
 
     const matchesKelas =
       studentKelasFilter === 'all' ||
@@ -2004,11 +2035,50 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                   className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700"
                 >
                   <option value="all">Semua Status Akun</option>
-                  <option value="active">Aktif</option>
-                  <option value="inactive">Nonaktif</option>
+                  <option value="pending">Menunggu ACC ({pendingRegistrationsCount})</option>
+                  <option value="active">Aktif Saja</option>
+                  <option value="inactive">Nonaktif Saja</option>
                 </select>
               </div>
             </div>
+
+            {/* Banner Calon Siswa Menunggu ACC */}
+            {pendingRegistrationsCount > 0 && (
+              <div className="p-4 bg-gradient-to-r from-amber-50 to-amber-100/70 border border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
+                    <Clock className="w-5 h-5 animate-spin" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-amber-950 flex items-center gap-2">
+                      <span>Ada {pendingRegistrationsCount} Calon Siswa Menunggu ACC!</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">PPDB Online</span>
+                    </h4>
+                    <p className="text-xs text-amber-800 mt-0.5">
+                      Calon siswa mendaftar melalui Portal PPDB. Setujui (ACC) akun mereka agar dapat langsung masuk ke aplikasi TAMVESTA.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setStudentStatusFilter('pending')}
+                    className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black rounded-xl transition shadow-xs cursor-pointer"
+                  >
+                    Tampilkan Menunggu ACC
+                  </button>
+                  <a
+                    href="/pendaftaran.html"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-amber-200 text-xs font-bold rounded-xl transition"
+                    title="Buka Website Pendaftaran Siswa"
+                  >
+                    Buka Portal &rarr;
+                  </a>
+                </div>
+              </div>
+            )}
 
             {refreshStudentsNotice && (
               <div className="flex items-center justify-between gap-2 p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-300 text-emerald-900 rounded-2xl text-xs font-bold shadow-xs animate-in fade-in">
@@ -2090,7 +2160,14 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                                 )}
                                 {stu.isVerified && <VerifiedBadge size="xs" />}
                               </div>
-                              <span className="text-[10px] text-slate-400 font-mono">ID: {stu.id}</span>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] text-slate-400 font-mono">ID: {stu.id}</span>
+                                {stu.registrationNumber && (
+                                  <span className="text-[10px] text-amber-700 font-mono font-bold bg-amber-50 px-1 rounded border border-amber-200">
+                                    {stu.registrationNumber}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -2107,20 +2184,48 @@ export const AdminDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOpen
                           {new Date(stu.createdAt).toLocaleDateString('id-ID')}
                         </td>
                         <td className="p-3 text-center">
-                          <button
-                            onClick={() => handleToggleStudentActive(stu)}
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border transition ${
-                              stu.isActive !== false
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                                : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
-                            }`}
-                            title="Klik untuk mengubah status aktif/nonaktif"
-                          >
-                            {stu.isActive !== false ? 'AKTIF' : 'NONAKTIF'}
-                          </button>
+                          {stu.registrationStatus === 'pending' ? (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                              MENUNGGU ACC
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleStudentActive(stu)}
+                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border transition ${
+                                stu.isActive !== false
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                  : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+                              }`}
+                              title="Klik untuk mengubah status aktif/nonaktif"
+                            >
+                              {stu.isActive !== false ? 'AKTIF' : 'NONAKTIF'}
+                            </button>
+                          )}
                         </td>
                         <td className="p-3 text-center">
                           <div className="flex items-center justify-center gap-1.5">
+                            {/* Tombol ACC Cepat untuk Pendaftaran Siswa */}
+                            {stu.registrationStatus === 'pending' && (
+                              <button
+                                onClick={() => handleApproveStudent(stu)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow-xs transition cursor-pointer"
+                                title="Setujui pendaftaran calon siswa (ACC)"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>ACC</span>
+                              </button>
+                            )}
+                            {stu.registrationStatus === 'pending' && (
+                              <button
+                                onClick={() => handleRejectStudent(stu)}
+                                className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold inline-flex items-center gap-1 transition cursor-pointer"
+                                title="Tolak pendaftaran calon siswa"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>Tolak</span>
+                              </button>
+                            )}
+
                             {/* Detail / QR */}
                             <button
                               onClick={() => setPreviewQrStudent(stu)}

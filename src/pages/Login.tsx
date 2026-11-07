@@ -10,16 +10,23 @@ import {
   AlertCircle,
   Smartphone,
   Download,
+  UserCheck,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../lib/api.ts';
 import { IosInstallModal } from '../components/IosInstallModal.tsx';
 
-export const Login: React.FC = () => {
+interface LoginProps {
+  onOpenRegistrationPortal?: () => void;
+  initialUsername?: string;
+}
+
+export const Login: React.FC<LoginProps> = ({ onOpenRegistrationPortal, initialUsername }) => {
   const { login, loginNotice, setLoginNotice } = useAuth();
 
   // Login states
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(initialUsername || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -104,9 +111,26 @@ export const Login: React.FC = () => {
           )}
 
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold leading-relaxed animate-in fade-in flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <span>{error}</span>
+            <div className={`p-3.5 rounded-xl text-xs font-semibold leading-relaxed animate-in fade-in flex items-start gap-2.5 ${
+              error.includes('MENUNGGU') || error.includes('menunggu')
+                ? 'bg-amber-50 border border-amber-300 text-amber-900'
+                : 'bg-rose-50 border border-rose-200 text-rose-700'
+            }`}>
+              <AlertCircle className={`w-4 h-4 shrink-0 mt-0.5 ${
+                error.includes('MENUNGGU') || error.includes('menunggu') ? 'text-amber-600' : 'text-rose-600'
+              }`} />
+              <div className="space-y-1.5 flex-1">
+                <span>{error}</span>
+                {(error.includes('MENUNGGU') || error.includes('menunggu') || error.includes('Registrasi')) && onOpenRegistrationPortal && (
+                  <button
+                    type="button"
+                    onClick={onOpenRegistrationPortal}
+                    className="block text-[11px] font-black text-amber-800 underline hover:text-amber-950"
+                  >
+                    Buka Portal Pendaftaran & Cek Status ACC &rarr;
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
@@ -183,6 +207,35 @@ export const Login: React.FC = () => {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Portal Pendaftaran Siswa Baru (PPDB Online) */}
+        <div className="mt-4 bg-gradient-to-r from-emerald-950/90 via-slate-900/90 to-teal-950/90 backdrop-blur-md p-4 rounded-3xl border border-emerald-500/30 text-white shadow-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-bold text-white tracking-wide">
+                Pendaftaran Siswa Baru (PPDB)
+              </span>
+            </div>
+            <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
+              Online 2026/2027
+            </span>
+          </div>
+
+          <p className="text-[11px] text-slate-300 leading-relaxed">
+            Belum memiliki akun? Calon siswa dapat mendaftar langsung secara online melalui portal PPDB resmi Tamansiswa Batam.
+          </p>
+
+          <button
+            type="button"
+            onClick={onOpenRegistrationPortal}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-[0.98] cursor-pointer"
+          >
+            <UserCheck className="w-4 h-4" />
+            <span>Buka Website Pendaftaran Siswa</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {/* Mobile App Access Banner (Android APK & iOS iPhone PWA) */}
