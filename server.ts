@@ -102,6 +102,29 @@ app.get('/TAMVESTA.apk', (req, res) => {
 // -------------------------------------------------------------
 // Proxy In-App Viewer Website Kemendikdasmen (buku.kemendikdasmen.go.id)
 // Memungkinkan situs SIBI Kemendikdasmen dibuka langsung di dalam APK / Aplikasi tanpa lempar ke Chrome
+app.get('/api/proxy/sibi-api', async (req, res) => {
+  try {
+    const targetUrl = (req.query.url as string) || '';
+    if (!targetUrl || (!targetUrl.includes('cloudapp.web.id') && !targetUrl.includes('kemendikdasmen.go.id'))) {
+      return res.status(400).json({ error: 'URL tidak valid' });
+    }
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Referer': 'https://buku.kemendikdasmen.go.id/',
+      },
+    });
+    const data = await response.json();
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json');
+    return res.json(data);
+  } catch (err: any) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.status(500).json({ error: err?.message || 'Gagal mengambil data dari API SIBI' });
+  }
+});
+
 app.get(['/api/proxy/kemendikdasmen', '/api/kemendikdasmen-viewer'], async (req, res) => {
   try {
     const rawUrl = (req.query.url as string) || 'https://buku.kemendikdasmen.go.id/';
@@ -134,6 +157,56 @@ app.get(['/api/proxy/kemendikdasmen', '/api/kemendikdasmen-viewer'], async (req,
         const baseHref = `https://${parsed.hostname}/`;
         html = html.replace(/<head>/i, `<head>\n  <base href="${baseHref}">`);
       }
+
+      const targetPath = parsed.pathname || '/';
+      const targetSearch = parsed.search || '';
+
+      // Injeksi script patch agar website SIBI berjalan sempurna di dalam iframe aplikasi
+      const patchScript = `
+        <script>
+          (function() {
+            // 1. Sinkronkan pathname agar React Router SIBI merender halaman tujuan (bukan URL proxy)
+            try {
+              if (window.history && window.history.replaceState) {
+                var initialPath = ${JSON.stringify(targetPath + targetSearch)};
+                window.history.replaceState(null, '', initialPath);
+              }
+            } catch (_) {}
+
+            // 2. Mock serviceWorker agar tidak melempar SecurityError di iframe
+            if (navigator && navigator.serviceWorker) {
+              try {
+                navigator.serviceWorker.getRegistrations = function() {
+                  return Promise.resolve([]);
+                };
+              } catch (_) {}
+            }
+
+            // 3. Pastikan window.open tidak membuka browser eksternal Chrome
+            try {
+              var _origOpen = window.open;
+              window.open = function(url, target, features) {
+                if (url) {
+                  window.location.href = url;
+                  return window;
+                }
+                return _origOpen ? _origOpen.apply(this, arguments) : null;
+              };
+            } catch (_) {}
+
+            // 4. Tangani klik tautan <a> dengan target="_blank" agar tetap di dalam frame
+            document.addEventListener('click', function(e) {
+              try {
+                var a = e.target && e.target.closest ? e.target.closest('a') : null;
+                if (a && a.target === '_blank') {
+                  a.target = '_self';
+                }
+              } catch (_) {}
+            }, true);
+          })();
+        </script>
+      `;
+      html = html.replace(/<head>/i, `<head>\n${patchScript}`);
       return res.send(html);
     } else {
       const buffer = await response.arrayBuffer();
@@ -156,7 +229,7 @@ app.get(['/api/proxy/kemendikdasmen', '/api/kemendikdasmen-viewer'], async (req,
         <body>
           <div class="box">
             <h3>Portal SIBI Kemendikdasmen RI</h3>
-            <p style="color: #94a3b8; font-size: 13px;">Gagal memuat proxy langsung dari server Kemendikdasmen saat ini.</p>
+            <p style="color: #94a3b8; font-size: 13px;">Sedang menyambungkan ke server resmi Kemendikdasmen...</p>
             <p style="margin-top: 20px;"><a href="https://buku.kemendikdasmen.go.id/" target="_self">Muat Ulang Halaman SIBI</a></p>
           </div>
         </body>

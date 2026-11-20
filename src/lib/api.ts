@@ -128,7 +128,7 @@ const isStandalone = typeof window !== 'undefined' && (
  * Priority: (1) if browser is directly accessing via HTTP/HTTPS, use relative path or custom server URL.
  * (2) configured/default server URL for standalone APK.
  */
-function resolveUrl(endpoint: string): string {
+export function resolveUrl(endpoint: string): string {
   if (typeof window !== 'undefined') {
     const custom = localStorage.getItem(SERVER_URL_KEY);
     if (custom) return `${custom.replace(/\/+$/, '')}${endpoint}`;
