@@ -37,6 +37,7 @@ import type {
   ModerationLog,
   QuizParticipant,
 } from '../types/index.ts';
+import { OFFICIAL_KEMENDIKDASMEN_BOOKS } from '../constants/kemendikdasmenBooks.ts';
 
 const DEFAULT_DATA_FILE = path.resolve(process.cwd(), 'data', 'tamvesta-data.json');
 const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'tamvesta-data') : path.resolve(process.cwd(), 'data');
@@ -413,7 +414,7 @@ export function getInitialData(): DatabaseSchema {
   return {
     users: [adminUser, supportUser, ...staffUsers, ...studentUsers],
     subjects: [],
-    books: [],
+    books: OFFICIAL_KEMENDIKDASMEN_BOOKS,
     announcements: [],
     quizzes: [],
     quizAttempts: [],
@@ -894,10 +895,19 @@ class DatabaseManager {
         });
         const cleanQuizIdSet = new Set(cleanQuizzes.map((q: Quiz) => (q.id || '').trim().toLowerCase()));
 
+        // Pastikan koleksi resmi buku Kemendikdasmen Kurikulum Merdeka selalu tersedia
+        const currentBooks = parsed.books || [];
+        const bookIdSet = new Set(currentBooks.map((b: DigitalBook) => b.id));
+        OFFICIAL_KEMENDIKDASMEN_BOOKS.forEach((kBook) => {
+          if (!bookIdSet.has(kBook.id)) {
+            currentBooks.push(kBook);
+          }
+        });
+
         return {
           users: parsed.users || [],
           subjects: parsed.subjects || [],
-          books: parsed.books || [],
+          books: currentBooks,
           announcements: parsed.announcements || [],
           quizzes: cleanQuizzes,
           quizAttempts: (parsed.quizAttempts || []).filter((a: QuizAttempt) => !parsedDeletedQuizSet.has((a.quizId || '').trim().toLowerCase()) && cleanQuizIdSet.has((a.quizId || '').trim().toLowerCase())),

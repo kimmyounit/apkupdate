@@ -1,4 +1,5 @@
 import defaultData from './defaultData.json' with { type: 'json' };
+import { OFFICIAL_KEMENDIKDASMEN_BOOKS } from '../constants/kemendikdasmenBooks.ts';
 import type {
   User,
   Subject,
@@ -1738,7 +1739,11 @@ export const offlineStore = {
   },
 
   getBooks(): DigitalBook[] {
-    return loadDB().books || [];
+    const books = loadDB().books || [];
+    const bookMap = new Map<string, DigitalBook>();
+    OFFICIAL_KEMENDIKDASMEN_BOOKS.forEach((b) => bookMap.set(b.id, b));
+    books.forEach((b) => bookMap.set(b.id, b));
+    return Array.from(bookMap.values());
   },
 
   getAnnouncements(): Announcement[] {

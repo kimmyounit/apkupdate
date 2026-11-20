@@ -153,7 +153,7 @@ export const StudentDashboard: React.FC = () => {
         )}
 
         {activeTab === 'library' && (
-          <LibraryPage onBack={() => setActiveTab('home')} />
+          <LibraryPage role="siswa" onBack={() => setActiveTab('home')} />
         )}
       </div>
 

@@ -45,8 +45,10 @@ import {
   ShieldAlert,
   AlertTriangle,
   Radio,
+  Library,
 } from 'lucide-react';
 import { LostFoundManagementPanel } from '../../components/LostFoundManagementPanel.tsx';
+import { LibraryPage } from '../student/LibraryPage.tsx';
 import { api } from '../../lib/api.ts';
 import { playQuizExitAlertSound, playNotificationChime } from '../../lib/audio.ts';
 import type {
@@ -63,7 +65,7 @@ import type {
 import { useAuth } from '../../context/AuthContext.tsx';
 import { formatGoogleFormsEmbedUrl } from '../student/QuizPage.tsx';
 
-type TeacherTab = 'articles' | 'attendance' | 'quizzes' | 'lost_found';
+type TeacherTab = 'articles' | 'attendance' | 'quizzes' | 'lost_found' | 'library';
 
 // Helper pemetaan tingkat kelas 1 - 9 (SD & SMP) untuk pencarian siswa akurat
 const getGradeNumber = (str: string): number | null => {
@@ -356,6 +358,23 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
 
   useEffect(() => {
     loadData();
+
+    const handleNavEvent = (e: any) => {
+      const tab = e.detail;
+      if (tab === 'perpustakaan' || tab === 'library') {
+        setActiveTab('library');
+      } else if (tab === 'artikel' || tab === 'articles') {
+        setActiveTab('articles');
+      } else if (tab === 'absensi' || tab === 'attendance') {
+        setActiveTab('attendance');
+      } else if (tab === 'quiz' || tab === 'quizzes') {
+        setActiveTab('quizzes');
+      } else if (tab === 'lost_found') {
+        setActiveTab('lost_found');
+      }
+    };
+    window.addEventListener('tamvesta_navigate', handleNavEvent);
+    return () => window.removeEventListener('tamvesta_navigate', handleNavEvent);
   }, []);
 
   // Real-time polling untuk kuis, peserta masuk & pelanggaran ujian saat guru di tab kuis
@@ -1090,6 +1109,18 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
           )}
 
           <button
+            onClick={() => setActiveTab('library')}
+            className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-md transition ${
+              activeTab === 'library'
+                ? 'bg-teal-600 text-white shadow-teal-600/30'
+                : 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30'
+            }`}
+          >
+            <Library className="w-4 h-4 text-teal-300" />
+            <span>Perpustakaan (SIBI)</span>
+          </button>
+
+          <button
             onClick={onOpenScanner}
             className="flex items-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-2xl font-bold text-xs shadow-md transition"
           >
@@ -1135,6 +1166,18 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
         >
           <Award className="w-4 h-4" />
           <span>Manajemen Quiz & Token ({quizzes.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('library')}
+          className={`py-3 px-4 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'library'
+              ? 'border-teal-600 text-teal-700 font-black'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Library className="w-4 h-4 text-teal-600" />
+          <span>Perpustakaan & Buku Kemendikdasmen (SIBI)</span>
         </button>
 
         <button
@@ -2302,6 +2345,13 @@ export const TeacherDashboard: React.FC<{ onOpenScanner: () => void }> = ({ onOp
           userRole="guru"
           userName={user?.name || 'Bapak/Ibu Guru'}
         />
+      )}
+
+      {/* ===================== TAB: PERPUSTAKAAN & BUKU KEMENDIKDASMEN ===================== */}
+      {activeTab === 'library' && (
+        <div className="pt-2">
+          <LibraryPage role="guru" />
+        </div>
       )}
 
       {/* ===================== MODAL: BUAT / EDIT ARTIKEL ===================== */}

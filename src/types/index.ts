@@ -117,6 +117,13 @@ export interface DigitalBook {
   publishedYear: string;
   content: string[];
   createdAt: string;
+  pdfUrl?: string;
+  downloadUrl?: string;
+  sourceUrl?: string;
+  bookType?: 'Buku Siswa' | 'Buku Guru' | 'Umum' | string;
+  gradeLevel?: string;
+  curriculum?: string;
+  fileSize?: string;
 }
 
 export interface Announcement {

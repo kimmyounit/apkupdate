@@ -353,6 +353,18 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
                 </button>
 
                 <button
+                  onClick={() => handleNav('perpustakaan')}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                    currentTab === 'perpustakaan'
+                      ? 'bg-teal-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Library className="w-4 h-4" />
+                  <span>Perpustakaan (SIBI)</span>
+                </button>
+
+                <button
                   onClick={() => handleNav('scanner')}
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
                     currentTab === 'scanner'
@@ -600,6 +612,16 @@ export const Navbar: React.FC<Props> = ({ currentTab = 'mapel', onNavigate }) =>
               >
                 <HelpCircle className="w-4 h-4" />
                 <span>Dashboard Guru</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('perpustakaan')}
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold ${
+                  currentTab === 'perpustakaan' ? 'bg-teal-600 text-white' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Library className="w-4 h-4" />
+                <span>Perpustakaan & Buku Kemendikbud (SIBI)</span>
               </button>
 
               <button
