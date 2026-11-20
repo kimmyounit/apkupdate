@@ -99,6 +99,72 @@ app.get('/TAMVESTA.apk', (req, res) => {
   }
 });
 
+// -------------------------------------------------------------
+// Proxy In-App Viewer Website Kemendikdasmen (buku.kemendikdasmen.go.id)
+// Memungkinkan situs SIBI Kemendikdasmen dibuka langsung di dalam APK / Aplikasi tanpa lempar ke Chrome
+app.get(['/api/proxy/kemendikdasmen', '/api/kemendikdasmen-viewer'], async (req, res) => {
+  try {
+    const rawUrl = (req.query.url as string) || 'https://buku.kemendikdasmen.go.id/';
+    let targetUrl = rawUrl;
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      targetUrl = 'https://buku.kemendikdasmen.go.id/' + targetUrl.replace(/^\/+/, '');
+    }
+    const parsed = new URL(targetUrl);
+    if (!parsed.hostname.endsWith('kemendikdasmen.go.id') && !parsed.hostname.endsWith('kemdikbud.go.id')) {
+      targetUrl = 'https://buku.kemendikdasmen.go.id/';
+    }
+
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'id,en-US;q=0.9,en;q=0.8',
+      },
+    });
+
+    const contentType = response.headers.get('content-type') || 'text/html';
+    res.setHeader('Content-Type', contentType);
+    res.removeHeader('X-Frame-Options');
+    res.removeHeader('Content-Security-Policy');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    if (contentType.includes('text/html')) {
+      let html = await response.text();
+      if (!html.includes('<base ') && !html.includes('<base>')) {
+        const baseHref = `https://${parsed.hostname}/`;
+        html = html.replace(/<head>/i, `<head>\n  <base href="${baseHref}">`);
+      }
+      return res.send(html);
+    } else {
+      const buffer = await response.arrayBuffer();
+      return res.send(Buffer.from(buffer));
+    }
+  } catch (err: any) {
+    return res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Portal SIBI Kemendikdasmen</title>
+          <style>
+            body { font-family: sans-serif; background: #0f172a; color: #fff; text-align: center; padding: 30px; margin: 0; }
+            .box { max-width: 480px; margin: 40px auto; background: #1e293b; padding: 24px; border-radius: 16px; border: 1px solid #334155; }
+            a { color: #38bdf8; text-decoration: none; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="box">
+            <h3>Portal SIBI Kemendikdasmen RI</h3>
+            <p style="color: #94a3b8; font-size: 13px;">Gagal memuat proxy langsung dari server Kemendikdasmen saat ini.</p>
+            <p style="margin-top: 20px;"><a href="https://buku.kemendikdasmen.go.id/" target="_self">Muat Ulang Halaman SIBI</a></p>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+});
+
 // 1. AUTHENTICATION ENDPOINTS
 // -------------------------------------------------------------
 
