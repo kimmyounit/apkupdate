@@ -1167,7 +1167,9 @@
       "type": "system",
       "isImportant": false,
       "linkType": "none",
-      "readBy": [],
+      "readBy": [
+        "stu_1793373992097_jv1v1"
+      ],
       "deletedBy": [],
       "createdAt": "2026-11-07T09:41:59.265Z"
     },
